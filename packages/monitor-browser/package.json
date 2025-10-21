@@ -1,0 +1,36 @@
+{
+  "name": "@whayl/monitor-browser",
+  "version": "1.0.0",
+  "description": "浏览器端监控SDK，包含各种监控插件",
+  "type": "module",
+  "main": "lib/bundle.cjs.js",
+  "module": "lib/bundle.esm.js",
+  "browser": "lib/bundle.umd.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/bundle.esm.js",
+      "require": "./lib/bundle.cjs.js",
+      "browser": "./lib/bundle.umd.js",
+      "default": "./lib/bundle.umd.js"
+    }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "rollup -wc rollup.config.dev.js",
+    "build": "rollup -c rollup.config.js"
+  },
+  "keywords": [
+    "monitor",
+    "browser",
+    "frontend"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whayl/monitor-core": "workspace:*"
+  }
+}

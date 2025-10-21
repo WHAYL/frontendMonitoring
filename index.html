@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<script src="./packages/monitor-browser/lib/bundle.umd.js"></script>
+<script>
+    console.log("aiyMonitorBrowser", aiyMonitorBrowser)
+
+
+    let browserClient = aiyMonitorBrowser({
+        monitorConfig: {
+            reportLevel: "OFF"
+        }
+    })
+    console.info("ddddddddddddddd",)
+
+
+
+
+
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/@whayl/mito-browser@1.0.2/lib/bundle.umd.js"></script> -->
+<script>
+
+    setTimeout(() => {
+        let content = document.querySelector('.content')
+        content.style.width = '100px'
+        content.style.height = '100vh'
+        content.style.backgroundColor = 'red'
+        content.onclick = function () {
+            // location.href = "cs.html"
+            window.open("cs.html")
+        }
+    }, 5000);
+</script>
+
+
+<body>
+    <a class="cs cs1" href="cs.html">跳转页面2</a>
+    <br />
+    <a href="cs.html">跳转页面11111</a>
+    <img src="https://serve.ymt2021.com/pub_upload/images/activity_v2.pn" alt="" />
+    <div id="app" style="width: 1050px;height: 2000px;">
+        <div id="a">55555</div>
+        <div class="content"></div>
+    </div>
+    <div style="display: flex;width: 300vw;">
+        <div style="width: 100vw;;background-color: black;">a</div>
+        <div class="scrollerFooter" data-id="22" style="width: max-content;background-color: red;">
+            scrollerFooterscrollerFooterscrollerFooter
+        </div>
+    </div>
+    <div style="height: 100vh;width: 100vw;background-color: green;"></div>
+
+    <!-- <div id="cdd" style="width:200px;height: 200px;background-color: black;">
+
+    </div> -->
+    <!-- <div style="width:200px;height: 200px;background-color: black;">
+
+    </div> -->
+    <!-- <img src="https://serve.ymt2021.com/pub_upload/images/activity_v2.pn"
+        style="width:200px;height: 200px;background-color: red;" /> -->
+    <!-- <div>aaaaaaaaaaa
+        <div>cccccc</div>
+        <div>ddddddd
+            <div>eeeeee</div>
+        </div>
+    </div>
+    <div class="cs cs1" data-id="45" data-name="whay">bbbbbbbbbb</div>
+    <p data-id="45" data-name="whay">999999999</p>
+    <a class="cs cs1">链接</a> -->
+
+</body>
+
+
+</html>

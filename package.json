@@ -1,0 +1,39 @@
+{
+  "name": "@whayl/monitor",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "dev": "rollup -wc rollup.config.dev.js",
+    "build": "rollup -c rollup.config.js",
+    "npx:changeset": "npx changeset",
+    "npx:changesetVersion": "npx changeset version",
+    "changeset:publish": "npx changeset publish -r"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@changesets/cli": "^2.29.7",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^28.0.8",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@rollup/plugin-url": "^8.0.2",
+    "path": "^0.12.7",
+    "pnpm": "^10.18.3",
+    "rollup": "^4.52.5",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-delete": "^3.0.1",
+    "rollup-plugin-filesize": "^10.0.0",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-progress": "^1.1.2",
+    "rollup-plugin-serve": "^3.0.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "rollup-plugin-visualizer": "^6.0.5",
+    "typescript": "^5.9.3"
+  }
+}

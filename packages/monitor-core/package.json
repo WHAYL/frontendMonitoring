@@ -1,0 +1,31 @@
+{
+  "name": "@whayl/monitor-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/bundle.cjs.js",
+  "module": "lib/bundle.esm.js",
+  "browser": "lib/bundle.umd.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/bundle.esm.js",
+      "require": "./lib/bundle.cjs.js",
+      "browser": "./lib/bundle.umd.js",
+      "default": "./lib/bundle.umd.js"
+    }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {},
+  "gitHead": "de922e4e2f4f90eaacfe07d2c832a0de4bc0a82e"
+}
