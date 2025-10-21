@@ -14,9 +14,6 @@ export class FrontendMonitor {
     // 本地存储队列，用于存储未达到上报等级的信息
     private storageQueue: ErrorInfo[] = [];
 
-    // 插件列表
-    private plugins: MonitorPlugin[] = [];
-
     // 浏览器指纹
     private fingerprint: string = '';
 
@@ -24,7 +21,7 @@ export class FrontendMonitor {
      * 初始化监控配置
      * @param config 监控配置
      */
-    async init(config: Partial<MonitorConfig>): Promise<void> {
+    init(config: Partial<MonitorConfig>): void {
         this.config = Object.assign(this.config, config);
 
     }
@@ -37,21 +34,7 @@ export class FrontendMonitor {
         return this.fingerprint;
     }
 
-    /**
-     * 添加插件
-     * @param plugin 监控插件
-     */
-    use(plugin: MonitorPlugin): void {
-        // 检查插件是否已存在
-        const existingPlugin = this.plugins.find(p => p.name === plugin.name);
-        if (existingPlugin) {
-            console.warn(`Plugin ${plugin.name} already exists, skipping addition.`);
-            return;
-        }
-        this.plugins.push(plugin);
-        // 初始化插件
-        plugin.init(this);
-    }
+
 
     /**
      * 记录错误信息
@@ -198,16 +181,6 @@ export class FrontendMonitor {
      * 销毁监控实例，清理资源
      */
     destroy(): void {
-        // 销毁所有插件
-        this.plugins.forEach(plugin => {
-            if (plugin.destroy) {
-                plugin.destroy();
-            }
-        });
-
-        // 清空插件列表
-        this.plugins = [];
-
         // 清空存储队列
         this.storageQueue = [];
     }

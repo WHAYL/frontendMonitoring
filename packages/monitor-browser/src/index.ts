@@ -1,4 +1,4 @@
-import { monitor, MonitorConfig } from '@whayl/monitor-core';
+import { monitor, MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr.js';
 import { FetchPlugin } from './plugins/fetch.js';
 import { DomPlugin } from './plugins/dom.js';
@@ -16,36 +16,67 @@ interface BrowserMonitorConfig {
 }
 
 /**
- * 初始化浏览器监控
- * @param config 浏览器监控配置
+ * 浏览器监控类
  */
-async function initBrowserMonitor(config: BrowserMonitorConfig = {}) {
-    // 默认配置都为 true
-    const {
-        xhrPluginEnabled = true,
-        fetchPluginEnabled = true,
-        domPluginEnabled = true,
-        routePluginEnabled = true
-    } = config.pluginsUse || {};
+class BrowserMonitor {
+    private plugins: MonitorPlugin[] = [];
+    constructor(config: BrowserMonitorConfig = {}) {
+        // 默认配置都为 true
+        const {
+            xhrPluginEnabled = true,
+            fetchPluginEnabled = true,
+            domPluginEnabled = true,
+            routePluginEnabled = true
+        } = config.pluginsUse || {};
 
-    // 初始化核心监控
-    await monitor.init(config?.monitorConfig || {});
+        // 初始化核心监控
+        monitor.init(config?.monitorConfig || {});
 
-    // 根据配置动态注册插件
-    const pluginsToRegister = [
-        xhrPluginEnabled && { name: 'XhrPlugin', creator: () => new XhrPlugin() },
-        fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
-        domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin() },
-        routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() }
-    ].filter(Boolean) as { name: string; creator: () => any }[];
+        // 根据配置动态注册插件
+        const pluginsToRegister = [
+            xhrPluginEnabled && { name: 'XhrPlugin', creator: () => new XhrPlugin() },
+            fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
+            domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin() },
+            routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() }
+        ].filter(Boolean) as { name: string; creator: () => any }[];
 
-    // 注册插件
-    pluginsToRegister.forEach(plugin => {
-        monitor.use(plugin.creator());
-    });
+        // 注册插件
+        pluginsToRegister.forEach(plugin => {
+            this.use(plugin.creator());
+        });
+    }
 
-    return monitor;
+    /**
+     * 添加插件
+     * @param plugin 监控插件
+     */
+    use(plugin: MonitorPlugin): void {
+        // 检查插件是否已存在
+        const existingPlugin = this.plugins.find(p => p.name === plugin.name);
+        if (existingPlugin) {
+            console.warn(`Plugin ${plugin.name} already exists, skipping addition.`);
+            return;
+        }
+        this.plugins.push(plugin);
+        // 初始化插件
+        plugin.init(monitor);
+    }
+
+    /**
+     * 销毁监控实例
+     */
+    destroy(): void {
+        // 销毁所有插件
+        this.plugins.forEach(plugin => {
+            if (plugin.destroy) {
+                plugin.destroy();
+            }
+        });
+
+        // 清空插件列表
+        this.plugins = [];
+    }
 }
 
-// 默认导出初始化函数
-export default initBrowserMonitor
+// 默认导出浏览器监控类
+export default BrowserMonitor;

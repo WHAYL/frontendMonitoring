@@ -2,11 +2,9 @@ import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin
 export declare class FrontendMonitor {
     private config;
     private storageQueue;
-    private plugins;
     private fingerprint;
-    init(config: Partial<MonitorConfig>): Promise<void>;
+    init(config: Partial<MonitorConfig>): void;
     getFingerprint(): string;
-    use(plugin: MonitorPlugin): void;
     log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, error?: Error, data?: any): void;
     error(pluginName: string, message: string, error?: Error, data?: any): void;
     warn(pluginName: string, message: string, error?: Error, data?: any): void;

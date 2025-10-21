@@ -1,4 +1,4 @@
-import { MonitorConfig } from '@whayl/monitor-core';
+import { MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
 interface BrowserMonitorConfig {
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
@@ -8,5 +8,10 @@ interface BrowserMonitorConfig {
     };
     monitorConfig?: Partial<MonitorConfig>;
 }
-declare function initBrowserMonitor(config?: BrowserMonitorConfig): Promise<import("@whayl/monitor-core").FrontendMonitor>;
-export default initBrowserMonitor;
+declare class BrowserMonitor {
+    private plugins;
+    constructor(config?: BrowserMonitorConfig);
+    use(plugin: MonitorPlugin): void;
+    destroy(): void;
+}
+export default BrowserMonitor;

@@ -9,10 +9,9 @@
 </head>
 <script src="./packages/monitor-browser/lib/bundle.umd.js"></script>
 <script>
-    console.log("aiyMonitorBrowser", aiyMonitorBrowser)
+    console.log("aiyMonitorBrowser", AiyMonitorBrowser)
 
-
-    let browserClient = aiyMonitorBrowser({
+    let browserClient = new AiyMonitorBrowser({
         monitorConfig: {
             reportLevel: "OFF"
         }

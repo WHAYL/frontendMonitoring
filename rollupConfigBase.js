@@ -4,7 +4,7 @@ import { babel } from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import { fileURLToPath } from 'url'
-const formatName = "aiyMonitor";
+const formatName = "AiyMonitor";
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const resolveFile = function (filePath) {
