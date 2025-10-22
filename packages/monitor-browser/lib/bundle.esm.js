@@ -350,6 +350,43 @@ function a$1(e, r, t) {
   if (2 === arguments.length) for (var n, i = 0, o = r.length; i < o; i++) !n && i in r || (n || (n = Array.prototype.slice.call(r, 0, i)), n[i] = r[i]);
   return e.concat(n || Array.prototype.slice.call(r));
 }
+function u$1(e) {
+  if (!Array.isArray(e)) throw new Error("EventEmitter(names:string[]):  names must be an array");
+  var r = new Map(),
+    t = function (r) {
+      if (!e.includes(r)) throw new Error("Invalid event name: ".concat(r.toString(), ", must includes [").concat(e.toString(), "]"));
+    },
+    n = {
+      getNames: function () {
+        return e;
+      },
+      clearAll: function () {
+        return r.clear();
+      },
+      on: function (e, n) {
+        if (t(e), "function" != typeof n) throw new Error("on(eventName,listener) => listener: ".concat(n, ' for event "').concat(e.toString(), '" is not a function'));
+        r.has(e) || r.set(e, new Set()), r.get(e).add(n);
+      },
+      off: function (e, n) {
+        t(e);
+        var i = r.get(e);
+        i && (i.delete(n), 0 === i.size && r.delete(e));
+      },
+      emit: function (e) {
+        for (var n = [], i = 1; i < arguments.length; i++) n[i - 1] = arguments[i];
+        t(e);
+        var u = r.get(e);
+        u && u.forEach(function (r) {
+          try {
+            r.apply(void 0, a$1([], o$1(n), !1));
+          } catch (r) {
+            console.error('Error in listener for event "'.concat(e.toString(), '":'), r);
+          }
+        });
+      }
+    };
+  return n;
+}
 "function" == typeof SuppressedError && SuppressedError, Function.prototype.after = function (e) {
   var r = this;
   return function () {
@@ -979,6 +1016,9 @@ var DomPlugin = (function () {
     return DomPlugin;
 }());
 
+var arr = ['monitorRouteChange'];
+var monitorRouteChange = u$1(arr);
+
 var RoutePlugin = (function () {
     function RoutePlugin() {
         this.name = 'route';
@@ -1018,12 +1058,14 @@ var RoutePlugin = (function () {
             this.recordRouteLeave();
             this.lastRoute = currentRoute;
             this.recordRouteEnter();
-            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(this.lastRoute), {
+            var data = {
                 previousRoute: this.lastRoute,
                 currentRoute: currentRoute,
                 changeType: changeType,
                 enterTime: this.routeEnterTime
-            });
+            };
+            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(this.lastRoute), data);
+            monitorRouteChange.emit("monitorRouteChange", data);
         }
     };
     RoutePlugin.prototype.getCurrentRoute = function () {
@@ -1387,6 +1429,7 @@ var PerformancePlugin = (function () {
         this.resourceObserver = null;
         this.navigationObserver = null;
         this.paintObserver = null;
+        this.boundHandleRouteChange = function () { };
     }
     PerformancePlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
@@ -1394,11 +1437,16 @@ var PerformancePlugin = (function () {
             console.warn('Performance API is not supported in this browser');
             return;
         }
+        this.run();
+        this.boundHandleRouteChange = this.handleRouteChange.bind(this);
+        monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+    };
+    PerformancePlugin.prototype.run = function () {
         this.setupResourceMonitoring();
         this.setupNavigationMonitoring();
         this.setupWebVitals();
     };
-    PerformancePlugin.prototype.destroy = function () {
+    PerformancePlugin.prototype.clearEffects = function () {
         if (this.resourceObserver) {
             this.resourceObserver.disconnect();
             this.resourceObserver = null;
@@ -1411,7 +1459,16 @@ var PerformancePlugin = (function () {
             this.paintObserver.disconnect();
             this.paintObserver = null;
         }
+    };
+    PerformancePlugin.prototype.destroy = function () {
+        this.clearEffects();
+        if (this.boundHandleRouteChange) {
+            monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+        }
         this.monitor = null;
+    };
+    PerformancePlugin.prototype.handleRouteChange = function (data) {
+        this.run();
     };
     PerformancePlugin.prototype.setupResourceMonitoring = function () {
         var _this = this;
@@ -1516,21 +1573,36 @@ var WhiteScreenPlugin = (function () {
         this.startTime = 0;
         this.endTime = 0;
         this.resolved = false;
+        this.boundHandleRouteChange = function () { };
         this.config = __assign({ keySelectors: ['img'], checkInterval: 100, timeout: 8000 }, config);
     }
     WhiteScreenPlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
+        this.run();
+        this.boundHandleRouteChange = this.handleRouteChange.bind(this);
+        monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+    };
+    WhiteScreenPlugin.prototype.run = function () {
         this.startTime = Date.now();
         this.resolved = false;
         this.startCheck();
     };
-    WhiteScreenPlugin.prototype.destroy = function () {
+    WhiteScreenPlugin.prototype.clearEffects = function () {
         if (this.timer) {
             clearInterval(this.timer);
             this.timer = null;
         }
         this.resolved = true;
+    };
+    WhiteScreenPlugin.prototype.destroy = function () {
+        this.clearEffects();
+        if (this.boundHandleRouteChange) {
+            monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+        }
         this.monitor = null;
+    };
+    WhiteScreenPlugin.prototype.handleRouteChange = function (data) {
+        this.run();
     };
     WhiteScreenPlugin.prototype.startCheck = function () {
         var _this = this;
@@ -1543,12 +1615,12 @@ var WhiteScreenPlugin = (function () {
             if (visible) {
                 _this.endTime = Date.now();
                 _this.report('success');
-                _this.destroy();
+                _this.clearEffects();
             }
             else if (Date.now() - start > (timeout || 8000)) {
                 _this.endTime = Date.now();
                 _this.report('timeout');
-                _this.destroy();
+                _this.clearEffects();
             }
         }, checkInterval);
     };

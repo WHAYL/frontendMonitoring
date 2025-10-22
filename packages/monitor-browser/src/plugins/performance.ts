@@ -1,6 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
+import { monitorRouteChange } from '../eventBus';
 
 export class PerformancePlugin implements MonitorPlugin {
   name = 'performance';
@@ -8,22 +9,25 @@ export class PerformancePlugin implements MonitorPlugin {
   private resourceObserver: PerformanceObserver | null = null;
   private navigationObserver: PerformanceObserver | null = null;
   private paintObserver: PerformanceObserver | null = null;
-
+  private boundHandleRouteChange: (data: any) => void = () => { };
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
-
     // 确保浏览器支持 Performance API
     if (typeof PerformanceObserver === 'undefined' || typeof performance === 'undefined') {
       console.warn('Performance API is not supported in this browser');
       return;
     }
-
+    this.run();
+    // 监听路由变化事件，重置性能监控数据采集
+    this.boundHandleRouteChange = this.handleRouteChange.bind(this);
+    monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+  }
+  run(): void {
     this.setupResourceMonitoring();
     this.setupNavigationMonitoring();
     this.setupWebVitals();
   }
-
-  destroy(): void {
+  clearEffects(): void {
     // 断开所有 PerformanceObserver 的连接
     if (this.resourceObserver) {
       this.resourceObserver.disconnect();
@@ -40,8 +44,21 @@ export class PerformancePlugin implements MonitorPlugin {
       this.paintObserver = null;
     }
 
+  }
+  destroy(): void {
+    this.clearEffects()
+    if (this.boundHandleRouteChange) {
+      monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+    }
     // 清空引用
     this.monitor = null;
+  }
+
+  /**
+   * 处理路由变化事件
+   */
+  private handleRouteChange(data: any): void {
+    this.run();
   }
 
   /**

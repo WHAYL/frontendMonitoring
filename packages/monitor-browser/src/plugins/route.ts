@@ -1,5 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
+import { monitorRouteChange } from '../eventBus';
 
 export class RoutePlugin implements MonitorPlugin {
   name = 'route';
@@ -69,18 +70,19 @@ export class RoutePlugin implements MonitorPlugin {
 
       // 记录新路由的进入时间
       this.recordRouteEnter();
-
+      const data = {
+        previousRoute: this.lastRoute,
+        currentRoute: currentRoute,
+        changeType: changeType,
+        enterTime: this.routeEnterTime
+      }
       // 记录路由变更
       this.monitor!.info(
         this.name,
         `Route Changed (${changeType}): ${this.lastRoute}`,
-        {
-          previousRoute: this.lastRoute,
-          currentRoute: currentRoute,
-          changeType: changeType,
-          enterTime: this.routeEnterTime
-        }
+        data
       );
+      monitorRouteChange.emit("monitorRouteChange", data)
     }
   }
 

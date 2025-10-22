@@ -1,6 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-
+import { monitorRouteChange } from '../eventBus';
 export interface WhiteScreenConfig {
   keySelectors?: string[]; // 关键渲染元素选择器
   checkInterval?: number; // 检测间隔ms
@@ -15,6 +15,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   private startTime: number = 0;
   private endTime: number = 0;
   private resolved = false;
+  private boundHandleRouteChange: (data: any) => void = () => { };
 
   constructor(config: WhiteScreenConfig = {}) {
     this.config = {
@@ -27,20 +28,35 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
+    this.run();
+    this.boundHandleRouteChange = this.handleRouteChange.bind(this);
+    monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+  }
+  run(): void {
     this.startTime = Date.now();
     this.resolved = false;
     this.startCheck();
   }
-
-  destroy(): void {
+  clearEffects(): void {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
     this.resolved = true;
+  }
+  destroy(): void {
+    this.clearEffects()
+    if (this.boundHandleRouteChange) {
+      monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+    }
     this.monitor = null;
   }
-
+  /**
+    * 处理路由变化事件
+    */
+  private handleRouteChange(data: any): void {
+    this.run();
+  }
   private startCheck() {
     const { checkInterval, timeout } = this.config;
     const start = Date.now();
@@ -50,11 +66,11 @@ export class WhiteScreenPlugin implements MonitorPlugin {
       if (visible) {
         this.endTime = Date.now();
         this.report('success');
-        this.destroy();
+        this.clearEffects();
       } else if (Date.now() - start > (timeout || 8000)) {
         this.endTime = Date.now();
         this.report('timeout');
-        this.destroy();
+        this.clearEffects();
       }
     }, checkInterval);
   }
