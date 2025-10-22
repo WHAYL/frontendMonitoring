@@ -26,6 +26,11 @@
             this.storageQueue = [];
             this.fingerprint = '';
         }
+        FrontendMonitor.prototype.getTimestamp = function () {
+            return typeof performance !== 'undefined'
+                ? Math.floor(performance.now() + performance.timeOrigin)
+                : Date.now();
+        };
         FrontendMonitor.prototype.init = function (config) {
             this.config = Object.assign(this.config, config);
         };
@@ -36,9 +41,7 @@
             if (!this.config.enabled) {
                 return;
             }
-            var timestamp = typeof performance !== 'undefined'
-                ? Math.floor(performance.now() + performance.timeOrigin)
-                : Date.now();
+            var timestamp = this.getTimestamp();
             var errorInfo = {
                 level: level,
                 message: message,

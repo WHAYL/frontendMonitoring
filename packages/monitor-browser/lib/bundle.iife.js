@@ -21,6 +21,9 @@ var AiyMonitorBrowser = (function () {
         this.storageQueue = [];
         this.fingerprint = '';
       }
+      FrontendMonitor.prototype.getTimestamp = function () {
+        return typeof performance !== 'undefined' ? Math.floor(performance.now() + performance.timeOrigin) : Date.now();
+      };
       FrontendMonitor.prototype.init = function (config) {
         this.config = Object.assign(this.config, config);
       };
@@ -31,7 +34,7 @@ var AiyMonitorBrowser = (function () {
         if (!this.config.enabled) {
           return;
         }
-        var timestamp = typeof performance !== 'undefined' ? Math.floor(performance.now() + performance.timeOrigin) : Date.now();
+        var timestamp = this.getTimestamp();
         var errorInfo = {
           level: level,
           message: message,
@@ -1507,19 +1510,152 @@ var AiyMonitorBrowser = (function () {
         return PerformancePlugin;
     }());
 
+    var WhiteScreenPlugin = (function () {
+        function WhiteScreenPlugin(config) {
+            if (config === void 0) { config = {}; }
+            this.name = 'whiteScreen';
+            this.monitor = null;
+            this.timer = null;
+            this.startTime = 0;
+            this.endTime = 0;
+            this.resolved = false;
+            this.config = __assign({ keySelectors: ['img'], checkInterval: 100, timeout: 8000 }, config);
+        }
+        WhiteScreenPlugin.prototype.init = function (monitor) {
+            this.monitor = monitor;
+            this.startTime = Date.now();
+            this.resolved = false;
+            this.startCheck();
+        };
+        WhiteScreenPlugin.prototype.destroy = function () {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+            this.resolved = true;
+            this.monitor = null;
+        };
+        WhiteScreenPlugin.prototype.startCheck = function () {
+            var _this = this;
+            var _a = this.config, checkInterval = _a.checkInterval, timeout = _a.timeout;
+            var start = Date.now();
+            this.timer = window.setInterval(function () {
+                if (_this.resolved)
+                    return;
+                var visible = _this.checkKeyElements();
+                if (visible) {
+                    _this.endTime = Date.now();
+                    _this.report('success');
+                    _this.destroy();
+                }
+                else if (Date.now() - start > (timeout || 8000)) {
+                    _this.endTime = Date.now();
+                    _this.report('timeout');
+                    _this.destroy();
+                }
+            }, checkInterval);
+        };
+        WhiteScreenPlugin.prototype.checkKeyElements = function () {
+            var _this = this;
+            var selectors = this.config.keySelectors || [];
+            for (var _i = 0, selectors_1 = selectors; _i < selectors_1.length; _i++) {
+                var sel = selectors_1[_i];
+                var els = Array.from(document.querySelectorAll(sel));
+                for (var _a = 0, els_1 = els; _a < els_1.length; _a++) {
+                    var el = els_1[_a];
+                    if (el instanceof HTMLImageElement) {
+                        if (el.complete && el.naturalWidth > 0 && this.isElementVisible(el))
+                            return true;
+                    }
+                    else if (el instanceof HTMLElement) {
+                        var style = window.getComputedStyle(el);
+                        if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0)
+                            continue;
+                        if (el.offsetWidth > 0 && el.offsetHeight > 0) {
+                            var rect = el.getBoundingClientRect();
+                            if (rect.bottom < 0 || rect.top > (window.innerHeight || document.documentElement.clientHeight) || rect.right < 0 || rect.left > (window.innerWidth || document.documentElement.clientWidth)) {
+                                continue;
+                            }
+                            if (el.textContent && el.textContent.trim().length > 0) {
+                                if (this.isElementVisible(el))
+                                    return true;
+                            }
+                            var imgs = Array.from(el.querySelectorAll('img'));
+                            if (imgs.some(function (img) { return img.complete && img.naturalWidth > 0 && _this.isElementVisible(img); }))
+                                return true;
+                            var bgColor = style.backgroundColor;
+                            var color = style.color;
+                            if ((bgColor && !this.isColorTransparent(bgColor)) || (color && !this.isColorTransparent(color))) {
+                                if (this.isElementVisible(el))
+                                    return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+        WhiteScreenPlugin.prototype.isColorTransparent = function (color) {
+            if (!color)
+                return true;
+            if (color === 'transparent')
+                return true;
+            var rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
+            if (!rgbaMatch)
+                return false;
+            var parts = rgbaMatch[1].split(',').map(function (p) { return p.trim(); });
+            if (parts.length === 4) {
+                var alpha = parseFloat(parts[3]);
+                return alpha === 0;
+            }
+            return false;
+        };
+        WhiteScreenPlugin.prototype.isElementVisible = function (el) {
+            try {
+                var rect = el.getBoundingClientRect();
+                var x = rect.left + rect.width / 2;
+                var y = rect.top + rect.height / 2;
+                if (x < 0 || y < 0 || x > (window.innerWidth || document.documentElement.clientWidth) || y > (window.innerHeight || document.documentElement.clientHeight)) {
+                    return false;
+                }
+                var topEl = document.elementFromPoint(x, y);
+                if (!topEl)
+                    return false;
+                return el === topEl || el.contains(topEl) || topEl.contains(el);
+            }
+            catch (e) {
+                return false;
+            }
+        };
+        WhiteScreenPlugin.prototype.report = function (status) {
+            if (!this.monitor)
+                return;
+            this.monitor.info(this.name, "WhiteScreen check ".concat(status), {
+                status: status,
+                page: window.location.href,
+                startTime: this.startTime,
+                endTime: this.endTime,
+                duration: this.endTime - this.startTime,
+                selectors: this.config.keySelectors
+            });
+        };
+        return WhiteScreenPlugin;
+    }());
+
     var BrowserMonitor = (function () {
         function BrowserMonitor(config) {
             if (config === void 0) { config = {}; }
             var _this = this;
             this.plugins = [];
-            var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f;
+            var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g;
             monitor.init((config === null || config === void 0 ? void 0 : config.monitorConfig) || {});
             var pluginsToRegister = [
                 xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
                 fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },
                 domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin(); } },
                 routePluginEnabled && { name: 'RoutePlugin', creator: function () { return new RoutePlugin(); } },
-                performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin(); } }
+                performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin(); } },
+                whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } }
             ].filter(Boolean);
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());

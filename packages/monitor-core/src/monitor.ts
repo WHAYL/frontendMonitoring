@@ -18,6 +18,17 @@ export class FrontendMonitor {
     private fingerprint: string = '';
 
     /**
+     * 获取高精度时间戳
+     * 优先使用 performance.now()，如果不支持则回退到 Date.now()
+     * @returns 时间戳（毫秒）
+     */
+    getTimestamp(): number {
+        return typeof performance !== 'undefined'
+            ? Math.floor(performance.now() + performance.timeOrigin)
+            : Date.now();
+    }
+
+    /**
      * 初始化监控配置
      * @param config 监控配置
      */
@@ -34,8 +45,6 @@ export class FrontendMonitor {
         return this.fingerprint;
     }
 
-
-
     /**
      * 记录错误信息
      * @param pluginName 插件名称
@@ -48,9 +57,7 @@ export class FrontendMonitor {
         if (!this.config.enabled) {
             return;
         }
-        const timestamp = typeof performance !== 'undefined'
-            ? Math.floor(performance.now() + performance.timeOrigin)
-            : Date.now();
+        const timestamp = this.getTimestamp();
         const errorInfo: ErrorInfo = {
             level,
             message,

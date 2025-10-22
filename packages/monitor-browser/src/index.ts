@@ -4,6 +4,7 @@ import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin } from './plugins/dom';
 import { RoutePlugin } from './plugins/route';
 import { PerformancePlugin } from './plugins/performance';
+import { WhiteScreenConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 
 // 定义浏览器监控插件配置接口
 interface BrowserMonitorConfig {
@@ -13,8 +14,10 @@ interface BrowserMonitorConfig {
         domPluginEnabled?: boolean;
         routePluginEnabled?: boolean;
         performancePluginEnabled?: boolean;
+        whiteScreenPluginEnabled?: boolean
     },
     monitorConfig?: Partial<MonitorConfig>;
+    whiteScreenConfig?: Partial<WhiteScreenConfig>;
 }
 
 /**
@@ -29,7 +32,8 @@ class BrowserMonitor {
             fetchPluginEnabled = true,
             domPluginEnabled = true,
             routePluginEnabled = true,
-            performancePluginEnabled = true
+            performancePluginEnabled = true,
+            whiteScreenPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -41,7 +45,8 @@ class BrowserMonitor {
             fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
             domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin() },
             routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
-            performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() }
+            performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() },
+            whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenConfig || {}) }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

@@ -14,6 +14,11 @@
     let browserClient = new AiyMonitorBrowser({
         monitorConfig: {
             reportLevel: "OFF"
+        },
+        whiteScreenConfig: {
+            keySelectors: ['.content'], // 关键渲染元素选择器
+            checkInterval: 100, // 检测间隔ms
+            timeout: 10000 // 超时时间ms
         }
     })
 
@@ -38,7 +43,7 @@
             // location.href = "cs.html"
             window.open("cs.html")
         }
-    }, 5000);
+    }, 3000);
 </script>
 
 

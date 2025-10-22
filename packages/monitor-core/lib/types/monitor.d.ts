@@ -3,6 +3,7 @@ export declare class FrontendMonitor {
     private config;
     private storageQueue;
     private fingerprint;
+    getTimestamp(): number;
     init(config: Partial<MonitorConfig>): void;
     getFingerprint(): string;
     log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, error?: Error, data?: any): void;

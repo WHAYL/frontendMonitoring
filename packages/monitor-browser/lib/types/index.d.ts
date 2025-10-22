@@ -1,4 +1,5 @@
 import { MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
+import { WhiteScreenConfig } from './plugins/whiteScreen';
 interface BrowserMonitorConfig {
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
@@ -6,8 +7,10 @@ interface BrowserMonitorConfig {
         domPluginEnabled?: boolean;
         routePluginEnabled?: boolean;
         performancePluginEnabled?: boolean;
+        whiteScreenPluginEnabled?: boolean;
     };
     monitorConfig?: Partial<MonitorConfig>;
+    whiteScreenConfig?: Partial<WhiteScreenConfig>;
 }
 declare class BrowserMonitor {
     private plugins;
