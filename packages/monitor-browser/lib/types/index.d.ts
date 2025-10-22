@@ -1,7 +1,7 @@
 import { MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
 import { WhiteScreenConfig } from './plugins/whiteScreen';
 import { ConsoleConfig } from './plugins/console';
-interface BrowserMonitorConfig {
+export interface BrowserMonitorConfig {
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
         fetchPluginEnabled?: boolean;

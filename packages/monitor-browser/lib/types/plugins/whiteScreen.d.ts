@@ -1,0 +1,28 @@
+import { MonitorPlugin } from '@whayl/monitor-core';
+import type { FrontendMonitor } from '@whayl/monitor-core';
+export interface WhiteScreenConfig {
+    keySelectors?: string[];
+    checkInterval?: number;
+    timeout?: number;
+}
+export declare class WhiteScreenPlugin implements MonitorPlugin {
+    name: string;
+    private monitor;
+    private config;
+    private timer;
+    private startTime;
+    private endTime;
+    private resolved;
+    private boundHandleRouteChange;
+    constructor(config?: WhiteScreenConfig);
+    init(monitor: FrontendMonitor): void;
+    run(): void;
+    clearEffects(): void;
+    destroy(): void;
+    private handleRouteChange;
+    private startCheck;
+    private checkKeyElements;
+    private isColorTransparent;
+    private isElementVisible;
+    private report;
+}

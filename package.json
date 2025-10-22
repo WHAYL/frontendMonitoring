@@ -35,5 +35,13 @@
     "rollup-plugin-typescript2": "^0.36.0",
     "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@whayl/monitor": "link:"
+    }
+  },
+  "dependencies": {
+    "@whayl/monitor": "link:"
   }
 }

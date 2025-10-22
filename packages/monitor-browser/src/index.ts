@@ -8,7 +8,7 @@ import { WhiteScreenConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 import { ConsoleConfig, ConsolePlugin } from './plugins/console';
 
 // 定义浏览器监控插件配置接口
-interface BrowserMonitorConfig {
+export interface BrowserMonitorConfig {
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
         fetchPluginEnabled?: boolean;
@@ -17,7 +17,7 @@ interface BrowserMonitorConfig {
         performancePluginEnabled?: boolean;
         whiteScreenPluginEnabled?: boolean;
         consolePluginEnabled?: boolean;
-    },
+    };
     monitorConfig?: Partial<MonitorConfig>;
     whiteScreenConfig?: Partial<WhiteScreenConfig>;
     consoleConfig?: Partial<ConsoleConfig>;

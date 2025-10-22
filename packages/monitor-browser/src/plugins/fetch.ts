@@ -27,20 +27,20 @@ export class FetchPlugin implements MonitorPlugin {
         const endTime = self.monitor!.getTimestamp();
         const duration = endTime - startTime;
 
-        self.monitor!.info(
-          self.name,
-          `Fetch Success: ${method} ${url}`,
-          {
-            type: 'fetch',
-            url,
-            method,
-            status: response.status,
-            statusText: response.statusText,
-            startTime,
-            endTime,
-            duration
-          }
-        );
+        // self.monitor!.info(
+        //   self.name,
+        //   `Fetch Success: ${method} ${url}`,
+        //   {
+        //     type: 'fetch',
+        //     url,
+        //     method,
+        //     status: response.status,
+        //     statusText: response.statusText,
+        //     startTime,
+        //     endTime,
+        //     duration
+        //   }
+        // );
 
         return response;
       }).catch(error => {

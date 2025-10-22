@@ -163,21 +163,6 @@
             XMLHttpRequest.prototype.send = function () {
                 var xhrInfo = self.xhrMap.get(this);
                 if (xhrInfo) {
-                    this.addEventListener('load', function () {
-                        var endTime = self.monitor.getTimestamp();
-                        var duration = endTime - xhrInfo.startTime;
-                        self.monitor.info(self.name, "XHR Success: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
-                            type: 'xhr',
-                            url: xhrInfo.url,
-                            method: xhrInfo.method,
-                            status: this.status,
-                            statusText: this.statusText,
-                            startTime: xhrInfo.startTime,
-                            endTime: endTime,
-                            duration: duration
-                        });
-                        self.xhrMap.delete(this);
-                    });
                     this.addEventListener('error', function () {
                         var endTime = self.monitor.getTimestamp();
                         var duration = endTime - xhrInfo.startTime;
@@ -241,18 +226,7 @@
                     method = args[1].method;
                 }
                 return originalFetch.apply(this, args).then(function (response) {
-                    var endTime = self.monitor.getTimestamp();
-                    var duration = endTime - startTime;
-                    self.monitor.info(self.name, "Fetch Success: ".concat(method, " ").concat(url), {
-                        type: 'fetch',
-                        url: url,
-                        method: method,
-                        status: response.status,
-                        statusText: response.statusText,
-                        startTime: startTime,
-                        endTime: endTime,
-                        duration: duration
-                    });
+                    self.monitor.getTimestamp();
                     return response;
                 }).catch(function (error) {
                     var endTime = self.monitor.getTimestamp();
@@ -1656,11 +1630,38 @@
             try {
                 var resourceList_1 = [];
                 this.resourceObserver = new PerformanceObserver(function (list) {
+                    var allowedInitiatorTypes = new Set([
+                        'script',
+                        'link',
+                        'img',
+                        'css',
+                        'video',
+                        'audio',
+                        'iframe',
+                        'fetch',
+                        'xmlhttprequest',
+                        'worker',
+                        'serviceworker',
+                        'font',
+                        'json',
+                        'wasm',
+                        'other'
+                    ]);
+                    var allowedExt = /\.(js|mjs|cjs|css|html?|json|wasm|map|manifest|jpg|jpeg|png|gif|svg|webp|ico|mp4|webm|ogg|mp3|m4a|wav|woff2?|woff|ttf|eot|otf)$/i;
                     list.getEntries().forEach(function (entry) {
                         if (entry.entryType === 'resource') {
                             var resourceEntry = entry;
+                            var initiatorType = resourceEntry.initiatorType || '';
+                            var url = resourceEntry.name || '';
+                            if (initiatorType === 'beacon') {
+                                return;
+                            }
+                            var shouldInclude = allowedInitiatorTypes.has(initiatorType) || allowedExt.test(url);
+                            if (!shouldInclude) {
+                                return;
+                            }
                             resourceList_1.push({
-                                name: resourceEntry.name,
+                                name: url,
                                 duration: resourceEntry.duration
                             });
                             _this.monitor.info(_this.name, "Resource loaded: ".concat(resourceEntry.name), {
@@ -1670,13 +1671,10 @@
                                 startTime: resourceEntry.startTime,
                                 transferSize: resourceEntry.transferSize,
                                 encodedBodySize: resourceEntry.encodedBodySize,
-                                decodedBodySize: resourceEntry.decodedBodySize
+                                decodedBodySize: resourceEntry.decodedBodySize,
+                                initiatorType: initiatorType
                             });
                         }
-                    });
-                    _this.monitor.info(_this.name, 'Resource loading summary', {
-                        type: 'resource_summary',
-                        resources: resourceList_1
                     });
                 });
                 this.resourceObserver.observe({ entryTypes: ['resource'] });

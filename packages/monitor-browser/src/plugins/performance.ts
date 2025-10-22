@@ -69,15 +69,52 @@ export class PerformancePlugin implements MonitorPlugin {
       const resourceList: Array<{ name: string, duration: number }> = [];
 
       this.resourceObserver = new PerformanceObserver((list) => {
+        // 只关注这些 initiatorType（优先）或特定后缀的资源
+        const allowedInitiatorTypes = new Set([
+          'script',
+          'link',
+          'img',
+          'css',
+          'video',
+          'audio',
+          'iframe',
+          'fetch',
+          'xmlhttprequest',
+          'worker',
+          'serviceworker',
+          'font',
+          'json',
+          'wasm',
+          'other'
+        ]);
+
+        // 常见静态资源扩展名（包括 icon/gif 等），并扩展 json/wasm/map/manifest 等
+        const allowedExt = /\.(js|mjs|cjs|css|html?|json|wasm|map|manifest|jpg|jpeg|png|gif|svg|webp|ico|mp4|webm|ogg|mp3|m4a|wav|woff2?|woff|ttf|eot|otf)$/i;
+
         list.getEntries().forEach((entry) => {
           if (entry.entryType === 'resource') {
             const resourceEntry = entry as PerformanceResourceTiming;
+            // 某些浏览器会有 initiatorType 字段
+            const initiatorType = (resourceEntry as any).initiatorType || '';
+            const url = resourceEntry.name || '';
+
+            // 显式忽略 beacon（navigator.sendBeacon）以避免上报时触发 sendBeacon 再次上报的死循环
+            if (initiatorType === 'beacon') {
+              return;
+            }
+
+            // 优先依据 initiatorType 过滤；如果 initiatorType 不存在或不在白名单，则根据扩展名判断
+            const shouldInclude = allowedInitiatorTypes.has(initiatorType) || allowedExt.test(url);
+            if (!shouldInclude) {
+              return;
+            }
+
             resourceList.push({
-              name: resourceEntry.name,
+              name: url,
               duration: resourceEntry.duration
             });
 
-            // 单独报告每个资源的加载情况
+            // 单独报告每个资源的加载情况（按需打开）
             this.monitor!.info(
               this.name,
               `Resource loaded: ${resourceEntry.name}`,
@@ -88,21 +125,13 @@ export class PerformancePlugin implements MonitorPlugin {
                 startTime: resourceEntry.startTime,
                 transferSize: resourceEntry.transferSize,
                 encodedBodySize: resourceEntry.encodedBodySize,
-                decodedBodySize: resourceEntry.decodedBodySize
+                decodedBodySize: resourceEntry.decodedBodySize,
+                initiatorType: initiatorType
               }
             );
           }
         });
 
-        // 报告资源列表汇总
-        this.monitor!.info(
-          this.name,
-          'Resource loading summary',
-          {
-            type: 'resource_summary',
-            resources: resourceList
-          }
-        );
       });
 
       this.resourceObserver.observe({ entryTypes: ['resource'] });

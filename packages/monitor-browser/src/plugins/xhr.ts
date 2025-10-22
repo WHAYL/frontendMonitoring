@@ -40,28 +40,28 @@ export class XhrPlugin implements MonitorPlugin {
       const xhrInfo = self.xhrMap.get(this);
 
       if (xhrInfo) {
-        this.addEventListener('load', function () {
-          const endTime = self.monitor!.getTimestamp();
-          const duration = endTime - xhrInfo.startTime;
+        // this.addEventListener('load', function () {
+        //   const endTime = self.monitor!.getTimestamp();
+        //   const duration = endTime - xhrInfo.startTime;
 
-          self.monitor!.info(
-            self.name,
-            `XHR Success: ${xhrInfo.method} ${xhrInfo.url}`,
-            {
-              type: 'xhr',
-              url: xhrInfo.url,
-              method: xhrInfo.method,
-              status: this.status,
-              statusText: this.statusText,
-              startTime: xhrInfo.startTime,
-              endTime,
-              duration
-            }
-          );
+        //   self.monitor!.info(
+        //     self.name,
+        //     `XHR Success: ${xhrInfo.method} ${xhrInfo.url}`,
+        //     {
+        //       type: 'xhr',
+        //       url: xhrInfo.url,
+        //       method: xhrInfo.method,
+        //       status: this.status,
+        //       statusText: this.statusText,
+        //       startTime: xhrInfo.startTime,
+        //       endTime,
+        //       duration
+        //     }
+        //   );
 
-          // 清理
-          self.xhrMap.delete(this);
-        });
+        //   // 清理
+        //   self.xhrMap.delete(this);
+        // });
 
         this.addEventListener('error', function () {
           const endTime = self.monitor!.getTimestamp();
