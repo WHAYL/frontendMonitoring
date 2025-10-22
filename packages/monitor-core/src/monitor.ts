@@ -19,12 +19,12 @@ export class FrontendMonitor {
 
     /**
      * 获取高精度时间戳
-     * 优先使用 performance.now()，如果不支持则回退到 Date.now()
+     * 优先使用 performance.now() + performance.timeOrigin，如果不支持则回退到 Date.now()
      * @returns 时间戳（毫秒）
      */
     getTimestamp(): number {
-        return typeof performance !== 'undefined'
-            ? Math.floor(performance.now() + performance.timeOrigin)
+        return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
+            ? performance.now() + performance.timeOrigin
             : Date.now();
     }
 
@@ -46,107 +46,95 @@ export class FrontendMonitor {
     }
 
     /**
-     * 记录错误信息
+     * 记录日志的通用方法
      * @param pluginName 插件名称
-     * @param level 错误等级
-     * @param message 错误消息
-     * @param error 可选的错误对象
+     * @param level 日志等级
+     * @param message 日志消息
+     * @param extraData 额外数据
      */
-    log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, error?: Error, data?: any): void {
-        // 检查是否启用监控
-        if (!this.config.enabled) {
-            return;
-        }
-        const timestamp = this.getTimestamp();
+    private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}): void {
+        // 如果监控未启用，则直接返回
+        if (!this.config.enabled) return;
+
+        // 创建错误信息对象
         const errorInfo: ErrorInfo = {
             level,
             message,
-            timestamp,
+            timestamp: this.getTimestamp(), // 使用高精度时间戳
             url: typeof window !== 'undefined' ? window.location.href : '',
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
             pluginName,
             fingerprint: this.fingerprint,
-            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-            data
+            ...extraData
         };
 
-        // 检查等级是否满足上报条件
+        // 判断是否需要立即上报
         if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
-            // 满足上报条件，执行上报
+            // 立即上报
             this.report(errorInfo);
         } else {
-            // 不满足上报条件，存储到本地队列
-            this.storeLocally(errorInfo);
+            // 存储到本地队列
+            this.storageQueue.push(errorInfo);
+
+            // 如果存储队列超过最大数量，则移除最旧的信息
+            if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
+                this.storageQueue.shift();
+            }
         }
     }
 
     /**
-     * 记录错误等级的信息
+     * 记录错误信息
      * @param pluginName 插件名称
      * @param message 错误消息
-     * @param error 可选的错误对象
+     * @param extraData 额外数据
      */
-    error(pluginName: string, message: string, error?: Error, data?: any): void {
-        this.log(pluginName, 'ERROR', message, error, data);
+    error(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
+        this.log(pluginName, 'ERROR', message, extraData);
     }
 
     /**
-     * 记录警告等级的信息
+     * 记录警告信息
      * @param pluginName 插件名称
      * @param message 警告消息
-     * @param error 可选的错误对象
+     * @param extraData 额外数据
      */
-    warn(pluginName: string, message: string, error?: Error, data?: any): void {
-        this.log(pluginName, 'WARN', message, error, data);
+    warn(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
+        this.log(pluginName, 'WARN', message, extraData);
     }
 
     /**
-     * 记录信息等级的信息
+     * 记录普通信息
      * @param pluginName 插件名称
      * @param message 信息消息
+     * @param extraData 额外数据
      */
-    info(pluginName: string, message: string, data?: any): void {
-        this.log(pluginName, 'INFO', message, undefined, data);
+    info(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
+        this.log(pluginName, 'INFO', message, extraData);
     }
 
     /**
-     * 记录调试等级的信息
+     * 记录调试信息
      * @param pluginName 插件名称
      * @param message 调试消息
+     * @param extraData 额外数据
      */
-    debug(pluginName: string, message: string, data?: any): void {
-        this.log(pluginName, 'DEBUG', message, undefined, data);
+    debug(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
+        this.log(pluginName, 'DEBUG', message, extraData);
     }
 
-    /**
-     * 将信息存储到本地队列
-     * @param errorInfo 错误信息
-     */
-    private storeLocally(errorInfo: ErrorInfo): void {
-        // 添加到队列开头
-        this.storageQueue.unshift(errorInfo);
-
-        // 如果超出最大存储数量，移除最旧的记录
-        if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
-            this.storageQueue.pop();
-        }
-    }
 
     /**
-     * 检查并上报本地存储的信息
-     * 当上报等级发生变化时调用此方法
+     * 检查本地存储的信息是否满足新的上报条件
      */
-    checkAndReportStored(): void {
-        if (!this.config.enabled || this.storageQueue.length === 0) {
-            return;
-        }
-
+    private checkAndReportStored(): void {
         // 过滤出满足当前上报等级的信息
         const reportableItems = this.storageQueue.filter(
             item => ReportLevelEnum[item.level] <= ReportLevelEnum[this.config.reportLevel]
         );
 
         if (reportableItems.length > 0) {
-            // 上报这些信息
+            // 上报满足条件的信息
             reportableItems.forEach(item => this.report(item));
 
             // 从存储队列中移除已上报的信息

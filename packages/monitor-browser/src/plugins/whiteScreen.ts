@@ -33,7 +33,8 @@ export class WhiteScreenPlugin implements MonitorPlugin {
     monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
   }
   run(): void {
-    this.startTime = Date.now();
+    if (!this.monitor) return;
+    this.startTime = this.monitor.getTimestamp();
     this.resolved = false;
     this.startCheck();
   }
@@ -59,16 +60,17 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   }
   private startCheck() {
     const { checkInterval, timeout } = this.config;
-    const start = Date.now();
+    if (!this.monitor) return;
+    const start = this.monitor.getTimestamp();
     this.timer = window.setInterval(() => {
-      if (this.resolved) return;
+      if (this.resolved || !this.monitor) return;
       const visible = this.checkKeyElements();
       if (visible) {
-        this.endTime = Date.now();
+        this.endTime = this.monitor.getTimestamp();
         this.report('success');
         this.clearEffects();
-      } else if (Date.now() - start > (timeout || 8000)) {
-        this.endTime = Date.now();
+      } else if (this.monitor.getTimestamp() - start > (timeout || 8000)) {
+        this.endTime = this.monitor.getTimestamp();
         this.report('timeout');
         this.clearEffects();
       }

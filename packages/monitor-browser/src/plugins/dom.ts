@@ -62,16 +62,16 @@ export class DomPlugin implements MonitorPlugin {
       );
     };
 
-    // // 定义需要监听的鼠标事件类型数组
-    // const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'] as const;
+    // 定义需要监听的鼠标事件类型数组
+    const mouseEvents = ['click', 'dblclick'] as const;
 
-    // // 批量添加鼠标事件监听器
-    // mouseEvents.forEach(eventType => {
-    //   document.addEventListener(eventType, debounce(mouseEventHandler(eventType), 1000, true, true), {
-    //     capture: true,
-    //     signal
-    //   });
-    // });
+    // 批量添加鼠标事件监听器
+    mouseEvents.forEach(eventType => {
+      document.addEventListener(eventType, debounce(mouseEventHandler(eventType), 1000, true, true), {
+        capture: true,
+        signal
+      });
+    });
 
     // 监听窗口大小变化
     window.addEventListener('resize', debounce(() => {

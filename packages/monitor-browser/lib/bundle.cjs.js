@@ -10,6 +10,37 @@ var ReportLevelEnum;
   ReportLevelEnum[ReportLevelEnum["DEBUG"] = 3] = "DEBUG";
   ReportLevelEnum[ReportLevelEnum["OFF"] = 4] = "OFF";
 })(ReportLevelEnum || (ReportLevelEnum = {}));
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+var __assign$1 = function () {
+  __assign$1 = Object.assign || function __assign(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+    }
+    return t;
+  };
+  return __assign$1.apply(this, arguments);
+};
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+  var e = new Error(message);
+  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 var FrontendMonitor = function () {
   function FrontendMonitor() {
     this.config = {
@@ -21,7 +52,7 @@ var FrontendMonitor = function () {
     this.fingerprint = '';
   }
   FrontendMonitor.prototype.getTimestamp = function () {
-    return typeof performance !== 'undefined' ? Math.floor(performance.now() + performance.timeOrigin) : Date.now();
+    return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number' ? performance.now() + performance.timeOrigin : Date.now();
   };
   FrontendMonitor.prototype.init = function (config) {
     this.config = Object.assign(this.config, config);
@@ -29,50 +60,55 @@ var FrontendMonitor = function () {
   FrontendMonitor.prototype.getFingerprint = function () {
     return this.fingerprint;
   };
-  FrontendMonitor.prototype.log = function (pluginName, level, message, error, data) {
-    if (!this.config.enabled) {
-      return;
+  FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
+    if (extraData === void 0) {
+      extraData = {};
     }
-    var timestamp = this.getTimestamp();
-    var errorInfo = {
+    if (!this.config.enabled) return;
+    var errorInfo = __assign$1({
       level: level,
       message: message,
-      timestamp: timestamp,
+      timestamp: this.getTimestamp(),
       url: typeof window !== 'undefined' ? window.location.href : '',
-      pluginName: pluginName,
-      fingerprint: this.fingerprint,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-      data: data
-    };
+      pluginName: pluginName,
+      fingerprint: this.fingerprint
+    }, extraData);
     if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
       this.report(errorInfo);
     } else {
-      this.storeLocally(errorInfo);
+      this.storageQueue.push(errorInfo);
+      if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
+        this.storageQueue.shift();
+      }
     }
   };
-  FrontendMonitor.prototype.error = function (pluginName, message, error, data) {
-    this.log(pluginName, 'ERROR', message, error, data);
-  };
-  FrontendMonitor.prototype.warn = function (pluginName, message, error, data) {
-    this.log(pluginName, 'WARN', message, error, data);
-  };
-  FrontendMonitor.prototype.info = function (pluginName, message, data) {
-    this.log(pluginName, 'INFO', message, undefined, data);
-  };
-  FrontendMonitor.prototype.debug = function (pluginName, message, data) {
-    this.log(pluginName, 'DEBUG', message, undefined, data);
-  };
-  FrontendMonitor.prototype.storeLocally = function (errorInfo) {
-    this.storageQueue.unshift(errorInfo);
-    if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
-      this.storageQueue.pop();
+  FrontendMonitor.prototype.error = function (pluginName, message, extraData) {
+    if (extraData === void 0) {
+      extraData = {};
     }
+    this.log(pluginName, 'ERROR', message, extraData);
+  };
+  FrontendMonitor.prototype.warn = function (pluginName, message, extraData) {
+    if (extraData === void 0) {
+      extraData = {};
+    }
+    this.log(pluginName, 'WARN', message, extraData);
+  };
+  FrontendMonitor.prototype.info = function (pluginName, message, extraData) {
+    if (extraData === void 0) {
+      extraData = {};
+    }
+    this.log(pluginName, 'INFO', message, extraData);
+  };
+  FrontendMonitor.prototype.debug = function (pluginName, message, extraData) {
+    if (extraData === void 0) {
+      extraData = {};
+    }
+    this.log(pluginName, 'DEBUG', message, extraData);
   };
   FrontendMonitor.prototype.checkAndReportStored = function () {
     var _this = this;
-    if (!this.config.enabled || this.storageQueue.length === 0) {
-      return;
-    }
     var reportableItems = this.storageQueue.filter(function (item) {
       return ReportLevelEnum[item.level] <= ReportLevelEnum[_this.config.reportLevel];
     });
@@ -103,63 +139,64 @@ var XhrPlugin = (function () {
     function XhrPlugin() {
         this.name = 'xhr';
         this.monitor = null;
-        this.xhrOpen = null;
-        this.xhrSend = null;
-        this.requests = new Map();
+        this.xhrMap = new Map();
     }
     XhrPlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
         this.setupXhrMonitoring();
     };
-    XhrPlugin.prototype.destroy = function () {
-        if (this.xhrOpen) {
-            XMLHttpRequest.prototype.open = this.xhrOpen;
-        }
-        if (this.xhrSend) {
-            XMLHttpRequest.prototype.send = this.xhrSend;
-        }
-        this.requests.clear();
-    };
     XhrPlugin.prototype.setupXhrMonitoring = function () {
         var self = this;
-        this.xhrOpen = XMLHttpRequest.prototype.open;
-        this.xhrSend = XMLHttpRequest.prototype.send;
+        var originalOpen = XMLHttpRequest.prototype.open;
+        var originalSend = XMLHttpRequest.prototype.send;
         XMLHttpRequest.prototype.open = function (method, url) {
-            self.requests.set(this, {
-                startTime: Date.now(),
+            this._xhrInfo = {
                 method: method,
-                url: url.toString()
-            });
-            return self.xhrOpen.apply(this, arguments);
+                url: url.toString(),
+                startTime: self.monitor.getTimestamp()
+            };
+            self.xhrMap.set(this, this._xhrInfo);
+            originalOpen.apply(this, arguments);
         };
-        XMLHttpRequest.prototype.send = function (body) {
-            var requestInfo = self.requests.get(this);
-            if (requestInfo) {
-                requestInfo.data = body ? body.toString() : '';
-            }
-            this.addEventListener('readystatechange', function () {
-                if (this.readyState === 4 && self.monitor) {
-                    var endTime = Date.now();
-                    var duration = endTime - ((requestInfo === null || requestInfo === void 0 ? void 0 : requestInfo.startTime) || endTime);
-                    var xhrInfo = {
-                        method: (requestInfo === null || requestInfo === void 0 ? void 0 : requestInfo.method) || 'UNKNOWN',
-                        url: (requestInfo === null || requestInfo === void 0 ? void 0 : requestInfo.url) || 'UNKNOWN',
+        XMLHttpRequest.prototype.send = function () {
+            var xhrInfo = self.xhrMap.get(this);
+            if (xhrInfo) {
+                this.addEventListener('load', function () {
+                    var endTime = self.monitor.getTimestamp();
+                    var duration = endTime - xhrInfo.startTime;
+                    self.monitor.info(self.name, "XHR Success: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
+                        type: 'xhr',
+                        url: xhrInfo.url,
+                        method: xhrInfo.method,
                         status: this.status,
-                        duration: duration,
-                        requestData: requestInfo === null || requestInfo === void 0 ? void 0 : requestInfo.data,
-                        responseData: this.responseText
-                    };
-                    if (this.status >= 400) {
-                        self.monitor.error(self.name, "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url, " - Status: ").concat(xhrInfo.status), undefined, xhrInfo);
-                    }
-                    else {
-                        self.monitor.info(self.name, "XHR Success: ".concat(xhrInfo.method, " ").concat(xhrInfo.url, " - Status: ").concat(xhrInfo.status));
-                    }
-                    self.requests.delete(this);
-                }
-            });
-            return self.xhrSend.apply(this, arguments);
+                        statusText: this.statusText,
+                        startTime: xhrInfo.startTime,
+                        endTime: endTime,
+                        duration: duration
+                    });
+                    self.xhrMap.delete(this);
+                });
+                this.addEventListener('error', function () {
+                    var endTime = self.monitor.getTimestamp();
+                    var duration = endTime - xhrInfo.startTime;
+                    self.monitor.error(self.name, "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
+                        type: 'xhr',
+                        url: xhrInfo.url,
+                        method: xhrInfo.method,
+                        error: 'Network Error',
+                        startTime: xhrInfo.startTime,
+                        endTime: endTime,
+                        duration: duration
+                    });
+                    self.xhrMap.delete(this);
+                });
+            }
+            originalSend.apply(this, arguments);
         };
+    };
+    XhrPlugin.prototype.destroy = function () {
+        this.xhrMap.clear();
+        this.monitor = null;
     };
     return XhrPlugin;
 }());
@@ -168,46 +205,58 @@ var FetchPlugin = (function () {
     function FetchPlugin() {
         this.name = 'fetch';
         this.monitor = null;
-        this.originalFetch = null;
     }
     FetchPlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
         this.setupFetchMonitoring();
     };
-    FetchPlugin.prototype.destroy = function () {
-        if (this.originalFetch) {
-            window.fetch = this.originalFetch;
-        }
-    };
     FetchPlugin.prototype.setupFetchMonitoring = function () {
+        var originalFetch = window.fetch;
         var self = this;
-        this.originalFetch = window.fetch;
-        window.fetch = function (input, init) {
-            var startTime = Date.now();
-            var url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-            var method = (init === null || init === void 0 ? void 0 : init.method) || (typeof input !== 'string' && !(input instanceof URL) ? input.method : 'GET') || 'GET';
-            return self.originalFetch.apply(this, arguments).then(function (response) {
-                var endTime = Date.now();
+        window.fetch = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var startTime = self.monitor.getTimestamp();
+            var url = typeof args[0] === 'string' ? args[0] : args[0].url;
+            var method = 'GET';
+            if (args[1] && args[1].method) {
+                method = args[1].method;
+            }
+            return originalFetch.apply(this, args).then(function (response) {
+                var endTime = self.monitor.getTimestamp();
                 var duration = endTime - startTime;
-                var fetchInfo = {
+                self.monitor.info(self.name, "Fetch Success: ".concat(method, " ").concat(url), {
+                    type: 'fetch',
                     url: url,
                     method: method,
                     status: response.status,
-                    duration: duration,
-                    requestData: (init === null || init === void 0 ? void 0 : init.body) ? init.body.toString() : undefined
-                };
-                if (!response.ok) {
-                    self.monitor.error(self.name, "Fetch Error: ".concat(fetchInfo.method, " ").concat(fetchInfo.url, " - Status: ").concat(fetchInfo.status), undefined, fetchInfo);
-                }
-                else {
-                    self.monitor.info(self.name, "Fetch Success: ".concat(fetchInfo.method, " ").concat(fetchInfo.url, " - Status: ").concat(fetchInfo.status));
-                }
+                    statusText: response.statusText,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: duration
+                });
                 return response;
             }).catch(function (error) {
-                self.monitor.error(self.name, "Fetch Exception: ".concat(method, " ").concat(url, " - Error: ").concat(error.message), error);
+                var endTime = self.monitor.getTimestamp();
+                var duration = endTime - startTime;
+                self.monitor.error(self.name, "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message), {
+                    type: 'fetch',
+                    url: url,
+                    method: method,
+                    error: error.message,
+                    stack: error.stack,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: duration
+                });
                 throw error;
             });
         };
+    };
+    FetchPlugin.prototype.destroy = function () {
+        this.monitor = null;
     };
     return FetchPlugin;
 }());
@@ -459,7 +508,7 @@ var s$1 = {
   };
 var g$1 = function (e, r, i, o) {
     var a, u;
-    return "function" != typeof e ? (console.error("debounce ==> 参数1不是Function "), function () {}) : s$1.isNumNotNaN(r) ? function () {
+    return void 0 === r && (r = 200), "function" != typeof e ? (console.error("debounce ==> 参数1不是Function "), function () {}) : s$1.isNumNotNaN(r) ? function () {
       var c = this,
         l = this,
         s = arguments;
@@ -489,9 +538,9 @@ var g$1 = function (e, r, i, o) {
                 return d(), [2];
               });
             });
-          }, r)), a = setTimeout(function () {
+          }, r || 0)), a = setTimeout(function () {
             a = null;
-          }, r), h && (d(), clearTimeout(u));
+          }, r || 0), h && (d(), clearTimeout(u));
         }
       });
     } : (console.error("debounce ==> 参数2不是Number(!NaN)"), e);
@@ -1010,6 +1059,22 @@ var DomPlugin = (function () {
         window.addEventListener('unhandledrejection', function (event) {
             _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), typeof event.reason === 'string' ? new Error(event.reason) : event.reason);
         }, { signal: signal });
+        var mouseEventHandler = function (eventType) { return function (event) {
+            var target = event.target;
+            var tagName = target.tagName;
+            var id = target.id;
+            var className = target.className;
+            _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''), {
+                target: target
+            });
+        }; };
+        var mouseEvents = ['click', 'dblclick'];
+        mouseEvents.forEach(function (eventType) {
+            document.addEventListener(eventType, g$1(mouseEventHandler(eventType), 1000, true), {
+                capture: true,
+                signal: signal
+            });
+        });
         window.addEventListener('resize', g$1(function () {
             var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
             _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight));
@@ -1023,10 +1088,46 @@ var monitorRouteChange = u$1(arr);
 
 var RoutePlugin = (function () {
     function RoutePlugin() {
+        var _this = this;
         this.name = 'route';
         this.monitor = null;
         this.lastRoute = null;
         this.routeEnterTime = 0;
+        this.originalPushState = null;
+        this.originalReplaceState = null;
+        this.originalWindowOpen = null;
+        this.handleDocumentClick = function (ev) {
+            var self = _this;
+            try {
+                var target = ev.target;
+                if (!target || !(target instanceof Element))
+                    return;
+                var a = target.closest('a');
+                if (!a)
+                    return;
+                var href = a.href;
+                if (!href)
+                    return;
+                var data = {
+                    previousRoute: _this.lastRoute,
+                    currentRoute: href,
+                    changeType: 'a.click',
+                    enterTime: self.monitor.getTimestamp(),
+                    target: a.target
+                };
+                _this.monitor.info(_this.name, "A tag clicked -> ".concat(href), data);
+                monitorRouteChange.emit('monitorRouteChange', data);
+            }
+            catch (e) {
+            }
+        };
+        this.handleBeforeUnload = function () {
+            try {
+                _this.recordRouteLeave();
+            }
+            catch (e) {
+            }
+        };
     }
     RoutePlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
@@ -1036,12 +1137,35 @@ var RoutePlugin = (function () {
         this.recordRouteLeave();
         window.removeEventListener('hashchange', this.handleHashChange);
         window.removeEventListener('popstate', this.handleHistoryChange);
+        document.removeEventListener('click', this.handleDocumentClick, true);
+        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        if (this.originalWindowOpen) {
+            try {
+                window.open = this.originalWindowOpen;
+            }
+            catch (e) { }
+        }
+        if (this.originalPushState) {
+            try {
+                history.pushState = this.originalPushState;
+            }
+            catch (e) { }
+        }
+        if (this.originalReplaceState) {
+            try {
+                history.replaceState = this.originalReplaceState;
+            }
+            catch (e) { }
+        }
     };
     RoutePlugin.prototype.setupRouteMonitoring = function () {
         this.lastRoute = this.getCurrentRoute();
         window.addEventListener('hashchange', this.handleHashChange.bind(this));
         window.addEventListener('popstate', this.handleHistoryChange.bind(this));
         this.wrapHistoryMethods();
+        document.addEventListener('click', this.handleDocumentClick, true);
+        this.wrapWindowOpen();
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
         this.recordRouteEnter();
         this.monitor.info(this.name, "Initial Route: ".concat(this.lastRoute), {
             route: this.lastRoute,
@@ -1057,16 +1181,17 @@ var RoutePlugin = (function () {
     RoutePlugin.prototype.handleRouteChange = function (changeType) {
         var currentRoute = this.getCurrentRoute();
         if (this.lastRoute !== currentRoute) {
+            var previous = this.lastRoute;
             this.recordRouteLeave();
             this.lastRoute = currentRoute;
             this.recordRouteEnter();
             var data = {
-                previousRoute: this.lastRoute,
+                previousRoute: previous,
                 currentRoute: currentRoute,
                 changeType: changeType,
                 enterTime: this.routeEnterTime
             };
-            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(this.lastRoute), data);
+            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(currentRoute), data);
             monitorRouteChange.emit("monitorRouteChange", data);
         }
     };
@@ -1075,14 +1200,14 @@ var RoutePlugin = (function () {
     };
     RoutePlugin.prototype.wrapHistoryMethods = function () {
         var self = this;
-        var originalPushState = history.pushState;
-        var originalReplaceState = history.replaceState;
+        this.originalPushState = history.pushState;
+        this.originalReplaceState = history.replaceState;
         history.pushState = function () {
             var args = [];
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
-            var result = originalPushState.apply(this, args);
+            var result = self.originalPushState.apply(this, args);
             self.handleRouteChange('pushState');
             return result;
         };
@@ -1091,17 +1216,45 @@ var RoutePlugin = (function () {
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
-            var result = originalReplaceState.apply(this, args);
+            var result = self.originalReplaceState.apply(this, args);
             self.handleRouteChange('replaceState');
             return result;
         };
     };
+    RoutePlugin.prototype.wrapWindowOpen = function () {
+        var self = this;
+        try {
+            this.originalWindowOpen = window.open;
+            window.open = function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                try {
+                    var url = args[0];
+                    var data = {
+                        previousRoute: self.lastRoute,
+                        currentRoute: url,
+                        changeType: 'window.open',
+                        enterTime: self.monitor.getTimestamp()
+                    };
+                    self.monitor.info(self.name, "window.open -> ".concat(url), data);
+                    monitorRouteChange.emit('monitorRouteChange', data);
+                }
+                catch (e) {
+                }
+                return self.originalWindowOpen.apply(this, args);
+            };
+        }
+        catch (e) {
+        }
+    };
     RoutePlugin.prototype.recordRouteEnter = function () {
-        this.routeEnterTime = Date.now();
+        this.routeEnterTime = this.monitor.getTimestamp();
     };
     RoutePlugin.prototype.recordRouteLeave = function () {
         if (this.lastRoute && this.routeEnterTime) {
-            var leaveTime = Date.now();
+            var leaveTime = this.monitor.getTimestamp();
             var duration = leaveTime - this.routeEnterTime;
             this.monitor.info(this.name, "Route Left: ".concat(this.lastRoute), {
                 route: this.lastRoute,
@@ -1585,7 +1738,9 @@ var WhiteScreenPlugin = (function () {
         monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
     };
     WhiteScreenPlugin.prototype.run = function () {
-        this.startTime = Date.now();
+        if (!this.monitor)
+            return;
+        this.startTime = this.monitor.getTimestamp();
         this.resolved = false;
         this.startCheck();
     };
@@ -1609,18 +1764,20 @@ var WhiteScreenPlugin = (function () {
     WhiteScreenPlugin.prototype.startCheck = function () {
         var _this = this;
         var _a = this.config, checkInterval = _a.checkInterval, timeout = _a.timeout;
-        var start = Date.now();
+        if (!this.monitor)
+            return;
+        var start = this.monitor.getTimestamp();
         this.timer = window.setInterval(function () {
-            if (_this.resolved)
+            if (_this.resolved || !_this.monitor)
                 return;
             var visible = _this.checkKeyElements();
             if (visible) {
-                _this.endTime = Date.now();
+                _this.endTime = _this.monitor.getTimestamp();
                 _this.report('success');
                 _this.clearEffects();
             }
-            else if (Date.now() - start > (timeout || 8000)) {
-                _this.endTime = Date.now();
+            else if (_this.monitor.getTimestamp() - start > (timeout || 8000)) {
+                _this.endTime = _this.monitor.getTimestamp();
                 _this.report('timeout');
                 _this.clearEffects();
             }

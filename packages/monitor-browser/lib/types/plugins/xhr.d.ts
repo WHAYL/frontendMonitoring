@@ -3,10 +3,8 @@ import type { FrontendMonitor } from '@whayl/monitor-core';
 export declare class XhrPlugin implements MonitorPlugin {
     name: string;
     private monitor;
-    private xhrOpen;
-    private xhrSend;
-    private requests;
+    private xhrMap;
     init(monitor: FrontendMonitor): void;
-    destroy(): void;
     private setupXhrMonitoring;
+    destroy(): void;
 }

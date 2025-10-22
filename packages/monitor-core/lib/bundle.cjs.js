@@ -12,6 +12,37 @@ exports.ReportLevelEnum = void 0;
     ReportLevelEnum[ReportLevelEnum["OFF"] = 4] = "OFF";
 })(exports.ReportLevelEnum || (exports.ReportLevelEnum = {}));
 
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+var __assign = function () {
+  __assign = Object.assign || function __assign(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+    }
+    return t;
+  };
+  return __assign.apply(this, arguments);
+};
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+  var e = new Error(message);
+  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
+
 var FrontendMonitor = (function () {
     function FrontendMonitor() {
         this.config = {
@@ -23,8 +54,8 @@ var FrontendMonitor = (function () {
         this.fingerprint = '';
     }
     FrontendMonitor.prototype.getTimestamp = function () {
-        return typeof performance !== 'undefined'
-            ? Math.floor(performance.now() + performance.timeOrigin)
+        return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
+            ? performance.now() + performance.timeOrigin
             : Date.now();
     };
     FrontendMonitor.prototype.init = function (config) {
@@ -33,51 +64,39 @@ var FrontendMonitor = (function () {
     FrontendMonitor.prototype.getFingerprint = function () {
         return this.fingerprint;
     };
-    FrontendMonitor.prototype.log = function (pluginName, level, message, error, data) {
-        if (!this.config.enabled) {
+    FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
+        if (extraData === void 0) { extraData = {}; }
+        if (!this.config.enabled)
             return;
-        }
-        var timestamp = this.getTimestamp();
-        var errorInfo = {
-            level: level,
-            message: message,
-            timestamp: timestamp,
-            url: typeof window !== 'undefined' ? window.location.href : '',
-            pluginName: pluginName,
-            fingerprint: this.fingerprint,
-            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-            data: data
-        };
+        var errorInfo = __assign({ level: level, message: message, timestamp: this.getTimestamp(), url: typeof window !== 'undefined' ? window.location.href : '', userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '', pluginName: pluginName, fingerprint: this.fingerprint }, extraData);
         if (exports.ReportLevelEnum[level] <= exports.ReportLevelEnum[this.config.reportLevel]) {
             this.report(errorInfo);
         }
         else {
-            this.storeLocally(errorInfo);
+            this.storageQueue.push(errorInfo);
+            if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
+                this.storageQueue.shift();
+            }
         }
     };
-    FrontendMonitor.prototype.error = function (pluginName, message, error, data) {
-        this.log(pluginName, 'ERROR', message, error, data);
+    FrontendMonitor.prototype.error = function (pluginName, message, extraData) {
+        if (extraData === void 0) { extraData = {}; }
+        this.log(pluginName, 'ERROR', message, extraData);
     };
-    FrontendMonitor.prototype.warn = function (pluginName, message, error, data) {
-        this.log(pluginName, 'WARN', message, error, data);
+    FrontendMonitor.prototype.warn = function (pluginName, message, extraData) {
+        if (extraData === void 0) { extraData = {}; }
+        this.log(pluginName, 'WARN', message, extraData);
     };
-    FrontendMonitor.prototype.info = function (pluginName, message, data) {
-        this.log(pluginName, 'INFO', message, undefined, data);
+    FrontendMonitor.prototype.info = function (pluginName, message, extraData) {
+        if (extraData === void 0) { extraData = {}; }
+        this.log(pluginName, 'INFO', message, extraData);
     };
-    FrontendMonitor.prototype.debug = function (pluginName, message, data) {
-        this.log(pluginName, 'DEBUG', message, undefined, data);
-    };
-    FrontendMonitor.prototype.storeLocally = function (errorInfo) {
-        this.storageQueue.unshift(errorInfo);
-        if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
-            this.storageQueue.pop();
-        }
+    FrontendMonitor.prototype.debug = function (pluginName, message, extraData) {
+        if (extraData === void 0) { extraData = {}; }
+        this.log(pluginName, 'DEBUG', message, extraData);
     };
     FrontendMonitor.prototype.checkAndReportStored = function () {
         var _this = this;
-        if (!this.config.enabled || this.storageQueue.length === 0) {
-            return;
-        }
         var reportableItems = this.storageQueue.filter(function (item) { return exports.ReportLevelEnum[item.level] <= exports.ReportLevelEnum[_this.config.reportLevel]; });
         if (reportableItems.length > 0) {
             reportableItems.forEach(function (item) { return _this.report(item); });

@@ -5,6 +5,9 @@ export declare class RoutePlugin implements MonitorPlugin {
     private monitor;
     private lastRoute;
     private routeEnterTime;
+    private originalPushState;
+    private originalReplaceState;
+    private originalWindowOpen;
     init(monitor: FrontendMonitor): void;
     destroy(): void;
     private setupRouteMonitoring;
@@ -13,6 +16,9 @@ export declare class RoutePlugin implements MonitorPlugin {
     private handleRouteChange;
     private getCurrentRoute;
     private wrapHistoryMethods;
+    private wrapWindowOpen;
+    private handleDocumentClick;
+    private handleBeforeUnload;
     private recordRouteEnter;
     private recordRouteLeave;
 }
