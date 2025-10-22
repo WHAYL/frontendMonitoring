@@ -10,6 +10,7 @@ export type ReportingLevel = keyof typeof ReportLevelEnum;
 export interface MonitorConfig {
     reportLevel: ReportingLevel;
     enabled: boolean;
+    uploadUrl: string;
     maxStorageCount?: number;
 }
 export interface ErrorInfo {

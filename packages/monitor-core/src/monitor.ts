@@ -8,7 +8,8 @@ export class FrontendMonitor {
     private config: MonitorConfig = {
         reportLevel: IMMEDIATE_REPORT_LEVEL,
         enabled: true,
-        maxStorageCount: MYSTORAGE_COUNT
+        maxStorageCount: MYSTORAGE_COUNT,
+        uploadUrl: ''
     };
 
     // 本地存储队列，用于存储未达到上报等级的信息
@@ -79,7 +80,10 @@ export class FrontendMonitor {
 
             // 如果存储队列超过最大数量，则移除最旧的信息
             if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
-                this.storageQueue.shift();
+                const data: ErrorInfo | undefined = this.storageQueue.shift();
+                if (data) {
+                    this.report(data);
+                }
             }
         }
     }
@@ -160,17 +164,23 @@ export class FrontendMonitor {
      * @param errorInfo 错误信息
      */
     private report(errorInfo: ErrorInfo): void {
-        // 在实际项目中，这里会发送数据到后端服务器
-        console.log(`[Frontend Monitor] ${errorInfo.level.toUpperCase()}: ${errorInfo.message}`, errorInfo);
-
-        // 示例上报逻辑：
-        // fetch('/api/monitor/report', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify(errorInfo)
-        // });
+        // 如果配置了上传地址，则发送数据到指定地址
+        if (this.config.uploadUrl) {
+            // 在实际项目中，这里会发送数据到后端服务器
+            fetch(this.config.uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorInfo)
+            }).catch(err => {
+                // 如果上报失败，输出错误信息到控制台
+                console.error('[Frontend Monitor] Failed to send error report:', err);
+            });
+        } else {
+            // 如果没有配置上传地址，则输出到控制台
+            console.log(`[Frontend Monitor] ${errorInfo.level.toUpperCase()}: ${errorInfo.message}`, errorInfo);
+        }
     }
 
     /**

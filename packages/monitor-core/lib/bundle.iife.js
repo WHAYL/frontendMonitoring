@@ -18,7 +18,8 @@ var AiyMonitorCore = (function (exports) {
             this.config = {
                 reportLevel: IMMEDIATE_REPORT_LEVEL,
                 enabled: true,
-                maxStorageCount: MYSTORAGE_COUNT
+                maxStorageCount: MYSTORAGE_COUNT,
+                uploadUrl: ''
             };
             this.storageQueue = [];
             this.fingerprint = '';
@@ -55,7 +56,10 @@ var AiyMonitorCore = (function (exports) {
             else {
                 this.storageQueue.push(errorInfo);
                 if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
-                    this.storageQueue.shift();
+                    var data = this.storageQueue.shift();
+                    if (data) {
+                        this.report(data);
+                    }
                 }
             }
         };
@@ -88,7 +92,20 @@ var AiyMonitorCore = (function (exports) {
             this.checkAndReportStored();
         };
         FrontendMonitor.prototype.report = function (errorInfo) {
-            console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
+            if (this.config.uploadUrl) {
+                fetch(this.config.uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(errorInfo)
+                }).catch(function (err) {
+                    console.error('[Frontend Monitor] Failed to send error report:', err);
+                });
+            }
+            else {
+                console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
+            }
         };
         FrontendMonitor.prototype.destroy = function () {
             this.storageQueue = [];
