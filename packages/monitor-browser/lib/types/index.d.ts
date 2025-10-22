@@ -5,6 +5,7 @@ interface BrowserMonitorConfig {
         fetchPluginEnabled?: boolean;
         domPluginEnabled?: boolean;
         routePluginEnabled?: boolean;
+        performancePluginEnabled?: boolean;
     };
     monitorConfig?: Partial<MonitorConfig>;
 }

@@ -1,10 +1,9 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-
+import { debounce } from 'aiy-utils';
 export class DomPlugin implements MonitorPlugin {
   name = 'dom';
   private monitor: FrontendMonitor | null = null;
-  private resizeTimer: number | null = null;
   private abortController: AbortController | null = null;
 
   init(monitor: FrontendMonitor): void {
@@ -19,11 +18,6 @@ export class DomPlugin implements MonitorPlugin {
       this.abortController = null;
     }
 
-    // 清除可能存在的定时器
-    if (this.resizeTimer) {
-      window.clearTimeout(this.resizeTimer);
-      this.resizeTimer = null;
-    }
 
     // 清空引用
     this.monitor = null;
@@ -68,30 +62,24 @@ export class DomPlugin implements MonitorPlugin {
       );
     };
 
-    // 定义需要监听的鼠标事件类型数组
-    const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'] as const;
+    // // 定义需要监听的鼠标事件类型数组
+    // const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'] as const;
 
-    // 批量添加鼠标事件监听器
-    mouseEvents.forEach(eventType => {
-      document.addEventListener(eventType, mouseEventHandler(eventType), {
-        capture: true,
-        signal
-      });
-    });
+    // // 批量添加鼠标事件监听器
+    // mouseEvents.forEach(eventType => {
+    //   document.addEventListener(eventType, debounce(mouseEventHandler(eventType), 1000, true, true), {
+    //     capture: true,
+    //     signal
+    //   });
+    // });
 
     // 监听窗口大小变化
-    window.addEventListener('resize', () => {
-      if (this.resizeTimer) {
-        window.clearTimeout(this.resizeTimer);
-      }
-
-      this.resizeTimer = window.setTimeout(() => {
-        const { innerWidth, innerHeight } = window;
-        this.monitor!.debug(
-          this.name,
-          `Window Resize: ${innerWidth}x${innerHeight}`
-        );
-      }, 500); // 防抖处理，避免频繁触发
-    }, { signal });
+    window.addEventListener('resize', debounce(() => {
+      const { innerWidth, innerHeight } = window;
+      this.monitor!.debug(
+        this.name,
+        `Window Resize: ${innerWidth}x${innerHeight}`
+      );
+    }, 500, true, true), { signal });
   }
 }

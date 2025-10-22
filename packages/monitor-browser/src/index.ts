@@ -1,8 +1,9 @@
 import { monitor, MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
-import { XhrPlugin } from './plugins/xhr.js';
-import { FetchPlugin } from './plugins/fetch.js';
-import { DomPlugin } from './plugins/dom.js';
-import { RoutePlugin } from './plugins/route.js';
+import { XhrPlugin } from './plugins/xhr';
+import { FetchPlugin } from './plugins/fetch';
+import { DomPlugin } from './plugins/dom';
+import { RoutePlugin } from './plugins/route';
+import { PerformancePlugin } from './plugins/performance';
 
 // 定义浏览器监控插件配置接口
 interface BrowserMonitorConfig {
@@ -11,6 +12,7 @@ interface BrowserMonitorConfig {
         fetchPluginEnabled?: boolean;
         domPluginEnabled?: boolean;
         routePluginEnabled?: boolean;
+        performancePluginEnabled?: boolean;
     },
     monitorConfig?: Partial<MonitorConfig>;
 }
@@ -26,7 +28,8 @@ class BrowserMonitor {
             xhrPluginEnabled = true,
             fetchPluginEnabled = true,
             domPluginEnabled = true,
-            routePluginEnabled = true
+            routePluginEnabled = true,
+            performancePluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -37,7 +40,8 @@ class BrowserMonitor {
             xhrPluginEnabled && { name: 'XhrPlugin', creator: () => new XhrPlugin() },
             fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
             domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin() },
-            routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() }
+            routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
+            performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

@@ -9,7 +9,8 @@
     "preserveConstEnums": false, // true 使用 const enum 产生内联成员，会导致没有引入的const enum也会生成代码
     "isolatedModules": false, // 将模块视为独立的，不会被其他模块所引用
     "experimentalDecorators": true, // 启用实验性的ES装饰器
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "sourceMap": true,
     "esModuleInterop": true,
     // "resolveJsonModule": true,
@@ -19,7 +20,7 @@
     "forceConsistentCasingInFileNames": true, //禁止对同一个文件的不一致的引用。
     "types": [],
     "target": "ESNext", // 编译成什么版本
-    "module": "NodeNext", // 当前代码语法
+    "module": "ESNext", // 当前代码语法
     // "outDir": "./dist/", // 输出目录
     // "declaration": false, // 是否自动创建类型声明文件
     // "declarationMap": true,

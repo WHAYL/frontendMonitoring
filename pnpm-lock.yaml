@@ -77,6 +77,12 @@ importers:
       '@whayl/monitor-core':
         specifier: workspace:*
         version: link:../monitor-core
+      aiy-utils:
+        specifier: ^0.1.45
+        version: 0.1.45
+      web-vitals:
+        specifier: ^5.1.0
+        version: 5.1.0
 
   packages/monitor-core: {}
 
@@ -569,6 +575,9 @@ packages:
   aggregate-error@3.1.0:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
+
+  aiy-utils@0.1.45:
+    resolution: {integrity: sha512-2wjk7mK8MSkpQnSl+i9JOxkcrkXnODrQ8E5y+SB1QFpupDbC7C6f7tWAy0rZyZhIJF+5jcDlkomeSdxL6nwHsQ==}
 
   ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
@@ -2183,6 +2192,9 @@ packages:
     resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
+  web-vitals@5.1.0:
+    resolution: {integrity: sha512-ArI3kx5jI0atlTtmV0fWU3fjpLmq/nD3Zr1iFFlJLaqa5wLBkUSzINwBPySCX/8jRyjlmy1Volw1kz1g9XE4Jg==}
+
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
@@ -2828,6 +2840,8 @@ snapshots:
     dependencies:
       clean-stack: 2.2.0
       indent-string: 4.0.0
+
+  aiy-utils@0.1.45: {}
 
   ansi-align@3.0.1:
     dependencies:
@@ -4516,6 +4530,8 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   validate-npm-package-name@5.0.1: {}
+
+  web-vitals@5.1.0: {}
 
   which@2.0.2:
     dependencies:
