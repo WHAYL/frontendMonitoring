@@ -65,6 +65,7 @@ export class FrontendMonitor {
             userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
             pluginName,
             fingerprint: this.fingerprint,
+            devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
             extraData
         };
 

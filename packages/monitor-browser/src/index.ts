@@ -65,6 +65,18 @@ class BrowserMonitor {
      * @param plugin 监控插件
      */
     use(plugin: MonitorPlugin): void {
+        // 检查插件是否包含必需的name属性
+        if (!plugin.name) {
+            console.error('Plugin must have a name property');
+            return;
+        }
+
+        // 检查插件是否包含必需的init方法
+        if (typeof plugin.init !== 'function') {
+            console.error(`Plugin ${plugin.name} must have an init method`);
+            return;
+        }
+
         // 检查插件是否已存在
         const existingPlugin = this.plugins.find(p => p.name === plugin.name);
         if (existingPlugin) {

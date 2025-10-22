@@ -57,13 +57,23 @@ export class DomPlugin implements MonitorPlugin {
         this.name,
         `User Mouse Event (${eventType}): ${tagName}${id ? '#' + id : ''}${className ? '.' + className : ''}`,
         {
-          target
+
+          // target: target,
+          localName: target.localName,
+          textContent: target.textContent,
+          // outerHTML: target.outerHTML,
+          classList: Array.from(target.classList).join(','),
+          className: target.className,
+          id: target.id,
+          nodeName: target.nodeName,
+          tagName: target.tagName,
+          dataSet: Object.entries(target.dataset).map(([key, value]) => `${key}:${value}`).join(','),
         }
       );
     };
 
     // 定义需要监听的鼠标事件类型数组
-    const mouseEvents = ['click', 'dblclick'] as const;
+    const mouseEvents = ['click', 'dblclick', 'mousemove'] as const;
 
     // 批量添加鼠标事件监听器
     mouseEvents.forEach(eventType => {

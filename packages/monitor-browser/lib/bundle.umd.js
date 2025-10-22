@@ -46,6 +46,7 @@
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
           pluginName: pluginName,
           fingerprint: this.fingerprint,
+          devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
           extraData: extraData
         };
         if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
@@ -1053,10 +1054,20 @@
                 var id = target.id;
                 var className = target.className;
                 _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''), {
-                    target: target
+                    localName: target.localName,
+                    textContent: target.textContent,
+                    classList: Array.from(target.classList).join(','),
+                    className: target.className,
+                    id: target.id,
+                    nodeName: target.nodeName,
+                    tagName: target.tagName,
+                    dataSet: Object.entries(target.dataset).map(function (_a) {
+                        var key = _a[0], value = _a[1];
+                        return "".concat(key, ":").concat(value);
+                    }).join(','),
                 });
             }; };
-            var mouseEvents = ['click', 'dblclick'];
+            var mouseEvents = ['click', 'dblclick', 'mousemove'];
             mouseEvents.forEach(function (eventType) {
                 document.addEventListener(eventType, g$1(mouseEventHandler(eventType), 1000, true), {
                     capture: true,
@@ -1975,6 +1986,14 @@
             });
         }
         BrowserMonitor.prototype.use = function (plugin) {
+            if (!plugin.name) {
+                console.error('Plugin must have a name property');
+                return;
+            }
+            if (typeof plugin.init !== 'function') {
+                console.error("Plugin ".concat(plugin.name, " must have an init method"));
+                return;
+            }
             var existingPlugin = this.plugins.find(function (p) { return p.name === plugin.name; });
             if (existingPlugin) {
                 console.warn("Plugin ".concat(plugin.name, " already exists, skipping addition."));

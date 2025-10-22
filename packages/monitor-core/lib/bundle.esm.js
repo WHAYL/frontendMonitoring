@@ -43,6 +43,7 @@ var FrontendMonitor = (function () {
             userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
             pluginName: pluginName,
             fingerprint: this.fingerprint,
+            devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
             extraData: extraData
         };
         if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {

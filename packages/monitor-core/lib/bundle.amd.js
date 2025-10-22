@@ -45,6 +45,7 @@ define(['exports'], (function (exports) { 'use strict';
                 userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 pluginName: pluginName,
                 fingerprint: this.fingerprint,
+                devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
                 extraData: extraData
             };
             if (exports.ReportLevelEnum[level] <= exports.ReportLevelEnum[this.config.reportLevel]) {
