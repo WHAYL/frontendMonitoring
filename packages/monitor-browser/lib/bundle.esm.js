@@ -8,37 +8,6 @@ var ReportLevelEnum;
   ReportLevelEnum[ReportLevelEnum["DEBUG"] = 3] = "DEBUG";
   ReportLevelEnum[ReportLevelEnum["OFF"] = 4] = "OFF";
 })(ReportLevelEnum || (ReportLevelEnum = {}));
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-var __assign$1 = function () {
-  __assign$1 = Object.assign || function __assign(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-      s = arguments[i];
-      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-    }
-    return t;
-  };
-  return __assign$1.apply(this, arguments);
-};
-typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-  var e = new Error(message);
-  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-};
 var FrontendMonitor = function () {
   function FrontendMonitor() {
     this.config = {
@@ -63,15 +32,16 @@ var FrontendMonitor = function () {
       extraData = {};
     }
     if (!this.config.enabled) return;
-    var errorInfo = __assign$1({
+    var errorInfo = {
       level: level,
       message: message,
       timestamp: this.getTimestamp(),
       url: typeof window !== 'undefined' ? window.location.href : '',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
       pluginName: pluginName,
-      fingerprint: this.fingerprint
-    }, extraData);
+      fingerprint: this.fingerprint,
+      extraData: extraData
+    };
     if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
       this.report(errorInfo);
     } else {
@@ -182,6 +152,20 @@ var XhrPlugin = (function () {
                         url: xhrInfo.url,
                         method: xhrInfo.method,
                         error: 'Network Error',
+                        startTime: xhrInfo.startTime,
+                        endTime: endTime,
+                        duration: duration
+                    });
+                    self.xhrMap.delete(this);
+                });
+                this.addEventListener('timeout', function () {
+                    var endTime = self.monitor.getTimestamp();
+                    var duration = endTime - xhrInfo.startTime;
+                    self.monitor.error(self.name, "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
+                        type: 'xhr',
+                        url: xhrInfo.url,
+                        method: xhrInfo.method,
+                        error: 'Timeout',
                         startTime: xhrInfo.startTime,
                         endTime: endTime,
                         duration: duration
@@ -1868,12 +1852,108 @@ var WhiteScreenPlugin = (function () {
     return WhiteScreenPlugin;
 }());
 
+var ConsolePlugin = (function () {
+    function ConsolePlugin(config) {
+        if (config === void 0) { config = { error: true, warn: true }; }
+        this.name = 'console';
+        this.monitor = null;
+        this.originalError = null;
+        this.originalWarn = null;
+        this.name = 'console';
+        this.config = config || { error: true, warn: true };
+    }
+    ConsolePlugin.prototype.init = function (monitor) {
+        this.monitor = monitor;
+        this.setupConsoleCapture();
+    };
+    ConsolePlugin.prototype.setupConsoleCapture = function () {
+        var self = this;
+        try {
+            if (this.config.error === false && this.config.warn === false) {
+                return;
+            }
+            if (this.originalError || this.originalWarn)
+                return;
+            if (this.config.error === true) {
+                this.originalError = console.error;
+                console.error = function () {
+                    var args = [];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        args[_i] = arguments[_i];
+                    }
+                    try {
+                        var message = args.map(function (a) {
+                            if (typeof a === 'string')
+                                return a;
+                            try {
+                                return JSON.stringify(a);
+                            }
+                            catch (_a) {
+                                return String(a);
+                            }
+                        }).join(' ');
+                        var stack = (new Error()).stack;
+                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args: args, stack: stack });
+                    }
+                    catch (e) {
+                    }
+                    return self.originalError && self.originalError.apply(console, args);
+                };
+            }
+            if (this.config.warn === true) {
+                this.originalWarn = console.warn;
+                console.warn = function () {
+                    var args = [];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        args[_i] = arguments[_i];
+                    }
+                    try {
+                        var message = args.map(function (a) {
+                            if (typeof a === 'string')
+                                return a;
+                            try {
+                                return JSON.stringify(a);
+                            }
+                            catch (_a) {
+                                return String(a);
+                            }
+                        }).join(' ');
+                        var stack = (new Error()).stack;
+                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args: args, stack: stack });
+                    }
+                    catch (e) {
+                    }
+                    return self.originalWarn && self.originalWarn.apply(console, args);
+                };
+            }
+        }
+        catch (e) {
+        }
+    };
+    ConsolePlugin.prototype.destroy = function () {
+        try {
+            if (this.originalError) {
+                console.error = this.originalError;
+                this.originalError = null;
+            }
+            if (this.originalWarn) {
+                console.warn = this.originalWarn;
+                this.originalWarn = null;
+            }
+        }
+        catch (e) {
+        }
+        this.monitor = null;
+    };
+    return ConsolePlugin;
+}());
+
 var BrowserMonitor = (function () {
     function BrowserMonitor(config) {
         if (config === void 0) { config = {}; }
         var _this = this;
         this.plugins = [];
-        var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g;
+        var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g, _h = _a.consolePluginEnabled, consolePluginEnabled = _h === void 0 ? true : _h;
         monitor.init((config === null || config === void 0 ? void 0 : config.monitorConfig) || {});
         var pluginsToRegister = [
             xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
@@ -1881,7 +1961,8 @@ var BrowserMonitor = (function () {
             domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin(); } },
             routePluginEnabled && { name: 'RoutePlugin', creator: function () { return new RoutePlugin(); } },
             performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin(); } },
-            whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } }
+            whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } },
+            consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin(config === null || config === void 0 ? void 0 : config.consoleConfig); } }
         ].filter(Boolean);
         pluginsToRegister.forEach(function (plugin) {
             _this.use(plugin.creator());

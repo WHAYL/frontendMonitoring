@@ -65,7 +65,7 @@ export class FrontendMonitor {
             userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
             pluginName,
             fingerprint: this.fingerprint,
-            ...extraData
+            extraData
         };
 
         // 判断是否需要立即上报

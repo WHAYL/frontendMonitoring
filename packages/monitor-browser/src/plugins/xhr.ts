@@ -84,6 +84,28 @@ export class XhrPlugin implements MonitorPlugin {
           // 清理
           self.xhrMap.delete(this);
         });
+
+        this.addEventListener('timeout', function () {
+          const endTime = self.monitor!.getTimestamp();
+          const duration = endTime - xhrInfo.startTime;
+
+          self.monitor!.error(
+            self.name,
+            `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
+            {
+              type: 'xhr',
+              url: xhrInfo.url,
+              method: xhrInfo.method,
+              error: 'Timeout',
+              startTime: xhrInfo.startTime,
+              endTime,
+              duration
+            }
+          );
+
+          // 清理
+          self.xhrMap.delete(this);
+        });
       }
 
       // @ts-ignore
