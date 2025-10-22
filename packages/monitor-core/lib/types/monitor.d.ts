@@ -13,6 +13,9 @@ export declare class FrontendMonitor {
     debug(pluginName: string, message: string, extraData?: Record<string, any>): void;
     private checkAndReportStored;
     updateReportLevel(level: keyof typeof ReportLevelEnum): void;
+    getStorageQueue(): ErrorInfo[];
+    clearStorageQueue(): void;
+    reportStorageQueue(): void;
     private report;
     destroy(): void;
 }

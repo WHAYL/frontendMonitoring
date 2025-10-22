@@ -20,13 +20,11 @@ export interface MonitorConfig {
   // 是否启用监控
   enabled: boolean;
 
-  // 数据上报地址
-  uploadUrl: string;
+  // 自定义上传处理函数
+  uploadHandler: (data: ErrorInfo) => void;
 
   // 本地存储最大数量，默认为100
   maxStorageCount?: number;
-
-
 
   // 其他可能的配置项...
 }

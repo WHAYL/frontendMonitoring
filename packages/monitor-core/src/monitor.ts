@@ -9,7 +9,9 @@ export class FrontendMonitor {
         reportLevel: IMMEDIATE_REPORT_LEVEL,
         enabled: true,
         maxStorageCount: MYSTORAGE_COUNT,
-        uploadUrl: ''
+        uploadHandler: (data: ErrorInfo) => {
+            console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
+        }
     };
 
     // 本地存储队列，用于存储未达到上报等级的信息
@@ -160,25 +162,40 @@ export class FrontendMonitor {
     }
 
     /**
+     * 获取存储队列
+     * @returns 存储队列
+     */
+    getStorageQueue(): ErrorInfo[] {
+        return this.storageQueue;
+    }
+    /**
+     * 清空存储队列
+     */
+    clearStorageQueue(): void {
+        this.storageQueue = [];
+    }
+    /**
+     * 上报存储队列中的所有信息
+     */
+    reportStorageQueue(): void {
+        this.storageQueue.forEach(item => this.report(item));
+        this.clearStorageQueue();
+    }
+
+    /**
      * 实际执行上报逻辑
      * @param errorInfo 错误信息
      */
     private report(errorInfo: ErrorInfo): void {
-        // 如果配置了上传地址，则发送数据到指定地址
-        if (this.config.uploadUrl) {
-            // 在实际项目中，这里会发送数据到后端服务器
-            fetch(this.config.uploadUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(errorInfo)
-            }).catch(err => {
-                // 如果上报失败，输出错误信息到控制台
-                console.error('[Frontend Monitor] Failed to send error report:', err);
-            });
+        // 如果配置了自定义上传处理函数，则使用它
+        if (this.config.uploadHandler) {
+            try {
+                this.config.uploadHandler(errorInfo);
+            } catch (err) {
+                console.error('[Frontend Monitor] Failed to send error report with custom handler:', err);
+            }
         } else {
-            // 如果没有配置上传地址，则输出到控制台
+            // 如果没有配置上传方式，则输出到控制台
             console.log(`[Frontend Monitor] ${errorInfo.level.toUpperCase()}: ${errorInfo.message}`, errorInfo);
         }
     }
@@ -188,7 +205,7 @@ export class FrontendMonitor {
      */
     destroy(): void {
         // 清空存储队列
-        this.storageQueue = [];
+        this.clearStorageQueue();
     }
 }
 const monitor = new FrontendMonitor()

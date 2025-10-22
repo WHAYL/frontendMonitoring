@@ -18,7 +18,9 @@ define(['exports'], (function (exports) { 'use strict';
                 reportLevel: IMMEDIATE_REPORT_LEVEL,
                 enabled: true,
                 maxStorageCount: MYSTORAGE_COUNT,
-                uploadUrl: ''
+                uploadHandler: function (data) {
+                    console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
+                }
             };
             this.storageQueue = [];
             this.fingerprint = '';
@@ -90,24 +92,32 @@ define(['exports'], (function (exports) { 'use strict';
             this.config.reportLevel = level;
             this.checkAndReportStored();
         };
+        FrontendMonitor.prototype.getStorageQueue = function () {
+            return this.storageQueue;
+        };
+        FrontendMonitor.prototype.clearStorageQueue = function () {
+            this.storageQueue = [];
+        };
+        FrontendMonitor.prototype.reportStorageQueue = function () {
+            var _this = this;
+            this.storageQueue.forEach(function (item) { return _this.report(item); });
+            this.clearStorageQueue();
+        };
         FrontendMonitor.prototype.report = function (errorInfo) {
-            if (this.config.uploadUrl) {
-                fetch(this.config.uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(errorInfo)
-                }).catch(function (err) {
-                    console.error('[Frontend Monitor] Failed to send error report:', err);
-                });
+            if (this.config.uploadHandler) {
+                try {
+                    this.config.uploadHandler(errorInfo);
+                }
+                catch (err) {
+                    console.error('[Frontend Monitor] Failed to send error report with custom handler:', err);
+                }
             }
             else {
                 console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
             }
         };
         FrontendMonitor.prototype.destroy = function () {
-            this.storageQueue = [];
+            this.clearStorageQueue();
         };
         return FrontendMonitor;
     }());

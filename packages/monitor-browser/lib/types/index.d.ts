@@ -17,7 +17,10 @@ interface BrowserMonitorConfig {
 }
 declare class BrowserMonitor {
     private plugins;
+    private handleVisibilityChange;
+    private handlePageHide;
     constructor(config?: BrowserMonitorConfig);
+    private init;
     use(plugin: MonitorPlugin): void;
     destroy(): void;
 }

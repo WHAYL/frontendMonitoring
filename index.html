@@ -13,7 +13,10 @@
 
     let browserClient = new AiyMonitorBrowser({
         monitorConfig: {
-            reportLevel: "OFF"
+            reportLevel: "WARN",
+            uploadHandler: function (data) {
+                console.log("自定义上报函数", data)
+            }
         },
         whiteScreenConfig: {
             keySelectors: ['.content'], // 关键渲染元素选择器

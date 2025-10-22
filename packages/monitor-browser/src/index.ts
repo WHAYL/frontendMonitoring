@@ -28,6 +28,10 @@ interface BrowserMonitorConfig {
  */
 class BrowserMonitor {
     private plugins: MonitorPlugin[] = [];
+    // 存储事件监听回调函数的引用，以便在销毁时移除监听
+    private handleVisibilityChange: () => void;
+    private handlePageHide: () => void;
+
     constructor(config: BrowserMonitorConfig = {}) {
         // 默认配置都为 true
         const {
@@ -58,6 +62,30 @@ class BrowserMonitor {
         pluginsToRegister.forEach(plugin => {
             this.use(plugin.creator());
         });
+
+        this.init();
+    }
+
+    private init(): void {
+        // 定义visibilitychange事件处理函数
+        this.handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                monitor.reportStorageQueue();
+            }
+        };
+
+        // 定义pagehide事件处理函数
+        this.handlePageHide = () => {
+            monitor.reportStorageQueue();
+        };
+
+        // 添加事件监听器，优先使用visibilitychange事件，如果不支持则使用pagehide事件
+        if (typeof document !== 'undefined' && 'hidden' in document) {
+            document.addEventListener('visibilitychange', this.handleVisibilityChange);
+        } else if (typeof window !== 'undefined' && 'pagehide' in window) {
+            // pagehide事件在现代浏览器中得到良好支持
+            window.addEventListener('pagehide', this.handlePageHide);
+        }
     }
 
     /**
@@ -83,6 +111,7 @@ class BrowserMonitor {
             console.warn(`Plugin ${plugin.name} already exists, skipping addition.`);
             return;
         }
+
         this.plugins.push(plugin);
         // 初始化插件
         plugin.init(monitor);
@@ -92,6 +121,13 @@ class BrowserMonitor {
      * 销毁监控实例
      */
     destroy(): void {
+        // 移除事件监听器
+        if (typeof document !== 'undefined' && 'hidden' in document) {
+            document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        } else if (typeof window !== 'undefined' && 'pagehide' in window) {
+            window.removeEventListener('pagehide', this.handlePageHide);
+        }
+
         // 销毁所有插件
         this.plugins.forEach(plugin => {
             if (plugin.destroy) {

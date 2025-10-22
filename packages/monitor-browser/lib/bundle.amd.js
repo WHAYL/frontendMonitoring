@@ -16,7 +16,9 @@ define((function () { 'use strict';
           reportLevel: IMMEDIATE_REPORT_LEVEL,
           enabled: true,
           maxStorageCount: MYSTORAGE_COUNT,
-          uploadUrl: ''
+          uploadHandler: function (data) {
+            console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
+          }
         };
         this.storageQueue = [];
         this.fingerprint = '';
@@ -100,23 +102,32 @@ define((function () { 'use strict';
         this.config.reportLevel = level;
         this.checkAndReportStored();
       };
+      FrontendMonitor.prototype.getStorageQueue = function () {
+        return this.storageQueue;
+      };
+      FrontendMonitor.prototype.clearStorageQueue = function () {
+        this.storageQueue = [];
+      };
+      FrontendMonitor.prototype.reportStorageQueue = function () {
+        var _this = this;
+        this.storageQueue.forEach(function (item) {
+          return _this.report(item);
+        });
+        this.clearStorageQueue();
+      };
       FrontendMonitor.prototype.report = function (errorInfo) {
-        if (this.config.uploadUrl) {
-          fetch(this.config.uploadUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(errorInfo)
-          }).catch(function (err) {
-            console.error('[Frontend Monitor] Failed to send error report:', err);
-          });
+        if (this.config.uploadHandler) {
+          try {
+            this.config.uploadHandler(errorInfo);
+          } catch (err) {
+            console.error('[Frontend Monitor] Failed to send error report with custom handler:', err);
+          }
         } else {
           console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
         }
       };
       FrontendMonitor.prototype.destroy = function () {
-        this.storageQueue = [];
+        this.clearStorageQueue();
       };
       return FrontendMonitor;
     }();
@@ -1996,7 +2007,24 @@ define((function () { 'use strict';
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());
             });
+            this.init();
         }
+        BrowserMonitor.prototype.init = function () {
+            this.handleVisibilityChange = function () {
+                if (document.visibilityState === 'hidden') {
+                    monitor.reportStorageQueue();
+                }
+            };
+            this.handlePageHide = function () {
+                monitor.reportStorageQueue();
+            };
+            if (typeof document !== 'undefined' && 'hidden' in document) {
+                document.addEventListener('visibilitychange', this.handleVisibilityChange);
+            }
+            else if (typeof window !== 'undefined' && 'pagehide' in window) {
+                window.addEventListener('pagehide', this.handlePageHide);
+            }
+        };
         BrowserMonitor.prototype.use = function (plugin) {
             if (!plugin.name) {
                 console.error('Plugin must have a name property');
@@ -2015,6 +2043,12 @@ define((function () { 'use strict';
             plugin.init(monitor);
         };
         BrowserMonitor.prototype.destroy = function () {
+            if (typeof document !== 'undefined' && 'hidden' in document) {
+                document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+            }
+            else if (typeof window !== 'undefined' && 'pagehide' in window) {
+                window.removeEventListener('pagehide', this.handlePageHide);
+            }
             this.plugins.forEach(function (plugin) {
                 if (plugin.destroy) {
                     plugin.destroy();
