@@ -4,6 +4,8 @@ import type { FrontendMonitor } from '@whayl/monitor-core';
 export class DomPlugin implements MonitorPlugin {
   name = 'dom';
   private monitor: FrontendMonitor | null = null;
+  private resizeTimer: number | null = null;
+  private abortController: AbortController | null = null;
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
@@ -11,10 +13,27 @@ export class DomPlugin implements MonitorPlugin {
   }
 
   destroy(): void {
+    // 使用abort controller一次性取消所有事件监听器
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
 
+    // 清除可能存在的定时器
+    if (this.resizeTimer) {
+      window.clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+
+    // 清空引用
+    this.monitor = null;
   }
 
   private setupDomMonitoring(): void {
+    // 创建AbortController来管理所有事件监听器
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+
     // 监听未捕获的错误
     window.addEventListener('error', (event: ErrorEvent) => {
       this.monitor!.error(
@@ -22,7 +41,7 @@ export class DomPlugin implements MonitorPlugin {
         `JavaScript Error: ${event.message}`,
         event.error
       );
-    });
+    }, { signal });
 
     // 监听未处理的Promise拒绝
     window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
@@ -31,10 +50,10 @@ export class DomPlugin implements MonitorPlugin {
         `Unhandled Promise Rejection: ${event.reason}`,
         typeof event.reason === 'string' ? new Error(event.reason) : event.reason
       );
-    });
+    }, { signal });
 
     // 监听点击事件，记录用户交互
-    document.addEventListener('click', (event: MouseEvent) => {
+    const mouseEventHandler = (eventType: string) => (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const tagName = target.tagName;
       const id = target.id;
@@ -42,8 +61,37 @@ export class DomPlugin implements MonitorPlugin {
 
       this.monitor!.debug(
         this.name,
-        `User Click: ${tagName}${id ? '#' + id : ''}${className ? '.' + className : ''}`
+        `User Mouse Event (${eventType}): ${tagName}${id ? '#' + id : ''}${className ? '.' + className : ''}`,
+        {
+          target
+        }
       );
-    }, true); // 使用捕获阶段
+    };
+
+    // 定义需要监听的鼠标事件类型数组
+    const mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'] as const;
+
+    // 批量添加鼠标事件监听器
+    mouseEvents.forEach(eventType => {
+      document.addEventListener(eventType, mouseEventHandler(eventType), {
+        capture: true,
+        signal
+      });
+    });
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', () => {
+      if (this.resizeTimer) {
+        window.clearTimeout(this.resizeTimer);
+      }
+
+      this.resizeTimer = window.setTimeout(() => {
+        const { innerWidth, innerHeight } = window;
+        this.monitor!.debug(
+          this.name,
+          `Window Resize: ${innerWidth}x${innerHeight}`
+        );
+      }, 500); // 防抖处理，避免频繁触发
+    }, { signal });
   }
 }

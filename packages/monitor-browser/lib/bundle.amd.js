@@ -213,28 +213,59 @@ define((function () { 'use strict';
         function DomPlugin() {
             this.name = 'dom';
             this.monitor = null;
+            this.resizeTimer = null;
+            this.abortController = null;
         }
         DomPlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
             this.setupDomMonitoring();
         };
         DomPlugin.prototype.destroy = function () {
+            if (this.abortController) {
+                this.abortController.abort();
+                this.abortController = null;
+            }
+            if (this.resizeTimer) {
+                window.clearTimeout(this.resizeTimer);
+                this.resizeTimer = null;
+            }
+            this.monitor = null;
         };
         DomPlugin.prototype.setupDomMonitoring = function () {
             var _this = this;
+            this.abortController = new AbortController();
+            var signal = this.abortController.signal;
             window.addEventListener('error', function (event) {
                 _this.monitor.error(_this.name, "JavaScript Error: ".concat(event.message), event.error);
-            });
+            }, { signal: signal });
             window.addEventListener('unhandledrejection', function (event) {
                 _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), typeof event.reason === 'string' ? new Error(event.reason) : event.reason);
-            });
-            document.addEventListener('click', function (event) {
+            }, { signal: signal });
+            var mouseEventHandler = function (eventType) { return function (event) {
                 var target = event.target;
                 var tagName = target.tagName;
                 var id = target.id;
                 var className = target.className;
-                _this.monitor.debug(_this.name, "User Click: ".concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''));
-            }, true);
+                _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''), {
+                    target: target
+                });
+            }; };
+            var mouseEvents = ['click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'];
+            mouseEvents.forEach(function (eventType) {
+                document.addEventListener(eventType, mouseEventHandler(eventType), {
+                    capture: true,
+                    signal: signal
+                });
+            });
+            window.addEventListener('resize', function () {
+                if (_this.resizeTimer) {
+                    window.clearTimeout(_this.resizeTimer);
+                }
+                _this.resizeTimer = window.setTimeout(function () {
+                    var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
+                    _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight));
+                }, 500);
+            }, { signal: signal });
         };
         return DomPlugin;
     }());
