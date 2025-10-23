@@ -11,6 +11,7 @@ export interface BrowserMonitorConfig {
         performancePluginEnabled?: boolean;
         whiteScreenPluginEnabled?: boolean;
         consolePluginEnabled?: boolean;
+        analyticsPluginEnabled?: boolean;
     };
     monitorConfig?: MonitorConfig;
     whiteScreenConfig?: WhiteScreenPluginConfig;

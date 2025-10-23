@@ -6,6 +6,7 @@ import { RoutePlugin } from './plugins/route';
 import { PerformancePlugin } from './plugins/performance';
 import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
+import { AnalyticsPlugin } from './plugins/analytics';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -17,6 +18,7 @@ export interface BrowserMonitorConfig {
         performancePluginEnabled?: boolean;
         whiteScreenPluginEnabled?: boolean;
         consolePluginEnabled?: boolean;
+        analyticsPluginEnabled?: boolean;
     };
     monitorConfig?: MonitorConfig;
     whiteScreenConfig?: WhiteScreenPluginConfig;
@@ -42,7 +44,8 @@ class BrowserMonitor {
             routePluginEnabled = true,
             performancePluginEnabled = true,
             whiteScreenPluginEnabled = true,
-            consolePluginEnabled = true
+            consolePluginEnabled = true,
+            analyticsPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -56,7 +59,8 @@ class BrowserMonitor {
             routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
             performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() },
             whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenConfig || {}) },
-            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig || {}) }
+            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig || {}) },
+            analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: () => new AnalyticsPlugin() }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

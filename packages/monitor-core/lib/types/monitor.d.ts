@@ -5,6 +5,7 @@ export declare class FrontendMonitor {
     private removedItems;
     private fingerprint;
     getTimestamp(): number;
+    formatTimestamp(format?: string, timestamp?: number): string;
     init(config: Partial<MonitorConfig>): void;
     getFingerprint(): string;
     private log;

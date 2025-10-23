@@ -29,6 +29,30 @@ define(['exports'], (function (exports) { 'use strict';
                 ? performance.now() + performance.timeOrigin
                 : Date.now();
         };
+        FrontendMonitor.prototype.formatTimestamp = function (format, timestamp) {
+            if (format === void 0) { format = 'YYYY/MM/DD hh:mm:ss.SSS'; }
+            var ts = typeof timestamp === 'number' ? timestamp : this.getTimestamp();
+            var d = new Date(Math.floor(ts));
+            var pad = function (n, len) {
+                if (len === void 0) { len = 2; }
+                return n.toString().padStart(len, '0');
+            };
+            var year = d.getFullYear().toString();
+            var month = pad(d.getMonth() + 1);
+            var day = pad(d.getDate());
+            var hour = pad(d.getHours());
+            var minute = pad(d.getMinutes());
+            var second = pad(d.getSeconds());
+            var ms = pad(d.getMilliseconds(), 3);
+            return format
+                .replace(/YYYY/g, year)
+                .replace(/MM/g, month)
+                .replace(/DD/g, day)
+                .replace(/hh/g, hour)
+                .replace(/mm/g, minute)
+                .replace(/ss/g, second)
+                .replace(/SSS/g, ms);
+        };
         FrontendMonitor.prototype.init = function (config) {
             this.config = Object.assign(this.config, config);
         };
@@ -44,6 +68,7 @@ define(['exports'], (function (exports) { 'use strict';
                 level: level,
                 message: message,
                 timestamp: this.getTimestamp(),
+                date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
                 url: typeof window !== 'undefined' ? window.location.href : '',
                 userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 pluginName: pluginName,
@@ -64,7 +89,6 @@ define(['exports'], (function (exports) { 'use strict';
                             this.removedItems = [];
                         }
                         this.removedItems.push(data);
-                        console.log("**********", this.removedItems.length, this.storageQueue.length);
                     }
                 }
             }
