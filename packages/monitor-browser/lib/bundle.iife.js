@@ -2229,8 +2229,9 @@ var AiyMonitorBrowser = (function () {
                 var keysToRemove = [];
                 for (var i = 0; i < localStorage.length; i++) {
                     var key = localStorage.key(i);
-                    if (!key)
+                    if (!key) {
                         continue;
+                    }
                     if (key.startsWith(DAILY_KEY_PREFIX) && !key.startsWith(todayPrefix)) {
                         keysToRemove.push(key);
                     }
