@@ -2,6 +2,7 @@ import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin
 export declare class FrontendMonitor {
     private config;
     private storageQueue;
+    private removedItems;
     private fingerprint;
     getTimestamp(): number;
     init(config: Partial<MonitorConfig>): void;
@@ -16,6 +17,8 @@ export declare class FrontendMonitor {
     getStorageQueue(): ErrorInfo[];
     clearStorageQueue(): void;
     reportStorageQueue(): void;
+    reportRemovedItems(): void;
+    reportRestInfo(): void;
     private report;
     destroy(): void;
 }

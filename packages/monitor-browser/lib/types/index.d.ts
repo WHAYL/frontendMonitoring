@@ -11,7 +11,7 @@ export interface BrowserMonitorConfig {
         whiteScreenPluginEnabled?: boolean;
         consolePluginEnabled?: boolean;
     };
-    monitorConfig?: Partial<MonitorConfig>;
+    monitorConfig?: MonitorConfig;
     whiteScreenConfig?: Partial<WhiteScreenConfig>;
     consoleConfig?: Partial<ConsoleConfig>;
 }

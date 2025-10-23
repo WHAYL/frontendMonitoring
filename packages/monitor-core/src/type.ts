@@ -21,7 +21,7 @@ export interface MonitorConfig {
   enabled: boolean;
 
   // 自定义上传处理函数
-  uploadHandler: (data: ErrorInfo) => void;
+  uploadHandler: null | ((data: ErrorInfo | ErrorInfo[]) => void);
 
   // 本地存储最大数量，默认为100
   maxStorageCount?: number;

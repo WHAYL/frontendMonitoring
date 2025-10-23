@@ -18,7 +18,7 @@ export interface BrowserMonitorConfig {
         whiteScreenPluginEnabled?: boolean;
         consolePluginEnabled?: boolean;
     };
-    monitorConfig?: Partial<MonitorConfig>;
+    monitorConfig?: MonitorConfig;
     whiteScreenConfig?: Partial<WhiteScreenConfig>;
     consoleConfig?: Partial<ConsoleConfig>;
 }
@@ -70,13 +70,13 @@ class BrowserMonitor {
         // 定义visibilitychange事件处理函数
         this.handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden') {
-                monitor.reportStorageQueue();
+                monitor.reportRestInfo();
             }
         };
 
         // 定义pagehide事件处理函数
         this.handlePageHide = () => {
-            monitor.reportStorageQueue();
+            monitor.reportRestInfo();
         };
 
         // 添加事件监听器，优先使用visibilitychange事件，如果不支持则使用pagehide事件

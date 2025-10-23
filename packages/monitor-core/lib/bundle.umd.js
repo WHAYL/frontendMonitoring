@@ -22,11 +22,10 @@
                 reportLevel: IMMEDIATE_REPORT_LEVEL,
                 enabled: true,
                 maxStorageCount: MYSTORAGE_COUNT,
-                uploadHandler: function (data) {
-                    console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
-                }
+                uploadHandler: null
             };
             this.storageQueue = [];
+            this.removedItems = [];
             this.fingerprint = '';
         }
         FrontendMonitor.prototype.getTimestamp = function () {
@@ -42,8 +41,9 @@
         };
         FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
             if (extraData === void 0) { extraData = {}; }
-            if (!this.config.enabled)
+            if (!this.config.enabled) {
                 return;
+            }
             var errorInfo = {
                 level: level,
                 message: message,
@@ -63,7 +63,12 @@
                 if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
                     var data = this.storageQueue.shift();
                     if (data) {
-                        this.report(data);
+                        if (this.removedItems.length > (this.config.maxStorageCount || MYSTORAGE_COUNT) && this.removedItems.length) {
+                            this.report(this.removedItems);
+                            this.removedItems = [];
+                        }
+                        this.removedItems.push(data);
+                        console.log("**********", this.removedItems.length, this.storageQueue.length);
                     }
                 }
             }
@@ -103,12 +108,23 @@
             this.storageQueue = [];
         };
         FrontendMonitor.prototype.reportStorageQueue = function () {
-            var _this = this;
-            this.storageQueue.forEach(function (item) { return _this.report(item); });
-            this.clearStorageQueue();
+            if (this.storageQueue.length > 0) {
+                this.report(this.storageQueue);
+                this.clearStorageQueue();
+            }
+        };
+        FrontendMonitor.prototype.reportRemovedItems = function () {
+            if (this.removedItems.length > 0) {
+                this.report(this.removedItems);
+                this.removedItems = [];
+            }
+        };
+        FrontendMonitor.prototype.reportRestInfo = function () {
+            this.reportStorageQueue();
+            this.reportRemovedItems();
         };
         FrontendMonitor.prototype.report = function (errorInfo) {
-            if (this.config.uploadHandler) {
+            if (typeof this.config.uploadHandler === 'function') {
                 try {
                     this.config.uploadHandler(errorInfo);
                 }
@@ -117,7 +133,7 @@
                 }
             }
             else {
-                console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
+                console.log("[Frontend Monitor] : ".concat(JSON.stringify(errorInfo)));
             }
         };
         FrontendMonitor.prototype.destroy = function () {

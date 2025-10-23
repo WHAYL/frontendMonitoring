@@ -66,7 +66,6 @@ export class PerformancePlugin implements MonitorPlugin {
    */
   private setupResourceMonitoring(): void {
     try {
-      const resourceList: Array<{ name: string, duration: number }> = [];
 
       this.resourceObserver = new PerformanceObserver((list) => {
         // 只关注这些 initiatorType（优先）或特定后缀的资源
@@ -109,10 +108,11 @@ export class PerformancePlugin implements MonitorPlugin {
               return;
             }
 
-            resourceList.push({
-              name: url,
-              duration: resourceEntry.duration
-            });
+            // 判断是否从缓存读取：常见的判断是 transferSize === 0 且 encodedBodySize/decodedBodySize 有值
+            const transferSize = typeof resourceEntry.transferSize === 'number' ? resourceEntry.transferSize : -1;
+            const encodedBodySize = typeof resourceEntry.encodedBodySize === 'number' ? resourceEntry.encodedBodySize : 0;
+            const decodedBodySize = typeof resourceEntry.decodedBodySize === 'number' ? resourceEntry.decodedBodySize : 0;
+            const fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
 
             // 单独报告每个资源的加载情况（按需打开）
             this.monitor!.info(
@@ -126,7 +126,8 @@ export class PerformancePlugin implements MonitorPlugin {
                 transferSize: resourceEntry.transferSize,
                 encodedBodySize: resourceEntry.encodedBodySize,
                 decodedBodySize: resourceEntry.decodedBodySize,
-                initiatorType: initiatorType
+                initiatorType: initiatorType,
+                cached: fromCache
               }
             );
           }

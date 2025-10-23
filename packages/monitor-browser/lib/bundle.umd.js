@@ -20,11 +20,10 @@
           reportLevel: IMMEDIATE_REPORT_LEVEL,
           enabled: true,
           maxStorageCount: MYSTORAGE_COUNT,
-          uploadHandler: function (data) {
-            console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
-          }
+          uploadHandler: null
         };
         this.storageQueue = [];
+        this.removedItems = [];
         this.fingerprint = '';
       }
       FrontendMonitor.prototype.getTimestamp = function () {
@@ -40,7 +39,9 @@
         if (extraData === void 0) {
           extraData = {};
         }
-        if (!this.config.enabled) return;
+        if (!this.config.enabled) {
+          return;
+        }
         var errorInfo = {
           level: level,
           message: message,
@@ -59,7 +60,12 @@
           if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
             var data = this.storageQueue.shift();
             if (data) {
-              this.report(data);
+              if (this.removedItems.length > (this.config.maxStorageCount || MYSTORAGE_COUNT) && this.removedItems.length) {
+                this.report(this.removedItems);
+                this.removedItems = [];
+              }
+              this.removedItems.push(data);
+              console.log("**********", this.removedItems.length, this.storageQueue.length);
             }
           }
         }
@@ -113,21 +119,30 @@
         this.storageQueue = [];
       };
       FrontendMonitor.prototype.reportStorageQueue = function () {
-        var _this = this;
-        this.storageQueue.forEach(function (item) {
-          return _this.report(item);
-        });
-        this.clearStorageQueue();
+        if (this.storageQueue.length > 0) {
+          this.report(this.storageQueue);
+          this.clearStorageQueue();
+        }
+      };
+      FrontendMonitor.prototype.reportRemovedItems = function () {
+        if (this.removedItems.length > 0) {
+          this.report(this.removedItems);
+          this.removedItems = [];
+        }
+      };
+      FrontendMonitor.prototype.reportRestInfo = function () {
+        this.reportStorageQueue();
+        this.reportRemovedItems();
       };
       FrontendMonitor.prototype.report = function (errorInfo) {
-        if (this.config.uploadHandler) {
+        if (typeof this.config.uploadHandler === 'function') {
           try {
             this.config.uploadHandler(errorInfo);
           } catch (err) {
             console.error('[Frontend Monitor] Failed to send error report with custom handler:', err);
           }
         } else {
-          console.log("[Frontend Monitor] ".concat(errorInfo.level.toUpperCase(), ": ").concat(errorInfo.message), errorInfo);
+          console.log("[Frontend Monitor] : ".concat(JSON.stringify(errorInfo)));
         }
       };
       FrontendMonitor.prototype.destroy = function () {
@@ -1100,14 +1115,17 @@
                 var self = _this;
                 try {
                     var target = ev.target;
-                    if (!target || !(target instanceof Element))
+                    if (!target || !(target instanceof Element)) {
                         return;
+                    }
                     var a = target.closest('a');
-                    if (!a)
+                    if (!a) {
                         return;
+                    }
                     var href = a.href;
-                    if (!href)
+                    if (!href) {
                         return;
+                    }
                     var data = {
                         previousRoute: _this.lastRoute,
                         currentRoute: href,
@@ -1628,7 +1646,6 @@
         PerformancePlugin.prototype.setupResourceMonitoring = function () {
             var _this = this;
             try {
-                var resourceList_1 = [];
                 this.resourceObserver = new PerformanceObserver(function (list) {
                     var allowedInitiatorTypes = new Set([
                         'script',
@@ -1660,10 +1677,10 @@
                             if (!shouldInclude) {
                                 return;
                             }
-                            resourceList_1.push({
-                                name: url,
-                                duration: resourceEntry.duration
-                            });
+                            var transferSize = typeof resourceEntry.transferSize === 'number' ? resourceEntry.transferSize : -1;
+                            var encodedBodySize = typeof resourceEntry.encodedBodySize === 'number' ? resourceEntry.encodedBodySize : 0;
+                            var decodedBodySize = typeof resourceEntry.decodedBodySize === 'number' ? resourceEntry.decodedBodySize : 0;
+                            var fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
                             _this.monitor.info(_this.name, "Resource loaded: ".concat(resourceEntry.name), {
                                 type: 'resource',
                                 name: resourceEntry.name,
@@ -1672,7 +1689,8 @@
                                 transferSize: resourceEntry.transferSize,
                                 encodedBodySize: resourceEntry.encodedBodySize,
                                 decodedBodySize: resourceEntry.decodedBodySize,
-                                initiatorType: initiatorType
+                                initiatorType: initiatorType,
+                                cached: fromCache
                             });
                         }
                     });
@@ -1762,8 +1780,9 @@
             monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
         };
         WhiteScreenPlugin.prototype.run = function () {
-            if (!this.monitor)
+            if (!this.monitor) {
                 return;
+            }
             this.startTime = this.monitor.getTimestamp();
             this.resolved = false;
             this.startCheck();
@@ -1788,12 +1807,14 @@
         WhiteScreenPlugin.prototype.startCheck = function () {
             var _this = this;
             var _a = this.config, checkInterval = _a.checkInterval, timeout = _a.timeout;
-            if (!this.monitor)
+            if (!this.monitor) {
                 return;
+            }
             var start = this.monitor.getTimestamp();
             this.timer = window.setInterval(function () {
-                if (_this.resolved || !_this.monitor)
+                if (_this.resolved || !_this.monitor) {
                     return;
+                }
                 var visible = _this.checkKeyElements();
                 if (visible) {
                     _this.endTime = _this.monitor.getTimestamp();
@@ -1816,30 +1837,35 @@
                 for (var _a = 0, els_1 = els; _a < els_1.length; _a++) {
                     var el = els_1[_a];
                     if (el instanceof HTMLImageElement) {
-                        if (el.complete && el.naturalWidth > 0 && this.isElementVisible(el))
+                        if (el.complete && el.naturalWidth > 0 && this.isElementVisible(el)) {
                             return true;
+                        }
                     }
                     else if (el instanceof HTMLElement) {
                         var style = window.getComputedStyle(el);
-                        if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0)
+                        if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0) {
                             continue;
+                        }
                         if (el.offsetWidth > 0 && el.offsetHeight > 0) {
                             var rect = el.getBoundingClientRect();
                             if (rect.bottom < 0 || rect.top > (window.innerHeight || document.documentElement.clientHeight) || rect.right < 0 || rect.left > (window.innerWidth || document.documentElement.clientWidth)) {
                                 continue;
                             }
                             if (el.textContent && el.textContent.trim().length > 0) {
-                                if (this.isElementVisible(el))
+                                if (this.isElementVisible(el)) {
                                     return true;
+                                }
                             }
                             var imgs = Array.from(el.querySelectorAll('img'));
-                            if (imgs.some(function (img) { return img.complete && img.naturalWidth > 0 && _this.isElementVisible(img); }))
+                            if (imgs.some(function (img) { return img.complete && img.naturalWidth > 0 && _this.isElementVisible(img); })) {
                                 return true;
+                            }
                             var bgColor = style.backgroundColor;
                             var color = style.color;
                             if ((bgColor && !this.isColorTransparent(bgColor)) || (color && !this.isColorTransparent(color))) {
-                                if (this.isElementVisible(el))
+                                if (this.isElementVisible(el)) {
                                     return true;
+                                }
                             }
                         }
                     }
@@ -1848,13 +1874,16 @@
             return false;
         };
         WhiteScreenPlugin.prototype.isColorTransparent = function (color) {
-            if (!color)
+            if (!color) {
                 return true;
-            if (color === 'transparent')
+            }
+            if (color === 'transparent') {
                 return true;
+            }
             var rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
-            if (!rgbaMatch)
+            if (!rgbaMatch) {
                 return false;
+            }
             var parts = rgbaMatch[1].split(',').map(function (p) { return p.trim(); });
             if (parts.length === 4) {
                 var alpha = parseFloat(parts[3]);
@@ -1871,8 +1900,9 @@
                     return false;
                 }
                 var topEl = document.elementFromPoint(x, y);
-                if (!topEl)
+                if (!topEl) {
                     return false;
+                }
                 return el === topEl || el.contains(topEl) || topEl.contains(el);
             }
             catch (e) {
@@ -1880,8 +1910,9 @@
             }
         };
         WhiteScreenPlugin.prototype.report = function (status) {
-            if (!this.monitor)
+            if (!this.monitor) {
                 return;
+            }
             this.monitor.info(this.name, "WhiteScreen check ".concat(status), {
                 status: status,
                 page: window.location.href,
@@ -1914,8 +1945,9 @@
                 if (this.config.error === false && this.config.warn === false) {
                     return;
                 }
-                if (this.originalError || this.originalWarn)
+                if (this.originalError || this.originalWarn) {
                     return;
+                }
                 if (this.config.error === true) {
                     this.originalError = console.error;
                     console.error = function () {
@@ -1925,8 +1957,9 @@
                         }
                         try {
                             var message = args.map(function (a) {
-                                if (typeof a === 'string')
+                                if (typeof a === 'string') {
                                     return a;
+                                }
                                 try {
                                     return JSON.stringify(a);
                                 }
@@ -1951,8 +1984,9 @@
                         }
                         try {
                             var message = args.map(function (a) {
-                                if (typeof a === 'string')
+                                if (typeof a === 'string') {
                                     return a;
+                                }
                                 try {
                                     return JSON.stringify(a);
                                 }
@@ -2014,11 +2048,11 @@
         BrowserMonitor.prototype.init = function () {
             this.handleVisibilityChange = function () {
                 if (document.visibilityState === 'hidden') {
-                    monitor.reportStorageQueue();
+                    monitor.reportRestInfo();
                 }
             };
             this.handlePageHide = function () {
-                monitor.reportStorageQueue();
+                monitor.reportRestInfo();
             };
             if (typeof document !== 'undefined' && 'hidden' in document) {
                 document.addEventListener('visibilitychange', this.handleVisibilityChange);

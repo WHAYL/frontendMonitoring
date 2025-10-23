@@ -9,13 +9,14 @@ export class FrontendMonitor {
         reportLevel: IMMEDIATE_REPORT_LEVEL,
         enabled: true,
         maxStorageCount: MYSTORAGE_COUNT,
-        uploadHandler: (data: ErrorInfo) => {
-            console.log('[Frontend Monitor] No upload handler configured. Error info:', data);
-        }
+        uploadHandler: null
     };
 
     // 本地存储队列，用于存储未达到上报等级的信息
     private storageQueue: ErrorInfo[] = [];
+
+    // 本地存储队列，用于存储未被 storageQueue 移除的信息
+    private removedItems: ErrorInfo[] = [];
 
     // 浏览器指纹
     private fingerprint: string = '';
@@ -57,7 +58,7 @@ export class FrontendMonitor {
      */
     private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}): void {
         // 如果监控未启用，则直接返回
-        if (!this.config.enabled) {return;}
+        if (!this.config.enabled) { return; }
 
         // 创建错误信息对象
         const errorInfo: ErrorInfo = {
@@ -84,7 +85,13 @@ export class FrontendMonitor {
             if (this.storageQueue.length > (this.config.maxStorageCount || MYSTORAGE_COUNT)) {
                 const data: ErrorInfo | undefined = this.storageQueue.shift();
                 if (data) {
-                    this.report(data);
+                    // 限制removedItems数组大小，避免无限增长
+                    if (this.removedItems.length > (this.config.maxStorageCount || MYSTORAGE_COUNT) && this.removedItems.length) {
+                        this.report(this.removedItems);
+                        this.removedItems = [];
+                    }
+                    this.removedItems.push(data);
+                    console.log("**********", this.removedItems.length, this.storageQueue.length);
                 }
             }
         }
@@ -177,17 +184,36 @@ export class FrontendMonitor {
      * 上报存储队列中的所有信息
      */
     reportStorageQueue(): void {
-        this.storageQueue.forEach(item => this.report(item));
-        this.clearStorageQueue();
+        // this.storageQueue.forEach(item => this.report(item));
+        if (this.storageQueue.length > 0) {
+            this.report(this.storageQueue);
+            this.clearStorageQueue();
+        }
+    }
+    /**
+     * 上报被移除的所有信息
+     */
+    reportRemovedItems(): void {
+        if (this.removedItems.length > 0) {
+            this.report(this.removedItems);
+            this.removedItems = [];
+        }
+    }
+    /**
+     * 上报剩余的所有信息
+     */
+    reportRestInfo(): void {
+        this.reportStorageQueue();
+        this.reportRemovedItems();
     }
 
     /**
      * 实际执行上报逻辑
      * @param errorInfo 错误信息
      */
-    private report(errorInfo: ErrorInfo): void {
+    private report(errorInfo: ErrorInfo | ErrorInfo[]): void {
         // 如果配置了自定义上传处理函数，则使用它
-        if (this.config.uploadHandler) {
+        if (typeof this.config.uploadHandler === 'function') {
             try {
                 this.config.uploadHandler(errorInfo);
             } catch (err) {
@@ -195,7 +221,7 @@ export class FrontendMonitor {
             }
         } else {
             // 如果没有配置上传方式，则输出到控制台
-            console.log(`[Frontend Monitor] ${errorInfo.level.toUpperCase()}: ${errorInfo.message}`, errorInfo);
+            console.log(`[Frontend Monitor] : ${JSON.stringify(errorInfo)}`);
         }
     }
 
