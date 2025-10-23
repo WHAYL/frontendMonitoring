@@ -3,7 +3,7 @@ import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin, DomPluginConfig } from './plugins/dom';
 import { RoutePlugin } from './plugins/route';
-import { PerformancePlugin } from './plugins/performance';
+import { PerformancePlugin, PerformancePluginConfig } from './plugins/performance';
 import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin } from './plugins/analytics';
@@ -24,6 +24,7 @@ export interface BrowserMonitorConfig {
     whiteScreenConfig?: WhiteScreenPluginConfig;
     consoleConfig?: ConsolePluginConfig;
     domConfig?: DomPluginConfig;
+    performancePluginConfig?: PerformancePluginConfig;
 }
 
 /**
@@ -57,7 +58,7 @@ class BrowserMonitor {
             fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
             domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin(config?.domConfig || {}) },
             routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
-            performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() },
+            performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin(config?.performancePluginConfig || {}) },
             whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenConfig || {}) },
             consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig || {}) },
             analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: () => new AnalyticsPlugin() }

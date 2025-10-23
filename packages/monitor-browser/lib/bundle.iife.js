@@ -1858,13 +1858,18 @@ var AiyMonitorBrowser = (function () {
       };
 
     var PerformancePlugin = (function () {
-        function PerformancePlugin() {
+        function PerformancePlugin(config) {
+            if (config === void 0) { config = {}; }
             this.name = 'performance';
             this.monitor = null;
             this.resourceObserver = null;
             this.navigationObserver = null;
             this.paintObserver = null;
+            this.longTaskObserver = null;
+            this.fpsIntervalId = null;
+            this.memoryIntervalId = null;
             this.boundHandleRouteChange = function () { };
+            this.config = __assign({ longTaskEnabled: true, memoryEnabled: true, fpsEnabled: true, resourceEnabled: true, navigationEnabled: true, webVitalsEnabled: true }, config);
         }
         PerformancePlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
@@ -1877,9 +1882,18 @@ var AiyMonitorBrowser = (function () {
             monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
         };
         PerformancePlugin.prototype.run = function () {
-            this.setupResourceMonitoring();
-            this.setupNavigationMonitoring();
-            this.setupWebVitals();
+            if (this.config.resourceEnabled)
+                this.setupResourceMonitoring();
+            if (this.config.navigationEnabled)
+                this.setupNavigationMonitoring();
+            if (this.config.webVitalsEnabled)
+                this.setupWebVitals();
+            if (this.config.longTaskEnabled)
+                this.setupLongTaskMonitoring();
+            if (this.config.memoryEnabled)
+                this.setupMemoryMonitoring();
+            if (this.config.fpsEnabled)
+                this.setupFPSMonitoring();
         };
         PerformancePlugin.prototype.clearEffects = function () {
             if (this.resourceObserver) {
@@ -1894,6 +1908,217 @@ var AiyMonitorBrowser = (function () {
                 this.paintObserver.disconnect();
                 this.paintObserver = null;
             }
+            if (this.longTaskObserver) {
+                this.longTaskObserver.disconnect();
+                this.longTaskObserver = null;
+            }
+            if (this.fpsIntervalId) {
+                clearInterval(this.fpsIntervalId);
+                this.fpsIntervalId = null;
+            }
+            if (this.memoryIntervalId) {
+                clearInterval(this.memoryIntervalId);
+                this.memoryIntervalId = null;
+            }
+        };
+        PerformancePlugin.prototype.setupLongTaskMonitoring = function () {
+            var _this = this;
+            try {
+                if (typeof PerformanceObserver === 'undefined' || typeof window.PerformanceLongTaskTiming === 'undefined')
+                    return;
+                this.longTaskObserver = new PerformanceObserver(function (list) {
+                    list.getEntries().forEach(function (entry) {
+                        var _a;
+                        if (entry.entryType === 'longtask') {
+                            (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info(_this.name, 'Long Task Detected', {
+                                type: 'longtask',
+                                name: entry.name,
+                                startTime: entry.startTime,
+                                duration: entry.duration,
+                                attribution: entry.attribution || []
+                            });
+                        }
+                    });
+                });
+                this.longTaskObserver.observe({ entryTypes: ['longtask'] });
+            }
+            catch (e) {
+                console.error('Error setting up long task monitoring:', e);
+            }
+        };
+        PerformancePlugin.prototype.setupMemoryMonitoring = function () {
+            var _this = this;
+            var memorySupported = 'memory' in performance ||
+                !!performance.mozMemory ||
+                !!window.console.memory;
+            if (!memorySupported) {
+                this.estimateMemoryUsage();
+                return;
+            }
+            var lastUsed = 0;
+            var lastTotal = 0;
+            var memoryData = {
+                samples: [],
+                peaks: [],
+                trend: 'stable'
+            };
+            this.memoryIntervalId = window.setInterval(function () {
+                var _a;
+                try {
+                    var memory = performance.memory;
+                    if (memory) {
+                        var usedDiff = Math.abs(memory.usedJSHeapSize - lastUsed);
+                        var totalDiff = Math.abs(memory.totalJSHeapSize - lastTotal);
+                        var percent = memory.totalJSHeapSize > 0 ? (memory.usedJSHeapSize / memory.totalJSHeapSize) : 0;
+                        memoryData.samples.push({
+                            used: memory.usedJSHeapSize,
+                            total: memory.totalJSHeapSize,
+                            timestamp: Date.now()
+                        });
+                        if (memoryData.peaks.length === 0 || memory.usedJSHeapSize > memoryData.peaks[memoryData.peaks.length - 1].used) {
+                            memoryData.peaks.push({
+                                used: memory.usedJSHeapSize,
+                                timestamp: Date.now()
+                            });
+                        }
+                        if (memoryData.samples.length > 30) {
+                            memoryData.samples.shift();
+                        }
+                        if (memoryData.peaks.length > 10) {
+                            memoryData.peaks.shift();
+                        }
+                        var trend = 'stable';
+                        if (memoryData.samples.length > 5) {
+                            var recentSamples = memoryData.samples.slice(-5);
+                            var firstSample = recentSamples[0];
+                            var lastSample = recentSamples[recentSamples.length - 1];
+                            if (lastSample.used > firstSample.used * 1.1) {
+                                trend = 'increasing';
+                            }
+                            else if (lastSample.used < firstSample.used * 0.9) {
+                                trend = 'decreasing';
+                            }
+                        }
+                        memoryData.trend = trend;
+                        var isLeakDetected = trend === 'increasing' && memoryData.samples.length > 10 && _this.detectMemoryLeak(memoryData.samples);
+                        if (usedDiff > 5 * 1024 * 1024 ||
+                            totalDiff > 5 * 1024 * 1024 ||
+                            percent > 0.9 ||
+                            isLeakDetected) {
+                            (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info(_this.name, isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage', {
+                                type: 'memory',
+                                jsHeapSizeLimit: memory.jsHeapSizeLimit,
+                                totalJSHeapSize: memory.totalJSHeapSize,
+                                usedJSHeapSize: memory.usedJSHeapSize,
+                                percent: +(percent * 100).toFixed(2),
+                                usedDiff: usedDiff,
+                                totalDiff: totalDiff,
+                                trend: trend,
+                                samplesCount: memoryData.samples.length,
+                                peaksCount: memoryData.peaks.length,
+                                timestamp: Date.now(),
+                                isLeakDetected: isLeakDetected
+                            });
+                        }
+                        lastUsed = memory.usedJSHeapSize;
+                        lastTotal = memory.totalJSHeapSize;
+                    }
+                }
+                catch (e) {
+                    console.error('Error in memory monitoring:', e);
+                }
+            }, 5000);
+        };
+        PerformancePlugin.prototype.estimateMemoryUsage = function () {
+            console.warn('Memory monitoring not supported in this browser');
+        };
+        PerformancePlugin.prototype.detectMemoryLeak = function (samples) {
+            if (samples.length < 10)
+                return false;
+            var n = samples.length;
+            var sumX = 0;
+            var sumY = 0;
+            var sumXY = 0;
+            var sumXX = 0;
+            samples.forEach(function (sample, i) {
+                var x = i;
+                var y = sample.used;
+                sumX += x;
+                sumY += y;
+                sumXY += x * y;
+                sumXX += x * x;
+            });
+            var slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            return slope > 50000;
+        };
+        PerformancePlugin.prototype.setupFPSMonitoring = function () {
+            var _this = this;
+            var lastFrameTime = performance.now();
+            var minFps = Infinity;
+            var maxFps = 0;
+            var fpsList = [];
+            var lastReportTime = performance.now();
+            var frameCount = 0;
+            var lastUserInteraction = 0;
+            var userInteracting = false;
+            var userInteractionEvents = ['click', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+            var handleUserInteraction = function () {
+                lastUserInteraction = performance.now();
+                userInteracting = true;
+                setTimeout(function () {
+                    userInteracting = false;
+                }, 1000);
+            };
+            userInteractionEvents.forEach(function (eventType) {
+                document.addEventListener(eventType, handleUserInteraction, { passive: true });
+            });
+            var detectFrameDrops = function () {
+                var _a, _b;
+                var now = performance.now();
+                var frameTime = now - lastFrameTime;
+                if (frameTime > 33) {
+                    var isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
+                    (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.warn(_this.name, 'Frame Drop Detected', {
+                        type: 'frame_drop',
+                        frameTime: Math.round(frameTime * 100) / 100,
+                        expectedFrameTime: 16.67,
+                        timestamp: now,
+                        isDuringInteraction: isDuringInteraction,
+                        timeSinceLastInteraction: now - lastUserInteraction
+                    });
+                }
+                frameCount++;
+                if (now - lastReportTime >= 1000) {
+                    var fps = Math.round((frameCount * 1000) / (now - lastReportTime));
+                    fpsList.push(fps);
+                    minFps = Math.min(minFps, fps);
+                    maxFps = Math.max(maxFps, fps);
+                    var avgFps = 0;
+                    if (fpsList.length > 0) {
+                        avgFps = Math.round(fpsList.reduce(function (a, b) { return a + b; }, 0) / fpsList.length);
+                    }
+                    if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
+                        (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.info(_this.name, 'FPS Report', {
+                            type: 'fps',
+                            fps: fps,
+                            minFps: Math.round(minFps),
+                            maxFps: Math.round(maxFps),
+                            avgFps: avgFps,
+                            frameCount: frameCount,
+                            timestamp: now,
+                            duration: now - lastReportTime
+                        });
+                    }
+                    if (fpsList.length > 60) {
+                        fpsList.shift();
+                    }
+                    frameCount = 0;
+                    lastReportTime = now;
+                }
+                lastFrameTime = now;
+                _this.fpsIntervalId = window.requestAnimationFrame(detectFrameDrops);
+            };
+            this.fpsIntervalId = window.requestAnimationFrame(detectFrameDrops);
         };
         PerformancePlugin.prototype.destroy = function () {
             this.clearEffects();
@@ -2518,7 +2743,7 @@ var AiyMonitorBrowser = (function () {
                 fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },
                 domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin((config === null || config === void 0 ? void 0 : config.domConfig) || {}); } },
                 routePluginEnabled && { name: 'RoutePlugin', creator: function () { return new RoutePlugin(); } },
-                performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin(); } },
+                performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin((config === null || config === void 0 ? void 0 : config.performancePluginConfig) || {}); } },
                 whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } },
                 consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consoleConfig) || {}); } },
                 analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: function () { return new AnalyticsPlugin(); } }

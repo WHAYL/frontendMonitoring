@@ -1,5 +1,6 @@
 import { MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
 import { DomPluginConfig } from './plugins/dom';
+import { PerformancePluginConfig } from './plugins/performance';
 import { WhiteScreenPluginConfig } from './plugins/whiteScreen';
 import { ConsolePluginConfig } from './plugins/console';
 export interface BrowserMonitorConfig {
@@ -17,6 +18,7 @@ export interface BrowserMonitorConfig {
     whiteScreenConfig?: WhiteScreenPluginConfig;
     consoleConfig?: ConsolePluginConfig;
     domConfig?: DomPluginConfig;
+    performancePluginConfig?: PerformancePluginConfig;
 }
 declare class BrowserMonitor {
     private plugins;
