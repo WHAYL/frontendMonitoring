@@ -1206,7 +1206,7 @@
             this.name = 'dom';
             this.monitor = null;
             this.abortController = null;
-            this.config = __assign({ error: true, unhandledrejection: true, resize: true }, config);
+            this.config = __assign({ error: true, unhandledrejection: true, resize: true, clickPath: true }, config);
         }
         DomPlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
@@ -1315,10 +1315,77 @@
                     });
                 });
             }
+            if (this.config.clickPath) {
+                try {
+                    document.addEventListener('click', function (e) { return _this.handleClickPath(e); }, { capture: true, signal: signal });
+                }
+                catch (e) {
+                }
+            }
             this.config.resize && window.addEventListener('resize', g$1(function () {
                 var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
                 _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight));
             }, 500, true), { signal: signal });
+        };
+        DomPlugin.prototype.describeElement = function (el) {
+            var _a;
+            if (!el)
+                return null;
+            return {
+                tagName: el.tagName,
+                id: el.id || null,
+                className: el.className || null,
+                localName: el.localName || null,
+                dataset: Object.entries(el.dataset || {}).map(function (_a) {
+                    var k = _a[0], v = _a[1];
+                    return "".concat(k, ":").concat(v);
+                }).join(',') || null,
+                textContent: (_a = el.textContent) === null || _a === void 0 ? void 0 : _a.substring(0, 100),
+            };
+        };
+        DomPlugin.prototype.buildPathFromEvent = function (event) {
+            var path = [];
+            var composed = event.composedPath ? event.composedPath() : null;
+            if (composed && composed.length) {
+                for (var _i = 0, composed_1 = composed; _i < composed_1.length; _i++) {
+                    var node = composed_1[_i];
+                    if (node instanceof HTMLElement) {
+                        var desc = this.describeElement(node);
+                        if (desc)
+                            path.push(desc);
+                    }
+                }
+            }
+            else {
+                var node = event.target;
+                while (node) {
+                    var desc = this.describeElement(node);
+                    if (desc)
+                        path.push(desc);
+                    node = node.parentElement;
+                }
+            }
+            return path;
+        };
+        DomPlugin.prototype.handleClickPath = function (event) {
+            try {
+                if (!this.monitor)
+                    return;
+                var path = this.buildPathFromEvent(event);
+                this.monitor.info(this.name, 'click_path', {
+                    timestamp: this.monitor.getTimestamp(),
+                    path: path,
+                    x: event.clientX,
+                    y: event.clientY,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight,
+                    url: typeof window !== 'undefined' ? window.location.href : '',
+                });
+            }
+            catch (e) {
+            }
         };
         return DomPlugin;
     }());

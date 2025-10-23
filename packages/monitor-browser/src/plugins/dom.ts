@@ -9,6 +9,7 @@ export interface DomPluginConfig {
     [K in MouseEventNames]?: string[] | boolean;
   }
   resize?: boolean;
+  clickPath?: boolean;
 }
 export class DomPlugin implements MonitorPlugin {
   name = 'dom';
@@ -20,13 +21,8 @@ export class DomPlugin implements MonitorPlugin {
       error: true,
       unhandledrejection: true,
       resize: true,
+      clickPath: true,
       ...config,
-      // mouseEvents: {
-      //   click: true,
-      //   dblclick: true,
-      //   mousemove: false,
-      //   ...config?.mouseEvents
-      // },
     };
   }
 
@@ -157,6 +153,15 @@ export class DomPlugin implements MonitorPlugin {
       });
     }
 
+    // 点击路径追踪（自动上报点击路径）
+    if (this.config.clickPath) {
+      try {
+        document.addEventListener('click', (e: MouseEvent) => this.handleClickPath(e), { capture: true, signal });
+      } catch (e) {
+        // ignore
+      }
+    }
+
     // 监听窗口大小变化
     this.config.resize && window.addEventListener('resize', debounce(() => {
       const { innerWidth, innerHeight } = window;
@@ -165,5 +170,62 @@ export class DomPlugin implements MonitorPlugin {
         `Window Resize: ${innerWidth}x${innerHeight}`
       );
     }, 500, true, true), { signal });
+  }
+
+  // ========== Click path tracing helpers ==========
+  private describeElement(el: HTMLElement | null) {
+    if (!el) {return null;}
+    return {
+      tagName: el.tagName,
+      id: el.id || null,
+      className: el.className || null,
+      localName: el.localName || null,
+      dataset: Object.entries(el.dataset || {}).map(([k, v]) => `${k}:${v}`).join(',') || null,
+      textContent: el.textContent?.substring(0, 100), // 截取前100字符
+    };
+  }
+
+  private buildPathFromEvent(event: Event): Array<Record<string, any>> {
+    const path: Array<Record<string, any>> = [];
+    const composed = (event as any).composedPath ? (event as any).composedPath() as EventTarget[] : null;
+    if (composed && composed.length) {
+      for (const node of composed) {
+        if (node instanceof HTMLElement) {
+          const desc = this.describeElement(node);
+          if (desc) {path.push(desc);}
+        }
+      }
+    } else {
+      // fallback: walk up from target to documentElement
+      let node = event.target as HTMLElement | null;
+      while (node) {
+        const desc = this.describeElement(node);
+        if (desc) {path.push(desc);}
+        node = node.parentElement;
+      }
+    }
+    return path;
+  }
+
+  private handleClickPath(event: MouseEvent): void {
+    try {
+      if (!this.monitor) {return;}
+      const path = this.buildPathFromEvent(event);
+      this.monitor.info(this.name, 'click_path', {
+        timestamp: this.monitor.getTimestamp(),
+        path,
+        // 位置信息
+        x: event.clientX,
+        y: event.clientY,
+        // 页面状态
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+      });
+    } catch (e) {
+      // ignore
+    }
   }
 }

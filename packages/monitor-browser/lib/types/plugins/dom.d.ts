@@ -8,6 +8,7 @@ export interface DomPluginConfig {
         [K in MouseEventNames]?: string[] | boolean;
     };
     resize?: boolean;
+    clickPath?: boolean;
 }
 export declare class DomPlugin implements MonitorPlugin {
     name: string;
@@ -18,5 +19,8 @@ export declare class DomPlugin implements MonitorPlugin {
     init(monitor: FrontendMonitor): void;
     destroy(): void;
     private setupDomMonitoring;
+    private describeElement;
+    private buildPathFromEvent;
+    private handleClickPath;
 }
 export {};
