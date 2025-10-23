@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json", // 继承 packages 目录下通用配置
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "allowUnreachableCode": true, // 报告执行不到的代码错误
+    "allowUnusedLabels": false, // 不报告未使用的标签错误
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "outDir": "./dist/", // 输出目录
+    "lib": [
+      "ESNext"
+    ],
+    "paths": {},
+    "types": []
+  },
+  "include": [
+    "src/**/*",
+    "src/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}

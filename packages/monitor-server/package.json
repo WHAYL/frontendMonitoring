@@ -1,0 +1,39 @@
+{
+  "name": "@whayl/monitor-server",
+  "version": "1.0.0",
+  "description": "Monitor server for collecting and analyzing frontend monitoring data",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "monitor",
+    "frontend",
+    "analytics",
+    "koa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@koa/router": "^14.0.0",
+    "koa": "^3.0.3",
+    "koa-body": "^6.0.1",
+    "koa2-cors": "^2.0.6",
+    "mongoose": "^8.19.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/koa": "^3.0.0",
+    "@types/koa-router": "^7.4.8",
+    "@types/koa__router": "^12.0.4",
+    "@types/node": "^24.9.1",
+    "jest": "^30.2.0",
+    "nodemon": "^3.0.0",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
