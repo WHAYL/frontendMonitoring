@@ -1,11 +1,11 @@
 import { monitor, MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
-import { DomPlugin } from './plugins/dom';
+import { DomPlugin, DomPluginConfig } from './plugins/dom';
 import { RoutePlugin } from './plugins/route';
 import { PerformancePlugin } from './plugins/performance';
-import { WhiteScreenConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
-import { ConsoleConfig, ConsolePlugin } from './plugins/console';
+import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
+import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -19,8 +19,9 @@ export interface BrowserMonitorConfig {
         consolePluginEnabled?: boolean;
     };
     monitorConfig?: MonitorConfig;
-    whiteScreenConfig?: Partial<WhiteScreenConfig>;
-    consoleConfig?: Partial<ConsoleConfig>;
+    whiteScreenConfig?: WhiteScreenPluginConfig;
+    consoleConfig?: ConsolePluginConfig;
+    domConfig?: DomPluginConfig;
 }
 
 /**
@@ -51,11 +52,11 @@ class BrowserMonitor {
         const pluginsToRegister = [
             xhrPluginEnabled && { name: 'XhrPlugin', creator: () => new XhrPlugin() },
             fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
-            domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin() },
+            domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin(config?.domConfig || {}) },
             routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
             performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin() },
             whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenConfig || {}) },
-            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig) }
+            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig || {}) }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

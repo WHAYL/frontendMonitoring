@@ -1,10 +1,34 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
+type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
+export interface DomPluginConfig {
+  error?: boolean;
+  unhandledrejection?: boolean;
+  mouseEvents?: {
+    [K in MouseEventNames]?: string[] | boolean;
+  }
+  resize?: boolean;
+}
 export class DomPlugin implements MonitorPlugin {
   name = 'dom';
   private monitor: FrontendMonitor | null = null;
   private abortController: AbortController | null = null;
+  private config: DomPluginConfig;
+  constructor(config: DomPluginConfig = {}) {
+    this.config = {
+      error: true,
+      unhandledrejection: true,
+      resize: true,
+      ...config,
+      // mouseEvents: {
+      //   click: true,
+      //   dblclick: true,
+      //   mousemove: false,
+      //   ...config?.mouseEvents
+      // },
+    };
+  }
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
@@ -28,7 +52,7 @@ export class DomPlugin implements MonitorPlugin {
     const { signal } = this.abortController;
 
     // 监听未捕获的错误
-    window.addEventListener('error', (event: ErrorEvent) => {
+    this.config.error && window.addEventListener('error', (event: ErrorEvent) => {
       this.monitor!.error(
         this.name,
         `JavaScript Error: ${event.message}`,
@@ -37,7 +61,7 @@ export class DomPlugin implements MonitorPlugin {
     }, { signal });
 
     // 监听未处理的Promise拒绝
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+    this.config.unhandledrejection && window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
       this.monitor!.error(
         this.name,
         `Unhandled Promise Rejection: ${event.reason}`,
@@ -47,10 +71,19 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听点击事件，记录用户交互
     const mouseEventHandler = (eventType: string) => (event: MouseEvent) => {
+      if (!this.config.mouseEvents || !this.config.mouseEvents[eventType]) {
+        return;
+      }
       const target = event.target as HTMLElement;
       const tagName = target.tagName;
       const id = target.id;
       const className = target.className;
+      if (this.config.mouseEvents[eventType] !== true) {
+        const find = Array.from(target.classList).filter(x => this.config.mouseEvents![eventType].includes(x));
+        if (find.length === 0) {
+          return;
+        }
+      }
 
       this.monitor!.debug(
         this.name,
@@ -71,19 +104,18 @@ export class DomPlugin implements MonitorPlugin {
       );
     };
 
-    // 定义需要监听的鼠标事件类型数组
-    const mouseEvents = ['click', 'dblclick', 'mousemove'] as const;
-
     // 批量添加鼠标事件监听器
-    mouseEvents.forEach(eventType => {
-      document.addEventListener(eventType, debounce(mouseEventHandler(eventType), 1000, true, true), {
-        capture: true,
-        signal
+    if (this.config.mouseEvents && Object.keys(this.config.mouseEvents).length > 0) {
+      Object.keys(this.config.mouseEvents).forEach(eventType => {
+        document.addEventListener(eventType, debounce(mouseEventHandler(eventType), 1000, true, true), {
+          capture: true,
+          signal
+        });
       });
-    });
+    }
 
     // 监听窗口大小变化
-    window.addEventListener('resize', debounce(() => {
+    this.config.resize && window.addEventListener('resize', debounce(() => {
       const { innerWidth, innerHeight } = window;
       this.monitor!.debug(
         this.name,

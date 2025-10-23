@@ -1,6 +1,7 @@
 import { MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
-import { WhiteScreenConfig } from './plugins/whiteScreen';
-import { ConsoleConfig } from './plugins/console';
+import { DomPluginConfig } from './plugins/dom';
+import { WhiteScreenPluginConfig } from './plugins/whiteScreen';
+import { ConsolePluginConfig } from './plugins/console';
 export interface BrowserMonitorConfig {
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
@@ -12,8 +13,9 @@ export interface BrowserMonitorConfig {
         consolePluginEnabled?: boolean;
     };
     monitorConfig?: MonitorConfig;
-    whiteScreenConfig?: Partial<WhiteScreenConfig>;
-    consoleConfig?: Partial<ConsoleConfig>;
+    whiteScreenConfig?: WhiteScreenPluginConfig;
+    consoleConfig?: ConsolePluginConfig;
+    domConfig?: DomPluginConfig;
 }
 declare class BrowserMonitor {
     private plugins;

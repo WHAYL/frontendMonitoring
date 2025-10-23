@@ -1,6 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-export interface ConsoleConfig {
+export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
 }
@@ -10,10 +10,10 @@ export class ConsolePlugin implements MonitorPlugin {
     private monitor: FrontendMonitor | null = null;
     private originalError: typeof console.error | null = null;
     private originalWarn: typeof console.warn | null = null;
-    private config: ConsoleConfig;
-    constructor(config: ConsoleConfig = { error: true, warn: true }) {
+    private config: ConsolePluginConfig;
+    constructor(config: ConsolePluginConfig = {}) {
         this.name = 'console';
-        this.config = config || { error: true, warn: true };
+        this.config = { error: true, warn: true, ...config };
     }
     init(monitor: FrontendMonitor): void {
         this.monitor = monitor;
@@ -28,13 +28,13 @@ export class ConsolePlugin implements MonitorPlugin {
             }
 
             // 避免重复包装
-            if (this.originalError || this.originalWarn) {return;}
+            if (this.originalError || this.originalWarn) { return; }
             if (this.config.error === true) {
                 this.originalError = console.error;
                 console.error = function (...args: any[]) {
                     try {
                         const message = args.map(a => {
-                            if (typeof a === 'string') {return a;}
+                            if (typeof a === 'string') { return a; }
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
@@ -52,7 +52,7 @@ export class ConsolePlugin implements MonitorPlugin {
                 console.warn = function (...args: any[]) {
                     try {
                         const message = args.map(a => {
-                            if (typeof a === 'string') {return a;}
+                            if (typeof a === 'string') { return a; }
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
 

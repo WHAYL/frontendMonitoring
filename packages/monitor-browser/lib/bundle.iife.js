@@ -263,6 +263,37 @@ var AiyMonitorBrowser = (function () {
         return FetchPlugin;
     }());
 
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+    var __assign = function () {
+      __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+      var e = new Error(message);
+      return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
     function t$1(e, r, t, n) {
       return new (t || (t = Promise))(function (i, o) {
         function a(e) {
@@ -1035,10 +1066,12 @@ var AiyMonitorBrowser = (function () {
     });
 
     var DomPlugin = (function () {
-        function DomPlugin() {
+        function DomPlugin(config) {
+            if (config === void 0) { config = {}; }
             this.name = 'dom';
             this.monitor = null;
             this.abortController = null;
+            this.config = __assign({ error: true, unhandledrejection: true, resize: true }, config);
         }
         DomPlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
@@ -1055,17 +1088,26 @@ var AiyMonitorBrowser = (function () {
             var _this = this;
             this.abortController = new AbortController();
             var signal = this.abortController.signal;
-            window.addEventListener('error', function (event) {
+            this.config.error && window.addEventListener('error', function (event) {
                 _this.monitor.error(_this.name, "JavaScript Error: ".concat(event.message), event.error);
             }, { signal: signal });
-            window.addEventListener('unhandledrejection', function (event) {
+            this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
                 _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), typeof event.reason === 'string' ? new Error(event.reason) : event.reason);
             }, { signal: signal });
             var mouseEventHandler = function (eventType) { return function (event) {
+                if (!_this.config.mouseEvents || !_this.config.mouseEvents[eventType]) {
+                    return;
+                }
                 var target = event.target;
                 var tagName = target.tagName;
                 var id = target.id;
                 var className = target.className;
+                if (_this.config.mouseEvents[eventType] !== true) {
+                    var find = Array.from(target.classList).filter(function (x) { return _this.config.mouseEvents[eventType].includes(x); });
+                    if (find.length === 0) {
+                        return;
+                    }
+                }
                 _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''), {
                     localName: target.localName,
                     textContent: target.textContent,
@@ -1080,14 +1122,15 @@ var AiyMonitorBrowser = (function () {
                     }).join(','),
                 });
             }; };
-            var mouseEvents = ['click', 'dblclick', 'mousemove'];
-            mouseEvents.forEach(function (eventType) {
-                document.addEventListener(eventType, g$1(mouseEventHandler(eventType), 1000, true), {
-                    capture: true,
-                    signal: signal
+            if (this.config.mouseEvents && Object.keys(this.config.mouseEvents).length > 0) {
+                Object.keys(this.config.mouseEvents).forEach(function (eventType) {
+                    document.addEventListener(eventType, g$1(mouseEventHandler(eventType), 1000, true), {
+                        capture: true,
+                        signal: signal
+                    });
                 });
-            });
-            window.addEventListener('resize', g$1(function () {
+            }
+            this.config.resize && window.addEventListener('resize', g$1(function () {
                 var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
                 _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight));
             }, 500, true), { signal: signal });
@@ -1281,37 +1324,6 @@ var AiyMonitorBrowser = (function () {
         };
         return RoutePlugin;
     }());
-
-    /******************************************************************************
-    Copyright (c) Microsoft Corporation.
-
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted.
-
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-    PERFORMANCE OF THIS SOFTWARE.
-    ***************************************************************************** */
-    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-    var __assign = function () {
-      __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-          s = arguments[i];
-          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-      };
-      return __assign.apply(this, arguments);
-    };
-    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-      var e = new Error(message);
-      return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-    };
 
     let e = -1;
     const t = t => {
@@ -1924,13 +1936,13 @@ var AiyMonitorBrowser = (function () {
 
     var ConsolePlugin = (function () {
         function ConsolePlugin(config) {
-            if (config === void 0) { config = { error: true, warn: true }; }
+            if (config === void 0) { config = {}; }
             this.name = 'console';
             this.monitor = null;
             this.originalError = null;
             this.originalWarn = null;
             this.name = 'console';
-            this.config = config || { error: true, warn: true };
+            this.config = __assign({ error: true, warn: true }, config);
         }
         ConsolePlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
@@ -2031,11 +2043,11 @@ var AiyMonitorBrowser = (function () {
             var pluginsToRegister = [
                 xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
                 fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },
-                domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin(); } },
+                domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin((config === null || config === void 0 ? void 0 : config.domConfig) || {}); } },
                 routePluginEnabled && { name: 'RoutePlugin', creator: function () { return new RoutePlugin(); } },
                 performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin(); } },
                 whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } },
-                consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin(config === null || config === void 0 ? void 0 : config.consoleConfig); } }
+                consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consoleConfig) || {}); } }
             ].filter(Boolean);
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());

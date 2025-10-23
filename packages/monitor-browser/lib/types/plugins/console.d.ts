@@ -1,6 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-export interface ConsoleConfig {
+export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
 }
@@ -10,7 +10,7 @@ export declare class ConsolePlugin implements MonitorPlugin {
     private originalError;
     private originalWarn;
     private config;
-    constructor(config?: ConsoleConfig);
+    constructor(config?: ConsolePluginConfig);
     init(monitor: FrontendMonitor): void;
     private setupConsoleCapture;
     destroy(): void;
