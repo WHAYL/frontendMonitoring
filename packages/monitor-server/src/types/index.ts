@@ -1,3 +1,10 @@
+
+declare module 'koa' {
+  interface Request {
+    body?: any;
+  }
+}
+
 export interface MonitorData {
   level: string;
   message: string;

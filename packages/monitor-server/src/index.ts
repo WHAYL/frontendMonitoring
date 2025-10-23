@@ -3,7 +3,6 @@ import Router from '@koa/router';
 import cors from 'koa2-cors';
 import { koaBody } from 'koa-body';
 
-import { connectDatabase } from './database';
 import { setupRoutes } from './routes';
 
 const app = new Koa();
@@ -39,7 +38,6 @@ app.use(async (ctx, next) => {
 });
 
 // 连接数据库
-connectDatabase();
 
 // 设置路由
 setupRoutes(router);

@@ -1,8 +1,8 @@
 import { Context } from 'koa';
 import 'koa-body';
+import '../types';
 import { ErrorInfoModel, IErrorInfo } from '../database/models/ErrorInfo';
 import { getOverallAnalytics, getPluginAnalytics } from '../services/analyticsService';
-import '../types';
 
 /**
  * 保存监控数据
@@ -10,7 +10,6 @@ import '../types';
  */
 export const saveMonitorData = async (ctx): Promise<void> => {
   try {
-
     let rawData = ctx.request.body;
 
     // 检查数据是否存在
@@ -46,27 +45,38 @@ export const saveMonitorData = async (ctx): Promise<void> => {
       monitorData = [rawData];
     }
 
-    // // 保存数据到数据库
-    // const savedData = await ErrorInfoModel.insertMany(monitorData.map(item => ({
-    //   level: item.level,
-    //   message: item.message,
-    //   stack: item.stack,
-    //   timestamp: item.timestamp,
-    //   date: item.date,
-    //   url: item.url,
-    //   userId: item.userId,
-    //   pluginName: item.pluginName,
-    //   fingerprint: item.fingerprint,
-    //   userAgent: item.userAgent,
-    //   devicePixelRatio: item.devicePixelRatio,
-    //   extraData: item.extraData
-    // })));
-    console.log('Saved data:', monitorData);
+    // 保存数据到数据库
+    let savedCount = 0;
+    for (const data of monitorData) {
+      try {
+        const errorInfo: IErrorInfo = {
+          level: data.level,
+          message: data.message,
+          stack: data.stack,
+          timestamp: data.timestamp,
+          date: data.date,
+          url: data.url,
+          userId: data.userId,
+          pluginName: data.pluginName,
+          fingerprint: data.fingerprint,
+          userAgent: data.userAgent,
+          devicePixelRatio: data.devicePixelRatio,
+          extraData: data.extraData
+        };
+
+        await ErrorInfoModel.create(errorInfo);
+        savedCount++;
+      } catch (saveError) {
+        console.error('Error saving individual record:', saveError);
+        // 继续处理其他记录
+      }
+    }
+
     ctx.status = 200;
     ctx.body = {
       success: true,
-      message: `Successfully saved `,
-      data: monitorData
+      message: `Successfully saved ${savedCount} records`,
+      data: savedCount
     };
   } catch (error: any) {
     ctx.status = 500;
@@ -92,7 +102,6 @@ export const getAnalyticsData = async (ctx: Context): Promise<void> => {
 
     let result;
 
-    // 如果指定了插件名称，则获取该插件的分析数据
     if (pluginName) {
       result = await getPluginAnalytics(
         pluginName as string,
@@ -100,7 +109,6 @@ export const getAnalyticsData = async (ctx: Context): Promise<void> => {
         endDate ? parseInt(endDate as string) : undefined
       );
     } else {
-      // 否则获取整体分析数据
       result = await getOverallAnalytics(
         startDate ? parseInt(startDate as string) : undefined,
         endDate ? parseInt(endDate as string) : undefined
