@@ -1325,8 +1325,9 @@ define((function () { 'use strict';
         };
         DomPlugin.prototype.describeElement = function (el) {
             var _a;
-            if (!el)
+            if (!el) {
                 return null;
+            }
             return {
                 tagName: el.tagName,
                 id: el.id || null,
@@ -1347,8 +1348,9 @@ define((function () { 'use strict';
                     var node = composed_1[_i];
                     if (node instanceof HTMLElement) {
                         var desc = this.describeElement(node);
-                        if (desc)
+                        if (desc) {
                             path.push(desc);
+                        }
                     }
                 }
             }
@@ -1356,8 +1358,9 @@ define((function () { 'use strict';
                 var node = event.target;
                 while (node) {
                     var desc = this.describeElement(node);
-                    if (desc)
+                    if (desc) {
                         path.push(desc);
+                    }
                     node = node.parentElement;
                 }
             }
@@ -1365,8 +1368,9 @@ define((function () { 'use strict';
         };
         DomPlugin.prototype.handleClickPath = function (event) {
             try {
-                if (!this.monitor)
+                if (!this.monitor) {
                     return;
+                }
                 var path = this.buildPathFromEvent(event);
                 this.monitor.info(this.name, 'click_path', {
                     timestamp: this.monitor.getTimestamp(),
