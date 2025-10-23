@@ -1227,25 +1227,75 @@ var DomPlugin = (function () {
             if (!_this.config.mouseEvents || !_this.config.mouseEvents[eventType]) {
                 return;
             }
-            var target = event.target;
-            var tagName = target.tagName;
-            var id = target.id;
-            var className = target.className;
-            if (_this.config.mouseEvents[eventType] !== true) {
-                var find = Array.from(target.classList).filter(function (x) { return _this.config.mouseEvents[eventType].includes(x); });
-                if (find.length === 0) {
-                    return;
+            var cfg = _this.config.mouseEvents[eventType];
+            var rawTarget = event.target;
+            if (!rawTarget) {
+                return;
+            }
+            var reportEl = null;
+            if (cfg === true) {
+                reportEl = rawTarget;
+            }
+            else {
+                var candidates = cfg;
+                var path = typeof event.composedPath === 'function' ? event.composedPath() : null;
+                if (path && path.length) {
+                    outer: for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
+                        var node = path_1[_i];
+                        if (!(node instanceof HTMLElement)) {
+                            continue;
+                        }
+                        for (var _a = 0, candidates_1 = candidates; _a < candidates_1.length; _a++) {
+                            var cand = candidates_1[_a];
+                            var isSelector = /^(\.|#|\[|[^a-zA-Z0-9_\-])/.test(cand) || /\s|>|\[/.test(cand);
+                            try {
+                                if (isSelector) {
+                                    if (node.matches && node.matches(cand)) {
+                                        reportEl = node;
+                                        break outer;
+                                    }
+                                }
+                                else {
+                                    if (node.classList && node.classList.contains(cand)) {
+                                        reportEl = node;
+                                        break outer;
+                                    }
+                                }
+                            }
+                            catch (e) {
+                            }
+                        }
+                    }
+                }
+                if (!reportEl) {
+                    for (var _b = 0, candidates_2 = candidates; _b < candidates_2.length; _b++) {
+                        var cand = candidates_2[_b];
+                        var isSelector = /^(\.|#|\[|[^a-zA-Z0-9_\-])/.test(cand) || /\s|>|\[/.test(cand);
+                        try {
+                            var selector = isSelector ? cand : ".".concat(cand);
+                            var found = rawTarget.closest(selector);
+                            if (found) {
+                                reportEl = found;
+                                break;
+                            }
+                        }
+                        catch (e) {
+                        }
+                    }
                 }
             }
-            _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(tagName).concat(id ? '#' + id : '').concat(className ? '.' + className : ''), {
-                localName: target.localName,
-                textContent: target.textContent,
-                classList: Array.from(target.classList).join(','),
-                className: target.className,
-                id: target.id,
-                nodeName: target.nodeName,
-                tagName: target.tagName,
-                dataSet: Object.entries(target.dataset).map(function (_a) {
+            if (!reportEl) {
+                return;
+            }
+            _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''), {
+                localName: reportEl.localName,
+                textContent: reportEl.textContent,
+                classList: Array.from(reportEl.classList).join(','),
+                className: reportEl.className,
+                id: reportEl.id,
+                nodeName: reportEl.nodeName,
+                tagName: reportEl.tagName,
+                dataSet: Object.entries(reportEl.dataset).map(function (_a) {
                     var key = _a[0], value = _a[1];
                     return "".concat(key, ":").concat(value);
                 }).join(','),
