@@ -28,13 +28,13 @@ export class ConsolePlugin implements MonitorPlugin {
             }
 
             // 避免重复包装
-            if (this.originalError || this.originalWarn) return;
+            if (this.originalError || this.originalWarn) {return;}
             if (this.config.error === true) {
                 this.originalError = console.error;
                 console.error = function (...args: any[]) {
                     try {
                         const message = args.map(a => {
-                            if (typeof a === 'string') return a;
+                            if (typeof a === 'string') {return a;}
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
@@ -52,7 +52,7 @@ export class ConsolePlugin implements MonitorPlugin {
                 console.warn = function (...args: any[]) {
                     try {
                         const message = args.map(a => {
-                            if (typeof a === 'string') return a;
+                            if (typeof a === 'string') {return a;}
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
 
@@ -65,8 +65,6 @@ export class ConsolePlugin implements MonitorPlugin {
                     return self.originalWarn && self.originalWarn.apply(console, args);
                 } as any;
             }
-
-
 
         } catch (e) {
             // ignore environments where console is not writable

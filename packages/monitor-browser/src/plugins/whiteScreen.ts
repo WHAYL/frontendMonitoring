@@ -33,7 +33,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
     monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
   }
   run(): void {
-    if (!this.monitor) return;
+    if (!this.monitor) {return;}
     this.startTime = this.monitor.getTimestamp();
     this.resolved = false;
     this.startCheck();
@@ -46,7 +46,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
     this.resolved = true;
   }
   destroy(): void {
-    this.clearEffects()
+    this.clearEffects();
     if (this.boundHandleRouteChange) {
       monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
     }
@@ -60,10 +60,10 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   }
   private startCheck() {
     const { checkInterval, timeout } = this.config;
-    if (!this.monitor) return;
+    if (!this.monitor) {return;}
     const start = this.monitor.getTimestamp();
     this.timer = window.setInterval(() => {
-      if (this.resolved || !this.monitor) return;
+      if (this.resolved || !this.monitor) {return;}
       const visible = this.checkKeyElements();
       if (visible) {
         this.endTime = this.monitor.getTimestamp();
@@ -85,10 +85,10 @@ export class WhiteScreenPlugin implements MonitorPlugin {
       for (const el of els) {
         // 图片元素：判断是否已加载且有尺寸
         if (el instanceof HTMLImageElement) {
-          if (el.complete && el.naturalWidth > 0 && this.isElementVisible(el)) return true;
+          if (el.complete && el.naturalWidth > 0 && this.isElementVisible(el)) {return true;}
         } else if (el instanceof HTMLElement) {
           const style = window.getComputedStyle(el);
-          if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0) continue;
+          if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0) {continue;}
 
           // 必须有宽高
           if (el.offsetWidth > 0 && el.offsetHeight > 0) {
@@ -100,18 +100,18 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
             // 文本节点判断
             if (el.textContent && el.textContent.trim().length > 0) {
-              if (this.isElementVisible(el)) return true;
+              if (this.isElementVisible(el)) {return true;}
             }
 
             // 有可见图片
             const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[];
-            if (imgs.some(img => img.complete && img.naturalWidth > 0 && this.isElementVisible(img))) return true;
+            if (imgs.some(img => img.complete && img.naturalWidth > 0 && this.isElementVisible(img))) {return true;}
 
             // 背景或前景色判断（确保不是完全透明）
             const bgColor = style.backgroundColor;
             const color = style.color;
             if ((bgColor && !this.isColorTransparent(bgColor)) || (color && !this.isColorTransparent(color))) {
-              if (this.isElementVisible(el)) return true;
+              if (this.isElementVisible(el)) {return true;}
             }
           }
         }
@@ -122,10 +122,10 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
   // 判断颜色是否完全透明 (rgba(0,0,0,0) 或 transparent)
   private isColorTransparent(color: string): boolean {
-    if (!color) return true;
-    if (color === 'transparent') return true;
+    if (!color) {return true;}
+    if (color === 'transparent') {return true;}
     const rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
-    if (!rgbaMatch) return false;
+    if (!rgbaMatch) {return false;}
     const parts = rgbaMatch[1].split(',').map(p => p.trim());
     if (parts.length === 4) {
       const alpha = parseFloat(parts[3]);
@@ -144,7 +144,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
         return false;
       }
       const topEl = document.elementFromPoint(x, y);
-      if (!topEl) return false;
+      if (!topEl) {return false;}
       return el === topEl || el.contains(topEl) || topEl.contains(el);
     } catch (e) {
       // 任何异常都认为不可见为保守策略
@@ -153,7 +153,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   }
 
   private report(status: 'success' | 'timeout') {
-    if (!this.monitor) return;
+    if (!this.monitor) {return;}
     this.monitor.info(
       this.name,
       `WhiteScreen check ${status}`,

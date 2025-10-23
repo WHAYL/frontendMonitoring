@@ -111,7 +111,7 @@ export class RoutePlugin implements MonitorPlugin {
         `Route Changed (${changeType}): ${currentRoute}`,
         data
       );
-      monitorRouteChange.emit("monitorRouteChange", data)
+      monitorRouteChange.emit("monitorRouteChange", data);
     }
   }
 
@@ -176,11 +176,11 @@ export class RoutePlugin implements MonitorPlugin {
     const self = this;
     try {
       const target = ev.target as Element | null;
-      if (!target || !(target instanceof Element)) return;
+      if (!target || !(target instanceof Element)) {return;}
       const a = target.closest('a') as HTMLAnchorElement | null;
-      if (!a) return;
+      if (!a) {return;}
       const href = a.href;
-      if (!href) return;
+      if (!href) {return;}
 
       const data = {
         previousRoute: this.lastRoute,

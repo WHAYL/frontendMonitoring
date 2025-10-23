@@ -46,7 +46,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
   }
   destroy(): void {
-    this.clearEffects()
+    this.clearEffects();
     if (this.boundHandleRouteChange) {
       monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
     }

@@ -18,7 +18,6 @@ export class DomPlugin implements MonitorPlugin {
       this.abortController = null;
     }
 
-
     // 清空引用
     this.monitor = null;
   }

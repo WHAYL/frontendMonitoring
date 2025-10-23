@@ -57,7 +57,7 @@ export class FrontendMonitor {
      */
     private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}): void {
         // 如果监控未启用，则直接返回
-        if (!this.config.enabled) return;
+        if (!this.config.enabled) {return;}
 
         // 创建错误信息对象
         const errorInfo: ErrorInfo = {
@@ -129,7 +129,6 @@ export class FrontendMonitor {
     debug(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
         this.log(pluginName, 'DEBUG', message, extraData);
     }
-
 
     /**
      * 检查本地存储的信息是否满足新的上报条件
@@ -208,7 +207,7 @@ export class FrontendMonitor {
         this.clearStorageQueue();
     }
 }
-const monitor = new FrontendMonitor()
+const monitor = new FrontendMonitor();
 // 导出类型定义
 export { ReportLevelEnum, monitor };
 export type { MonitorConfig, ErrorInfo, MonitorPlugin };
