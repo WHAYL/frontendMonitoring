@@ -1882,18 +1882,24 @@ var AiyMonitorBrowser = (function () {
             monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
         };
         PerformancePlugin.prototype.run = function () {
-            if (this.config.resourceEnabled)
+            if (this.config.resourceEnabled) {
                 this.setupResourceMonitoring();
-            if (this.config.navigationEnabled)
+            }
+            if (this.config.navigationEnabled) {
                 this.setupNavigationMonitoring();
-            if (this.config.webVitalsEnabled)
+            }
+            if (this.config.webVitalsEnabled) {
                 this.setupWebVitals();
-            if (this.config.longTaskEnabled)
+            }
+            if (this.config.longTaskEnabled) {
                 this.setupLongTaskMonitoring();
-            if (this.config.memoryEnabled)
+            }
+            if (this.config.memoryEnabled) {
                 this.setupMemoryMonitoring();
-            if (this.config.fpsEnabled)
+            }
+            if (this.config.fpsEnabled) {
                 this.setupFPSMonitoring();
+            }
         };
         PerformancePlugin.prototype.clearEffects = function () {
             if (this.resourceObserver) {
@@ -1924,8 +1930,9 @@ var AiyMonitorBrowser = (function () {
         PerformancePlugin.prototype.setupLongTaskMonitoring = function () {
             var _this = this;
             try {
-                if (typeof PerformanceObserver === 'undefined' || typeof window.PerformanceLongTaskTiming === 'undefined')
+                if (typeof PerformanceObserver === 'undefined' || typeof window.PerformanceLongTaskTiming === 'undefined') {
                     return;
+                }
                 this.longTaskObserver = new PerformanceObserver(function (list) {
                     list.getEntries().forEach(function (entry) {
                         var _a;
@@ -2033,8 +2040,9 @@ var AiyMonitorBrowser = (function () {
             console.warn('Memory monitoring not supported in this browser');
         };
         PerformancePlugin.prototype.detectMemoryLeak = function (samples) {
-            if (samples.length < 10)
+            if (samples.length < 10) {
                 return false;
+            }
             var n = samples.length;
             var sumX = 0;
             var sumY = 0;
