@@ -102,6 +102,12 @@ class BrowserMonitor implements MonitorInstance {
     private setupNetworkListener(): void {
         window.addEventListener('online', () => {
             this.isOnline = true;
+            if (this.cacheLog.length) {
+                this.cacheLog.forEach(item => {
+                    this.monitor.reportInfo(item.type, item.data);
+                });
+                this.cacheLog = [];
+            }
             this.monitor.reportInfo('INFO', {
                 pluginName: 'monitor-browser',
                 url: window.location.href,
@@ -110,12 +116,6 @@ class BrowserMonitor implements MonitorInstance {
                 date: formatTimestamp(),
                 message: '设备恢复在线'
             });
-            if (this.cacheLog.length) {
-                this.cacheLog.forEach(item => {
-                    this.monitor.reportInfo(item.type, item.data);
-                });
-                this.cacheLog = [];
-            }
         }, { signal: this.abortController?.signal });
 
         window.addEventListener('offline', () => {

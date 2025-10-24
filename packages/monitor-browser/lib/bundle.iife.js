@@ -3048,6 +3048,12 @@ var AiyMonitorBrowser = (function () {
           var _a, _b;
           window.addEventListener('online', function () {
               _this.isOnline = true;
+              if (_this.cacheLog.length) {
+                  _this.cacheLog.forEach(function (item) {
+                      _this.monitor.reportInfo(item.type, item.data);
+                  });
+                  _this.cacheLog = [];
+              }
               _this.monitor.reportInfo('INFO', {
                   pluginName: 'monitor-browser',
                   url: window.location.href,
@@ -3056,12 +3062,6 @@ var AiyMonitorBrowser = (function () {
                   date: formatTimestamp(),
                   message: '设备恢复在线'
               });
-              if (_this.cacheLog.length) {
-                  _this.cacheLog.forEach(function (item) {
-                      _this.monitor.reportInfo(item.type, item.data);
-                  });
-                  _this.cacheLog = [];
-              }
           }, { signal: (_a = this.abortController) === null || _a === void 0 ? void 0 : _a.signal });
           window.addEventListener('offline', function () {
               _this.isOnline = false;
