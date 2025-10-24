@@ -4,10 +4,12 @@ export declare class FrontendMonitor {
     private storageQueue;
     private removedItems;
     private fingerprint;
+    private oldFingerprint;
     getTimestamp(): number;
     formatTimestamp(format?: string, timestamp?: number): string;
     init(config: Partial<MonitorConfig>): void;
     getFingerprint(): string;
+    setFingerprint(fingerprint: string): void;
     private log;
     error(pluginName: string, message: string, extraData?: Record<string, any>): void;
     warn(pluginName: string, message: string, extraData?: Record<string, any>): void;

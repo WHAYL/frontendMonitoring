@@ -21,6 +21,8 @@ export class FrontendMonitor {
     // 浏览器指纹
     private fingerprint: string = '';
 
+    private oldFingerprint: string = '';
+
     /**
      * 获取高精度时间戳
      * 优先使用 performance.now() + performance.timeOrigin，如果不支持则回退到 Date.now()
@@ -66,6 +68,7 @@ export class FrontendMonitor {
      */
     init(config: Partial<MonitorConfig>): void {
         this.config = Object.assign(this.config, config);
+        this.fingerprint = this.config?.fingerprint || "";
 
     }
 
@@ -75,6 +78,11 @@ export class FrontendMonitor {
      */
     getFingerprint(): string {
         return this.fingerprint;
+    }
+
+    setFingerprint(fingerprint: string): void {
+        this.oldFingerprint = this.fingerprint;
+        this.fingerprint = fingerprint;
     }
 
     /**
@@ -98,6 +106,7 @@ export class FrontendMonitor {
             userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
             pluginName,
             fingerprint: this.fingerprint,
+            oldFingerprint: this.oldFingerprint,
             devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
             extraData
         };

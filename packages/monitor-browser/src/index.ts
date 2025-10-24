@@ -6,7 +6,7 @@ import { RoutePlugin } from './plugins/route';
 import { PerformancePlugin, PerformancePluginConfig } from './plugins/performance';
 import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
-import { AnalyticsPlugin } from './plugins/analytics';
+import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -21,10 +21,11 @@ export interface BrowserMonitorConfig {
         analyticsPluginEnabled?: boolean;
     };
     monitorConfig?: MonitorConfig;
-    whiteScreenConfig?: WhiteScreenPluginConfig;
-    consoleConfig?: ConsolePluginConfig;
-    domConfig?: DomPluginConfig;
+    whiteScreenPluginConfig?: WhiteScreenPluginConfig;
+    consolePluginConfig?: ConsolePluginConfig;
+    domPluginConfig?: DomPluginConfig;
     performancePluginConfig?: PerformancePluginConfig;
+    analyticsPluginConfig?: AnalyticsPluginConfig;
 }
 
 /**
@@ -56,12 +57,12 @@ class BrowserMonitor {
         const pluginsToRegister = [
             xhrPluginEnabled && { name: 'XhrPlugin', creator: () => new XhrPlugin() },
             fetchPluginEnabled && { name: 'FetchPlugin', creator: () => new FetchPlugin() },
-            domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin(config?.domConfig || {}) },
+            domPluginEnabled && { name: 'DomPlugin', creator: () => new DomPlugin(config?.domPluginConfig || {}) },
             routePluginEnabled && { name: 'RoutePlugin', creator: () => new RoutePlugin() },
             performancePluginEnabled && { name: 'PerformancePlugin', creator: () => new PerformancePlugin(config?.performancePluginConfig || {}) },
-            whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenConfig || {}) },
-            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consoleConfig || {}) },
-            analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: () => new AnalyticsPlugin() }
+            whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: () => new WhiteScreenPlugin(config?.whiteScreenPluginConfig || {}) },
+            consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consolePluginConfig || {}) },
+            analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: () => new AnalyticsPlugin(config?.analyticsPluginConfig || {}) }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -92,6 +93,9 @@ class BrowserMonitor {
             // pagehide事件在现代浏览器中得到良好支持
             window.addEventListener('pagehide', this.handlePageHide);
         }
+    }
+    setFingerprint(value: string) {
+        monitor.setFingerprint(value);
     }
 
     /**

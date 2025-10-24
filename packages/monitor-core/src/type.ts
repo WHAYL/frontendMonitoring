@@ -26,6 +26,9 @@ export interface MonitorConfig {
   // 本地存储最大数量，默认为100
   maxStorageCount?: number;
 
+  // 浏览器指纹
+  fingerprint?:string
+
   // 其他可能的配置项...
 }
 

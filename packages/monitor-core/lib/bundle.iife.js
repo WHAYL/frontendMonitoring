@@ -24,6 +24,7 @@ var AiyMonitorCore = (function (exports) {
             this.storageQueue = [];
             this.removedItems = [];
             this.fingerprint = '';
+            this.oldFingerprint = '';
         }
         FrontendMonitor.prototype.getTimestamp = function () {
             return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
@@ -55,10 +56,16 @@ var AiyMonitorCore = (function (exports) {
                 .replace(/SSS/g, ms);
         };
         FrontendMonitor.prototype.init = function (config) {
+            var _a;
             this.config = Object.assign(this.config, config);
+            this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
         };
         FrontendMonitor.prototype.getFingerprint = function () {
             return this.fingerprint;
+        };
+        FrontendMonitor.prototype.setFingerprint = function (fingerprint) {
+            this.oldFingerprint = this.fingerprint;
+            this.fingerprint = fingerprint;
         };
         FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
             if (extraData === void 0) { extraData = {}; }
@@ -74,6 +81,7 @@ var AiyMonitorCore = (function (exports) {
                 userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 pluginName: pluginName,
                 fingerprint: this.fingerprint,
+                oldFingerprint: this.oldFingerprint,
                 devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
                 extraData: extraData
             };

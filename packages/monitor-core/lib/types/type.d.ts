@@ -12,6 +12,7 @@ export interface MonitorConfig {
     enabled: boolean;
     uploadHandler: null | ((data: ErrorInfo | ErrorInfo[]) => void);
     maxStorageCount?: number;
+    fingerprint?: string;
 }
 export interface ErrorInfo {
     level: ReportingLevel;

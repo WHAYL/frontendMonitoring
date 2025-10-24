@@ -92,7 +92,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (!key) {continue;}
+                if (!key) { continue; }
                 if (key.startsWith(DAILY_KEY_PREFIX) && !key.startsWith(todayPrefix)) {
                     keysToRemove.push(key);
                 }

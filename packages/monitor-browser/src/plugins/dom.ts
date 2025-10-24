@@ -52,7 +52,13 @@ export class DomPlugin implements MonitorPlugin {
       this.monitor!.error(
         this.name,
         `JavaScript Error: ${event.message}`,
-        event.error
+        {
+          message: event.message,           // 错误信息
+          filename: event.filename,         // 发生错误的文件
+          lineno: event.lineno,             // 行号
+          colno: event.colno,               // 列号
+          error: event.error,               // Error 对象
+        }
       );
     }, { signal });
 
@@ -61,7 +67,21 @@ export class DomPlugin implements MonitorPlugin {
       this.monitor!.error(
         this.name,
         `Unhandled Promise Rejection: ${event.reason}`,
-        typeof event.reason === 'string' ? new Error(event.reason) : event.reason
+        {
+          type: event.type,
+          // Promise 相关信息
+          promise: event.promise,              // 被拒绝的 Promise 对象
+          reason: event.reason,                // 拒绝原因
+
+          // 拒绝原因的详细解析
+          reasonType: typeof event.reason,
+          isError: event.reason instanceof Error,
+
+          // 如果是 Error 对象
+          errorMessage: event.reason?.message,
+          errorStack: event.reason?.stack,
+          errorName: event.reason?.name,
+        }
       );
     }, { signal });
 
@@ -132,7 +152,7 @@ export class DomPlugin implements MonitorPlugin {
         `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
         {
           localName: reportEl.localName,
-          textContent: reportEl.textContent,
+          // textContent: reportEl.textContent,
           classList: Array.from(reportEl.classList).join(','),
           className: reportEl.className,
           id: reportEl.id,
@@ -167,21 +187,26 @@ export class DomPlugin implements MonitorPlugin {
       const { innerWidth, innerHeight } = window;
       this.monitor!.debug(
         this.name,
-        `Window Resize: ${innerWidth}x${innerHeight}`
+        `Window Resize: ${innerWidth}x${innerHeight}`,
+        {
+          innerWidth,
+          innerHeight,
+          devicePixelRatio
+        }
       );
     }, 500, true, true), { signal });
   }
 
   // ========== Click path tracing helpers ==========
   private describeElement(el: HTMLElement | null) {
-    if (!el) {return null;}
+    if (!el) { return null; }
     return {
       tagName: el.tagName,
       id: el.id || null,
       className: el.className || null,
       localName: el.localName || null,
       dataset: Object.entries(el.dataset || {}).map(([k, v]) => `${k}:${v}`).join(',') || null,
-      textContent: el.textContent?.substring(0, 100), // 截取前100字符
+      // textContent: el.textContent?.substring(0, 100), // 截取前100字符
     };
   }
 
@@ -192,7 +217,7 @@ export class DomPlugin implements MonitorPlugin {
       for (const node of composed) {
         if (node instanceof HTMLElement) {
           const desc = this.describeElement(node);
-          if (desc) {path.push(desc);}
+          if (desc) { path.push(desc); }
         }
       }
     } else {
@@ -200,7 +225,7 @@ export class DomPlugin implements MonitorPlugin {
       let node = event.target as HTMLElement | null;
       while (node) {
         const desc = this.describeElement(node);
-        if (desc) {path.push(desc);}
+        if (desc) { path.push(desc); }
         node = node.parentElement;
       }
     }
@@ -209,7 +234,7 @@ export class DomPlugin implements MonitorPlugin {
 
   private handleClickPath(event: MouseEvent): void {
     try {
-      if (!this.monitor) {return;}
+      if (!this.monitor) { return; }
       const path = this.buildPathFromEvent(event);
       this.monitor.info(this.name, 'click_path', {
         timestamp: this.monitor.getTimestamp(),

@@ -22,6 +22,7 @@ var AiyMonitorBrowser = (function () {
         this.storageQueue = [];
         this.removedItems = [];
         this.fingerprint = '';
+        this.oldFingerprint = '';
       }
       FrontendMonitor.prototype.getTimestamp = function () {
         return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number' ? performance.now() + performance.timeOrigin : Date.now();
@@ -48,10 +49,16 @@ var AiyMonitorBrowser = (function () {
         return format.replace(/YYYY/g, year).replace(/MM/g, month).replace(/DD/g, day).replace(/hh/g, hour).replace(/mm/g, minute).replace(/ss/g, second).replace(/SSS/g, ms);
       };
       FrontendMonitor.prototype.init = function (config) {
+        var _a;
         this.config = Object.assign(this.config, config);
+        this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
       };
       FrontendMonitor.prototype.getFingerprint = function () {
         return this.fingerprint;
+      };
+      FrontendMonitor.prototype.setFingerprint = function (fingerprint) {
+        this.oldFingerprint = this.fingerprint;
+        this.fingerprint = fingerprint;
       };
       FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
         if (extraData === void 0) {
@@ -69,6 +76,7 @@ var AiyMonitorBrowser = (function () {
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
           pluginName: pluginName,
           fingerprint: this.fingerprint,
+          oldFingerprint: this.oldFingerprint,
           devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
           extraData: extraData
         };
@@ -1221,10 +1229,26 @@ var AiyMonitorBrowser = (function () {
             this.abortController = new AbortController();
             var signal = this.abortController.signal;
             this.config.error && window.addEventListener('error', function (event) {
-                _this.monitor.error(_this.name, "JavaScript Error: ".concat(event.message), event.error);
+                _this.monitor.error(_this.name, "JavaScript Error: ".concat(event.message), {
+                    message: event.message,
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno,
+                    error: event.error,
+                });
             }, { signal: signal });
             this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
-                _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), typeof event.reason === 'string' ? new Error(event.reason) : event.reason);
+                var _a, _b, _c;
+                _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), {
+                    type: event.type,
+                    promise: event.promise,
+                    reason: event.reason,
+                    reasonType: typeof event.reason,
+                    isError: event.reason instanceof Error,
+                    errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
+                    errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
+                    errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
+                });
             }, { signal: signal });
             var mouseEventHandler = function (eventType) { return function (event) {
                 if (!_this.config.mouseEvents || !_this.config.mouseEvents[eventType]) {
@@ -1292,7 +1316,6 @@ var AiyMonitorBrowser = (function () {
                 }
                 _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''), {
                     localName: reportEl.localName,
-                    textContent: reportEl.textContent,
                     classList: Array.from(reportEl.classList).join(','),
                     className: reportEl.className,
                     id: reportEl.id,
@@ -1321,11 +1344,14 @@ var AiyMonitorBrowser = (function () {
             }
             this.config.resize && window.addEventListener('resize', g$1(function () {
                 var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
-                _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight));
+                _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight), {
+                    innerWidth: innerWidth,
+                    innerHeight: innerHeight,
+                    devicePixelRatio: devicePixelRatio
+                });
             }, 500, true), { signal: signal });
         };
         DomPlugin.prototype.describeElement = function (el) {
-            var _a;
             if (!el) {
                 return null;
             }
@@ -1338,7 +1364,6 @@ var AiyMonitorBrowser = (function () {
                     var k = _a[0], v = _a[1];
                     return "".concat(k, ":").concat(v);
                 }).join(',') || null,
-                textContent: (_a = el.textContent) === null || _a === void 0 ? void 0 : _a.substring(0, 100),
             };
         };
         DomPlugin.prototype.buildPathFromEvent = function (event) {
@@ -2749,12 +2774,12 @@ var AiyMonitorBrowser = (function () {
             var pluginsToRegister = [
                 xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
                 fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },
-                domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin((config === null || config === void 0 ? void 0 : config.domConfig) || {}); } },
+                domPluginEnabled && { name: 'DomPlugin', creator: function () { return new DomPlugin((config === null || config === void 0 ? void 0 : config.domPluginConfig) || {}); } },
                 routePluginEnabled && { name: 'RoutePlugin', creator: function () { return new RoutePlugin(); } },
                 performancePluginEnabled && { name: 'PerformancePlugin', creator: function () { return new PerformancePlugin((config === null || config === void 0 ? void 0 : config.performancePluginConfig) || {}); } },
-                whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenConfig) || {}); } },
-                consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consoleConfig) || {}); } },
-                analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: function () { return new AnalyticsPlugin(); } }
+                whiteScreenPluginEnabled && { name: 'WhiteScreenPlugin', creator: function () { return new WhiteScreenPlugin((config === null || config === void 0 ? void 0 : config.whiteScreenPluginConfig) || {}); } },
+                consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consolePluginConfig) || {}); } },
+                analyticsPluginEnabled && { name: 'AnalyticsPlugin', creator: function () { return new AnalyticsPlugin((config === null || config === void 0 ? void 0 : config.analyticsPluginConfig) || {}); } }
             ].filter(Boolean);
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());
@@ -2776,6 +2801,9 @@ var AiyMonitorBrowser = (function () {
             else if (typeof window !== 'undefined' && 'pagehide' in window) {
                 window.addEventListener('pagehide', this.handlePageHide);
             }
+        };
+        BrowserMonitor.prototype.setFingerprint = function (value) {
+            monitor.setFingerprint(value);
         };
         BrowserMonitor.prototype.use = function (plugin) {
             if (!plugin.name) {
