@@ -18,6 +18,7 @@ export declare class PerformancePlugin implements MonitorPlugin {
     private fpsIntervalId;
     private memoryIntervalId;
     private config;
+    private abortController;
     private boundHandleRouteChange;
     constructor(config?: PerformancePluginConfig);
     init(monitor: FrontendMonitor): void;

@@ -12,9 +12,12 @@ export class XhrPlugin implements MonitorPlugin {
   name = 'xhr';
   private monitor: FrontendMonitor | null = null;
   private xhrMap: Map<XMLHttpRequest, XhrInfo> = new Map();
+  private abortController: AbortController | null = null;
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
+    // 创建AbortController来管理所有事件监听器
+    this.abortController = new AbortController();
     this.setupXhrMonitoring();
   }
 
@@ -87,6 +90,8 @@ export class XhrPlugin implements MonitorPlugin {
 
           // 清理
           self.xhrMap.delete(this);
+        }, {
+          signal: self.abortController?.signal
         });
 
         this.addEventListener('timeout', function () {
@@ -112,6 +117,8 @@ export class XhrPlugin implements MonitorPlugin {
 
           // 清理
           self.xhrMap.delete(this);
+        }, {
+          signal: self.abortController?.signal
         });
       }
 
@@ -121,6 +128,11 @@ export class XhrPlugin implements MonitorPlugin {
   }
 
   destroy(): void {
+    // 使用abort controller一次性取消所有事件监听器
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
     this.xhrMap.clear();
     this.monitor = null;
   }

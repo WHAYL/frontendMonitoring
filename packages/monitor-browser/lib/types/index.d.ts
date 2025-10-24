@@ -24,8 +24,8 @@ export interface BrowserMonitorConfig {
 }
 declare class BrowserMonitor {
     private plugins;
-    private handleVisibilityChange;
-    private handlePageHide;
+    private monitor;
+    private abortController;
     constructor(config: BrowserMonitorConfig);
     private init;
     setFingerprint(value: string): void;

@@ -23,6 +23,7 @@ export class PerformancePlugin implements MonitorPlugin {
   private fpsIntervalId: number | null = null;
   private memoryIntervalId: number | null = null;
   private config: PerformancePluginConfig;
+  private abortController: AbortController | null = null;
   private boundHandleRouteChange: (data: any) => void = () => { };
 
   constructor(config: PerformancePluginConfig = {}) {
@@ -39,6 +40,8 @@ export class PerformancePlugin implements MonitorPlugin {
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
+    // 创建AbortController来管理所有事件监听器
+    this.abortController = new AbortController();
     if (typeof PerformanceObserver === 'undefined' || typeof performance === 'undefined') {
       console.warn('Performance API is not supported in this browser');
       return;
@@ -300,7 +303,7 @@ export class PerformancePlugin implements MonitorPlugin {
     };
 
     userInteractionEvents.forEach(eventType => {
-      document.addEventListener(eventType, handleUserInteraction, { passive: true });
+      document.addEventListener(eventType, handleUserInteraction, { passive: true, signal: this.abortController?.signal });
     });
 
     const detectFrameDrops = () => {
@@ -390,6 +393,11 @@ export class PerformancePlugin implements MonitorPlugin {
     this.clearEffects();
     if (this.boundHandleRouteChange) {
       monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+    }
+    // 使用abort controller一次性取消所有事件监听器
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
     }
     // 清空引用
     this.monitor = null;

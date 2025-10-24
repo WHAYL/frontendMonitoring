@@ -10,9 +10,12 @@ export class RoutePlugin implements MonitorPlugin {
   private originalPushState: typeof history.pushState | null = null;
   private originalReplaceState: typeof history.replaceState | null = null;
   private originalWindowOpen: typeof window.open | null = null;
+  private abortController: AbortController | null = null;
 
   init(monitor: FrontendMonitor): void {
     this.monitor = monitor;
+    // 创建AbortController来管理所有事件监听器
+    this.abortController = new AbortController();
     this.setupRouteMonitoring();
   }
 
@@ -20,12 +23,11 @@ export class RoutePlugin implements MonitorPlugin {
     // 记录最后路由的离开时间
     this.recordRouteLeave();
 
-    // 移除事件监听器
-    window.removeEventListener('hashchange', this.handleHashChange);
-    window.removeEventListener('popstate', this.handleHistoryChange);
-    // 移除我们额外添加的监听
-    document.removeEventListener('click', this.handleDocumentClick, true);
-    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    // 使用abort controller一次性取消所有事件监听器
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
 
     // 恢复覆盖的方法
     if (this.originalWindowOpen) {
@@ -44,22 +46,26 @@ export class RoutePlugin implements MonitorPlugin {
     this.lastRoute = this.getCurrentRoute();
 
     // 监听 hash 路由变化
-    window.addEventListener('hashchange', this.handleHashChange.bind(this));
+    window.addEventListener('hashchange', () => {
+      this.handleRouteChange('hash');
+    }, { signal: this.abortController?.signal });
 
     // 监听 history 路由变化
-    window.addEventListener('popstate', this.handleHistoryChange.bind(this));
+    window.addEventListener('popstate', () => {
+      this.handleRouteChange('history');
+    }, { signal: this.abortController?.signal });
 
     // 监听 history.pushState 和 history.replaceState
     this.wrapHistoryMethods();
 
     // 监听 document 的 a 标签点击（用于捕获普通链接或新标签打开）
-    document.addEventListener('click', this.handleDocumentClick, true);
+    document.addEventListener('click', this.handleDocumentClick, { capture: true, signal: this.abortController?.signal });
 
     // 包装 window.open
     this.wrapWindowOpen();
 
     // 页面卸载时记录离开（普通导航/刷新）
-    window.addEventListener('beforeunload', this.handleBeforeUnload);
+    window.addEventListener('beforeunload', this.handleBeforeUnload, { signal: this.abortController?.signal });
 
     // 记录初始路由进入时间
     this.recordRouteEnter();
@@ -76,14 +82,6 @@ export class RoutePlugin implements MonitorPlugin {
       timestamp: getTimestamp(),
       date: formatTimestamp()
     });
-  }
-
-  private handleHashChange(): void {
-    this.handleRouteChange('hash');
-  }
-
-  private handleHistoryChange(): void {
-    this.handleRouteChange('history');
   }
 
   private handleRouteChange(changeType: string): void {
@@ -186,7 +184,6 @@ export class RoutePlugin implements MonitorPlugin {
    * 捕获 document 上的 a 标签点击，用于在导航前主动上报（包括 target=_blank）
    */
   private handleDocumentClick = (ev: MouseEvent) => {
-    const self = this;
     try {
       const target = ev.target as Element | null;
       if (!target || !(target instanceof Element)) { return; }

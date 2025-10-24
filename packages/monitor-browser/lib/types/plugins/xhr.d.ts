@@ -4,6 +4,7 @@ export declare class XhrPlugin implements MonitorPlugin {
     name: string;
     private monitor;
     private xhrMap;
+    private abortController;
     init(monitor: FrontendMonitor): void;
     private setupXhrMonitoring;
     destroy(): void;

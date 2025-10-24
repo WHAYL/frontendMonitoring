@@ -8,11 +8,10 @@ export declare class RoutePlugin implements MonitorPlugin {
     private originalPushState;
     private originalReplaceState;
     private originalWindowOpen;
+    private abortController;
     init(monitor: FrontendMonitor): void;
     destroy(): void;
     private setupRouteMonitoring;
-    private handleHashChange;
-    private handleHistoryChange;
     private handleRouteChange;
     private getCurrentRoute;
     private wrapHistoryMethods;

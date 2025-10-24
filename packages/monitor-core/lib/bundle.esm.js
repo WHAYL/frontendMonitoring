@@ -153,6 +153,5 @@ var FrontendMonitor = (function () {
     };
     return FrontendMonitor;
 }());
-var monitor = new FrontendMonitor();
 
-export { FrontendMonitor, IMMEDIATE_REPORT_LEVEL, MYSTORAGE_COUNT, ReportLevelEnum, monitor };
+export { FrontendMonitor, IMMEDIATE_REPORT_LEVEL, MYSTORAGE_COUNT, ReportLevelEnum };

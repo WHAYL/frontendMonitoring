@@ -1,4 +1,4 @@
-import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin, type LogData } from './type';
+import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type LogData } from './type';
 import { MYSTORAGE_COUNT, IMMEDIATE_REPORT_LEVEL } from './const';
 
 /**
@@ -228,7 +228,3 @@ export class FrontendMonitor {
         this.clearStorageQueue();
     }
 }
-const monitor = new FrontendMonitor();
-// 导出类型定义
-export { ReportLevelEnum, monitor };
-export type { MonitorConfig, ErrorInfo, MonitorPlugin };

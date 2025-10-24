@@ -1,4 +1,4 @@
-import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin, type LogData } from './type';
+import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type LogData } from './type';
 export declare class FrontendMonitor {
     private config;
     private storageQueue;
@@ -23,6 +23,3 @@ export declare class FrontendMonitor {
     private report;
     destroy(): void;
 }
-declare const monitor: FrontendMonitor;
-export { ReportLevelEnum, monitor };
-export type { MonitorConfig, ErrorInfo, MonitorPlugin };

@@ -1,6 +1,5 @@
 import type { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-import { monitor } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
 
 export interface AnalyticsPluginConfig {

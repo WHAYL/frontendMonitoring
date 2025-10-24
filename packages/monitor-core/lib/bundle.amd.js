@@ -155,11 +155,9 @@ define(['exports'], (function (exports) { 'use strict';
         };
         return FrontendMonitor;
     }());
-    var monitor = new FrontendMonitor();
 
     exports.FrontendMonitor = FrontendMonitor;
     exports.IMMEDIATE_REPORT_LEVEL = IMMEDIATE_REPORT_LEVEL;
     exports.MYSTORAGE_COUNT = MYSTORAGE_COUNT;
-    exports.monitor = monitor;
 
 }));

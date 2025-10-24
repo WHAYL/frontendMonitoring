@@ -172,7 +172,6 @@
     };
     return FrontendMonitor;
   }();
-  var monitor = new FrontendMonitor();
 
   function getTimestamp() {
       return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
@@ -209,9 +208,11 @@
           this.name = 'xhr';
           this.monitor = null;
           this.xhrMap = new Map();
+          this.abortController = null;
       }
       XhrPlugin.prototype.init = function (monitor) {
           this.monitor = monitor;
+          this.abortController = new AbortController();
           this.setupXhrMonitoring();
       };
       XhrPlugin.prototype.setupXhrMonitoring = function () {
@@ -228,6 +229,7 @@
               originalOpen.apply(this, arguments);
           };
           XMLHttpRequest.prototype.send = function () {
+              var _a, _b;
               var xhrInfo = self.xhrMap.get(this);
               if (xhrInfo) {
                   this.addEventListener('error', function () {
@@ -250,6 +252,8 @@
                           }
                       });
                       self.xhrMap.delete(this);
+                  }, {
+                      signal: (_a = self.abortController) === null || _a === void 0 ? void 0 : _a.signal
                   });
                   this.addEventListener('timeout', function () {
                       var endTime = getTimestamp();
@@ -271,12 +275,18 @@
                           }
                       });
                       self.xhrMap.delete(this);
+                  }, {
+                      signal: (_b = self.abortController) === null || _b === void 0 ? void 0 : _b.signal
                   });
               }
               originalSend.apply(this, arguments);
           };
       };
       XhrPlugin.prototype.destroy = function () {
+          if (this.abortController) {
+              this.abortController.abort();
+              this.abortController = null;
+          }
           this.xhrMap.clear();
           this.monitor = null;
       };
@@ -1511,6 +1521,7 @@
           this.originalPushState = null;
           this.originalReplaceState = null;
           this.originalWindowOpen = null;
+          this.abortController = null;
           this.handleDocumentClick = function (ev) {
               try {
                   var target = ev.target;
@@ -1555,14 +1566,15 @@
       }
       RoutePlugin.prototype.init = function (monitor) {
           this.monitor = monitor;
+          this.abortController = new AbortController();
           this.setupRouteMonitoring();
       };
       RoutePlugin.prototype.destroy = function () {
           this.recordRouteLeave();
-          window.removeEventListener('hashchange', this.handleHashChange);
-          window.removeEventListener('popstate', this.handleHistoryChange);
-          document.removeEventListener('click', this.handleDocumentClick, true);
-          window.removeEventListener('beforeunload', this.handleBeforeUnload);
+          if (this.abortController) {
+              this.abortController.abort();
+              this.abortController = null;
+          }
           if (this.originalWindowOpen) {
               try {
                   window.open = this.originalWindowOpen;
@@ -1583,13 +1595,19 @@
           }
       };
       RoutePlugin.prototype.setupRouteMonitoring = function () {
+          var _this = this;
+          var _a, _b, _c, _d;
           this.lastRoute = this.getCurrentRoute();
-          window.addEventListener('hashchange', this.handleHashChange.bind(this));
-          window.addEventListener('popstate', this.handleHistoryChange.bind(this));
+          window.addEventListener('hashchange', function () {
+              _this.handleRouteChange('hash');
+          }, { signal: (_a = this.abortController) === null || _a === void 0 ? void 0 : _a.signal });
+          window.addEventListener('popstate', function () {
+              _this.handleRouteChange('history');
+          }, { signal: (_b = this.abortController) === null || _b === void 0 ? void 0 : _b.signal });
           this.wrapHistoryMethods();
-          document.addEventListener('click', this.handleDocumentClick, true);
+          document.addEventListener('click', this.handleDocumentClick, { capture: true, signal: (_c = this.abortController) === null || _c === void 0 ? void 0 : _c.signal });
           this.wrapWindowOpen();
-          window.addEventListener('beforeunload', this.handleBeforeUnload);
+          window.addEventListener('beforeunload', this.handleBeforeUnload, { signal: (_d = this.abortController) === null || _d === void 0 ? void 0 : _d.signal });
           this.recordRouteEnter();
           this.monitor.info({
               pluginName: this.name,
@@ -1602,12 +1620,6 @@
               timestamp: getTimestamp(),
               date: formatTimestamp()
           });
-      };
-      RoutePlugin.prototype.handleHashChange = function () {
-          this.handleRouteChange('hash');
-      };
-      RoutePlugin.prototype.handleHistoryChange = function () {
-          this.handleRouteChange('history');
       };
       RoutePlugin.prototype.handleRouteChange = function (changeType) {
           var currentRoute = this.getCurrentRoute();
@@ -2009,11 +2021,13 @@
           this.longTaskObserver = null;
           this.fpsIntervalId = null;
           this.memoryIntervalId = null;
+          this.abortController = null;
           this.boundHandleRouteChange = function () { };
           this.config = __assign({ longTaskEnabled: true, memoryEnabled: true, fpsEnabled: true, resourceEnabled: true, navigationEnabled: true, webVitalsEnabled: true }, config);
       }
       PerformancePlugin.prototype.init = function (monitor) {
           this.monitor = monitor;
+          this.abortController = new AbortController();
           if (typeof PerformanceObserver === 'undefined' || typeof performance === 'undefined') {
               console.warn('Performance API is not supported in this browser');
               return;
@@ -2232,7 +2246,8 @@
               }, 1000);
           };
           userInteractionEvents.forEach(function (eventType) {
-              document.addEventListener(eventType, handleUserInteraction, { passive: true });
+              var _a;
+              document.addEventListener(eventType, handleUserInteraction, { passive: true, signal: (_a = _this.abortController) === null || _a === void 0 ? void 0 : _a.signal });
           });
           var detectFrameDrops = function () {
               var _a, _b;
@@ -2300,6 +2315,10 @@
           this.clearEffects();
           if (this.boundHandleRouteChange) {
               monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+          }
+          if (this.abortController) {
+              this.abortController.abort();
+              this.abortController = null;
           }
           this.monitor = null;
       };
@@ -2992,8 +3011,10 @@
       function BrowserMonitor(config) {
           var _this = this;
           this.plugins = [];
+          this.monitor = new FrontendMonitor();
+          this.abortController = null;
           var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g, _h = _a.consolePluginEnabled, consolePluginEnabled = _h === void 0 ? true : _h, _j = _a.analyticsPluginEnabled, analyticsPluginEnabled = _j === void 0 ? true : _j;
-          monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
+          this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
           var pluginsToRegister = [
               xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
               fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },
@@ -3010,23 +3031,27 @@
           this.init();
       }
       BrowserMonitor.prototype.init = function () {
-          this.handleVisibilityChange = function () {
-              if (document.visibilityState === 'hidden') {
-                  monitor.reportRestInfo();
-              }
-          };
-          this.handlePageHide = function () {
-              monitor.reportRestInfo();
-          };
+          var _this = this;
+          this.abortController = new AbortController();
           if (typeof document !== 'undefined' && 'hidden' in document) {
-              document.addEventListener('visibilitychange', this.handleVisibilityChange);
+              document.addEventListener('visibilitychange', function () {
+                  if (document.visibilityState === 'hidden') {
+                      _this.monitor.reportRestInfo();
+                  }
+              }, {
+                  signal: this.abortController.signal
+              });
           }
           else if (typeof window !== 'undefined' && 'pagehide' in window) {
-              window.addEventListener('pagehide', this.handlePageHide);
+              window.addEventListener('pagehide', function () {
+                  _this.monitor.reportRestInfo();
+              }, {
+                  signal: this.abortController.signal
+              });
           }
       };
       BrowserMonitor.prototype.setFingerprint = function (value) {
-          monitor.setFingerprint(value);
+          this.monitor.setFingerprint(value);
       };
       BrowserMonitor.prototype.use = function (plugin) {
           if (!plugin.name) {
@@ -3043,14 +3068,12 @@
               return;
           }
           this.plugins.push(plugin);
-          plugin.init(monitor);
+          plugin.init(this.monitor);
       };
       BrowserMonitor.prototype.destroy = function () {
-          if (typeof document !== 'undefined' && 'hidden' in document) {
-              document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-          }
-          else if (typeof window !== 'undefined' && 'pagehide' in window) {
-              window.removeEventListener('pagehide', this.handlePageHide);
+          if (this.abortController) {
+              this.abortController.abort();
+              this.abortController = null;
           }
           this.plugins.forEach(function (plugin) {
               if (plugin.destroy) {
