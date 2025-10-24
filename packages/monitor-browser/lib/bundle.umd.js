@@ -3045,18 +3045,28 @@
                   signal: this.abortController.signal
               });
           }
+          window.addEventListener('beforeunload', function () {
+              _this.reportCacheLog();
+              _this.monitor.reportRestInfo();
+          }, {
+              signal: this.abortController.signal
+          });
+      };
+      BrowserMonitor.prototype.reportCacheLog = function () {
+          var _this = this;
+          if (this.cacheLog.length) {
+              this.cacheLog.forEach(function (item) {
+                  _this.monitor.reportInfo(item.type, item.data);
+              });
+              this.cacheLog = [];
+          }
       };
       BrowserMonitor.prototype.setupNetworkListener = function () {
           var _this = this;
           var _a, _b;
           window.addEventListener('online', function () {
               _this.isOnline = true;
-              if (_this.cacheLog.length) {
-                  _this.cacheLog.forEach(function (item) {
-                      _this.monitor.reportInfo(item.type, item.data);
-                  });
-                  _this.cacheLog = [];
-              }
+              _this.reportCacheLog();
               _this.monitor.reportInfo('INFO', {
                   pluginName: 'monitor-browser',
                   url: window.location.href,

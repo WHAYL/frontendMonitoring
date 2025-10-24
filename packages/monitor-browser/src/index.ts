@@ -98,16 +98,27 @@ class BrowserMonitor implements MonitorInstance {
                 signal: this.abortController.signal
             });
         }
+
+        // 添加beforeunload事件监听器，确保在页面刷新前上报缓存日志
+        window.addEventListener('beforeunload', () => {
+            this.reportCacheLog();
+            this.monitor.reportRestInfo();
+        }, {
+            signal: this.abortController.signal
+        });
+    }
+    private reportCacheLog(): void {
+        if (this.cacheLog.length) {
+            this.cacheLog.forEach(item => {
+                this.monitor.reportInfo(item.type, item.data);
+            });
+            this.cacheLog = [];
+        }
     }
     private setupNetworkListener(): void {
         window.addEventListener('online', () => {
             this.isOnline = true;
-            if (this.cacheLog.length) {
-                this.cacheLog.forEach(item => {
-                    this.monitor.reportInfo(item.type, item.data);
-                });
-                this.cacheLog = [];
-            }
+            this.reportCacheLog();
             this.monitor.reportInfo('INFO', {
                 pluginName: 'monitor-browser',
                 url: window.location.href,
