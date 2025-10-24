@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
 
 interface XhrInfo {
@@ -10,11 +10,11 @@ interface XhrInfo {
 
 export class XhrPlugin implements MonitorPlugin {
   name = 'xhr';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
   private xhrMap: Map<XMLHttpRequest, XhrInfo> = new Map();
   private abortController: AbortController | null = null;
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();
@@ -71,7 +71,7 @@ export class XhrPlugin implements MonitorPlugin {
           const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
-          self.monitor!.error({
+          self.monitor!.reportInfo('INFO', {
             pluginName: self.name,
             message: `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,
@@ -98,7 +98,7 @@ export class XhrPlugin implements MonitorPlugin {
           const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
-          self.monitor!.error({
+          self.monitor!.reportInfo('INFO', {
             pluginName: self.name,
             message: `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,

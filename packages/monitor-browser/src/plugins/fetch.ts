@@ -1,11 +1,11 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
 export class FetchPlugin implements MonitorPlugin {
   name = 'fetch';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     this.setupFetchMonitoring();
   }
@@ -47,7 +47,7 @@ export class FetchPlugin implements MonitorPlugin {
         const endTime = getTimestamp();
         const duration = endTime - startTime;
 
-        self.monitor!.error({
+        self.monitor!.reportInfo('ERROR', {
           pluginName: self.name,
           message: `Fetch Error: ${method} ${url} - ${error.message}`,
           url: window.location.href,

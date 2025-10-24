@@ -60,6 +60,16 @@ var FrontendMonitor = (function () {
         this.config = Object.assign(this.config, config);
         this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
     };
+    FrontendMonitor.prototype.updateConfig = function (newConfig) {
+        var oldConfig = __assign({}, this.config);
+        this.config = Object.assign(this.config, newConfig);
+        if (oldConfig.reportLevel !== this.config.reportLevel) {
+            this.checkAndReportStored();
+        }
+        if (oldConfig.fingerprint !== this.config.fingerprint && this.config.fingerprint) {
+            this.setFingerprint(this.config.fingerprint);
+        }
+    };
     FrontendMonitor.prototype.getFingerprint = function () {
         return this.fingerprint;
     };
@@ -89,17 +99,8 @@ var FrontendMonitor = (function () {
             }
         }
     };
-    FrontendMonitor.prototype.error = function (info) {
-        this.log(__assign(__assign({}, info), { level: 'ERROR' }));
-    };
-    FrontendMonitor.prototype.warn = function (info) {
-        this.log(__assign(__assign({}, info), { level: 'WARN' }));
-    };
-    FrontendMonitor.prototype.info = function (info) {
-        this.log(__assign(__assign({}, info), { level: 'INFO' }));
-    };
-    FrontendMonitor.prototype.debug = function (info) {
-        this.log(__assign(__assign({}, info), { level: 'DEBUG' }));
+    FrontendMonitor.prototype.reportInfo = function (level, info) {
+        this.log(__assign(__assign({}, info), { level: level }));
     };
     FrontendMonitor.prototype.checkAndReportStored = function () {
         var _this = this;

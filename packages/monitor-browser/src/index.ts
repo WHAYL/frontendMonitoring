@@ -1,4 +1,4 @@
-import { FrontendMonitor, MonitorConfig, MonitorPlugin } from '@whayl/monitor-core';
+import { FrontendMonitor, LogData, MonitorConfig, MonitorInstance, MonitorPlugin, ReportingLevel } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin, DomPluginConfig } from './plugins/dom';
@@ -7,6 +7,7 @@ import { PerformancePlugin, PerformancePluginConfig } from './plugins/performanc
 import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
+import { getTimestamp, formatTimestamp } from './utils';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -31,10 +32,13 @@ export interface BrowserMonitorConfig {
 /**
  * 浏览器监控类
  */
-class BrowserMonitor {
+class BrowserMonitor implements MonitorInstance {
     private plugins: MonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
     private abortController: AbortController | null = null;
+    // 添加网络状态监听，离线时缓存日志，上线时自动上报
+    private isOnline: boolean = navigator.onLine;
+    private cacheLog: { type: ReportingLevel, data: LogData }[] = [];
 
     constructor(config: BrowserMonitorConfig) {
         // 默认配置都为 true
@@ -70,6 +74,7 @@ class BrowserMonitor {
         });
 
         this.init();
+        this.setupNetworkListener();
     }
 
     private init(): void {
@@ -94,8 +99,55 @@ class BrowserMonitor {
             });
         }
     }
+    private setupNetworkListener(): void {
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.monitor.reportInfo('INFO', {
+                pluginName: 'monitor-browser',
+                url: window.location.href,
+                extraData: {},
+                timestamp: getTimestamp(),
+                date: formatTimestamp(),
+                message: '设备恢复在线'
+            });
+            if (this.cacheLog.length) {
+                this.cacheLog.forEach(item => {
+                    this.monitor.reportInfo(item.type, item.data);
+                });
+                this.cacheLog = [];
+            }
+        }, { signal: this.abortController?.signal });
+
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.cacheLog.push({
+                type: 'OFF',
+                data: {
+                    pluginName: 'monitor-browser',
+                    url: window.location.href,
+                    extraData: {},
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp(),
+                    message: '设备离线'
+                }
+            });
+        }, {
+            signal: this.abortController?.signal
+        });
+    }
     setFingerprint(value: string) {
         this.monitor.setFingerprint(value);
+    }
+    getFingerprint(): string {
+        return this.monitor.getFingerprint();
+    }
+    reportInfo(type: ReportingLevel, data: LogData) {
+        if (!this.isOnline) {
+            // 如果当前处于离线状态，则缓存日志
+            this.cacheLog.push({ type, data });
+            return;
+        }
+        this.monitor.reportInfo(type, data);
     }
 
     /**
@@ -124,7 +176,7 @@ class BrowserMonitor {
 
         this.plugins.push(plugin);
         // 初始化插件
-        plugin.init(this.monitor);
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     }
 
     /**

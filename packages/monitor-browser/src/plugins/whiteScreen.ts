@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 export interface WhiteScreenPluginConfig {
@@ -10,7 +10,7 @@ export interface WhiteScreenPluginConfig {
 
 export class WhiteScreenPlugin implements MonitorPlugin {
   name = 'whiteScreen';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
   private config: WhiteScreenPluginConfig;
   private timer: number | null = null;
   private startTime: number = 0;
@@ -27,7 +27,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
     };
   }
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     this.run();
     this.boundHandleRouteChange = this.handleRouteChange.bind(this);
@@ -155,7 +155,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
   private report(status: 'success' | 'timeout') {
     if (!this.monitor) { return; }
-    this.monitor.info({
+    this.monitor.reportInfo('INFO', {
       pluginName: this.name,
       message: `WhiteScreen check ${status}`,
       url: window.location.href,

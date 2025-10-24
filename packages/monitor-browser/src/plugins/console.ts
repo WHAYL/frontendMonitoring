@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
 export interface ConsolePluginConfig {
     error?: boolean;
@@ -8,7 +8,7 @@ export interface ConsolePluginConfig {
 
 export class ConsolePlugin implements MonitorPlugin {
     name = 'console';
-    private monitor: FrontendMonitor | null = null;
+    private monitor: MonitorPluginInitArg | null = null;
     private originalError: typeof console.error | null = null;
     private originalWarn: typeof console.warn | null = null;
     private config: ConsolePluginConfig;
@@ -16,7 +16,7 @@ export class ConsolePlugin implements MonitorPlugin {
         this.name = 'console';
         this.config = { error: true, warn: true, ...config };
     }
-    init(monitor: FrontendMonitor): void {
+    init(monitor: MonitorPluginInitArg): void {
         this.monitor = monitor;
         this.setupConsoleCapture();
     }
@@ -39,7 +39,7 @@ export class ConsolePlugin implements MonitorPlugin {
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.error({
+                        self.monitor && self.monitor.reportInfo('ERROR', {
                             pluginName: self.name,
                             message: message || 'console.error',
                             url: window.location.href,
@@ -65,7 +65,7 @@ export class ConsolePlugin implements MonitorPlugin {
                         }).join(' ');
 
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn({
+                        self.monitor && self.monitor.reportInfo('WARN', {
                             pluginName: self.name,
                             message: message || 'console.warn',
                             url: window.location.href,

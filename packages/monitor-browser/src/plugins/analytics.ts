@@ -1,5 +1,4 @@
-import type { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg, MonitorPlugin } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
 
 export interface AnalyticsPluginConfig {
@@ -20,7 +19,7 @@ function safeJSONParse<T = any>(s: string | null, fallback: T): T {
 
 export class AnalyticsPlugin implements MonitorPlugin {
     name = 'analytics';
-    private monitor: FrontendMonitor | null = null;
+    private monitor: MonitorPluginInitArg | null = null;
     private abortController: AbortController | null = null;
     private config: AnalyticsPluginConfig;
     private ipCached: string | null = null;
@@ -29,7 +28,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
         this.config = config;
     }
 
-    init(monitor: FrontendMonitor): void {
+    init(monitor: MonitorPluginInitArg): void {
         this.monitor = monitor;
         // 清理不属于今天的历史 localStorage 记录
         try {
@@ -71,11 +70,8 @@ export class AnalyticsPlugin implements MonitorPlugin {
     }
     private getTodayDate(): string {
         // 返回 YYYY/MM/DD
-        if (this.monitor) {
-            // 使用 monitor 的 formatTimestamp，参数顺序为 (format, timestamp)
-            return formatTimestamp('YYYY/MM/DD', getTimestamp());
-        }
-        return new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+        // 使用 monitor 的 formatTimestamp，参数顺序为 (format, timestamp)
+        return formatTimestamp('YYYY/MM/DD', getTimestamp());
     }
 
     private getTodayKey(suffix: string) {
@@ -113,7 +109,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
 
                 try {
                     if (this.monitor) {
-                        this.monitor.info({
+                        this.monitor.reportInfo('INFO', {
                             pluginName: this.name,
                             message: 'analytics_history_before_cleanup',
                             extraData: {
@@ -239,7 +235,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             };
 
             // 使用 info 级别上报统计数据
-            this.monitor.info({
+            this.monitor.reportInfo('INFO', {
                 pluginName: this.name,
                 message: 'analytics_report',
                 url: window.location.href,

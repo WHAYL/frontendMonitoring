@@ -1,4 +1,4 @@
-import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type LogData } from './type';
+import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type LogData, ReportingLevel } from './type';
 import { MYSTORAGE_COUNT, IMMEDIATE_REPORT_LEVEL } from './const';
 
 /**
@@ -32,6 +32,21 @@ export class FrontendMonitor {
         this.config = Object.assign(this.config, config);
         this.fingerprint = this.config?.fingerprint || "";
 
+    }
+    // 支持运行时动态更新配置
+    public updateConfig(newConfig: Partial<MonitorConfig>): void {
+        const oldConfig = { ...this.config };
+        this.config = Object.assign(this.config, newConfig);
+
+        // 如果上报等级发生变化，检查是否需要上报存储的日志
+        if (oldConfig.reportLevel !== this.config.reportLevel) {
+            this.checkAndReportStored();
+        }
+
+        // 如果浏览器指纹发生变化，则更新
+        if (oldConfig.fingerprint !== this.config.fingerprint && this.config.fingerprint) {
+            this.setFingerprint(this.config.fingerprint);
+        }
     }
 
     /**
@@ -88,47 +103,10 @@ export class FrontendMonitor {
             }
         }
     }
-
-    /**
-     * 记录错误信息
-     * @param pluginName 插件名称
-     * @param message 错误消息
-     * @param extraData 额外数据
-     */
-    error(info: LogData): void {
-        this.log({ ...info, level: 'ERROR' });
-    }
-
-    /**
-     * 记录警告信息
-     * @param pluginName 插件名称
-     * @param message 警告消息
-     * @param extraData 额外数据
-     */
-    warn(info: LogData): void {
-        this.log({ ...info, level: 'WARN' });
-    }
-
-    /**
-     * 记录普通信息
-     * @param pluginName 插件名称
-     * @param message 信息消息
-     * @param extraData 额外数据
-     */
-    info(info: LogData): void {
-        this.log({ ...info, level: 'INFO' });
-    }
-
-    /**
-     * 记录调试信息
-     * @param pluginName 插件名称
-     * @param message 调试消息
-     * @param extraData 额外数据
-     */
-    debug(info: LogData): void {
+    reportInfo(level: ReportingLevel, info: LogData) {
         this.log({
             ...info,
-            level: 'DEBUG'
+            level: level
         });
     }
 

@@ -1,10 +1,10 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 export class RoutePlugin implements MonitorPlugin {
   name = 'route';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
   private lastRoute: string | null = null;
   private routeEnterTime: number = 0;
   private originalPushState: typeof history.pushState | null = null;
@@ -12,7 +12,7 @@ export class RoutePlugin implements MonitorPlugin {
   private originalWindowOpen: typeof window.open | null = null;
   private abortController: AbortController | null = null;
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();
@@ -71,7 +71,7 @@ export class RoutePlugin implements MonitorPlugin {
     this.recordRouteEnter();
 
     // 记录初始路由
-    this.monitor!.info({
+    this.monitor!.reportInfo('INFO', {
       pluginName: this.name,
       message: `Initial Route: ${this.lastRoute}`,
       extraData: {
@@ -107,7 +107,7 @@ export class RoutePlugin implements MonitorPlugin {
         enterTime: this.routeEnterTime
       };
       // 记录路由变更
-      this.monitor!.info({
+      this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `Route Changed (${changeType}): ${currentRoute}`,
         extraData: data,
@@ -161,7 +161,7 @@ export class RoutePlugin implements MonitorPlugin {
             changeType: 'window.open',
             enterTime: getTimestamp()
           };
-          self.monitor!.info({
+          self.monitor!.reportInfo('INFO', {
             pluginName: self.name,
             message: `window.open -> ${url}`,
             url: window.location.href,
@@ -200,7 +200,7 @@ export class RoutePlugin implements MonitorPlugin {
         target: a.target
       } as any;
 
-      this.monitor!.info({
+      this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `A tag clicked -> ${href}`,
         url: window.location.href,
@@ -237,7 +237,7 @@ export class RoutePlugin implements MonitorPlugin {
       const leaveTime = getTimestamp();
       const duration = leaveTime - this.routeEnterTime;
 
-      this.monitor!.info({
+      this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `Route Left: ${this.lastRoute}`,
         extraData: {

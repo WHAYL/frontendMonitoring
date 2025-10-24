@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 export declare class RoutePlugin implements MonitorPlugin {
     name: string;
     private monitor;
@@ -9,7 +9,7 @@ export declare class RoutePlugin implements MonitorPlugin {
     private originalReplaceState;
     private originalWindowOpen;
     private abortController;
-    init(monitor: FrontendMonitor): void;
+    init(monitor: MonitorPluginInitArg): void;
     destroy(): void;
     private setupRouteMonitoring;
     private handleRouteChange;

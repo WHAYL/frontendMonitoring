@@ -60,6 +60,16 @@ var FrontendMonitor = function () {
     this.config = Object.assign(this.config, config);
     this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
   };
+  FrontendMonitor.prototype.updateConfig = function (newConfig) {
+    var oldConfig = __assign$1({}, this.config);
+    this.config = Object.assign(this.config, newConfig);
+    if (oldConfig.reportLevel !== this.config.reportLevel) {
+      this.checkAndReportStored();
+    }
+    if (oldConfig.fingerprint !== this.config.fingerprint && this.config.fingerprint) {
+      this.setFingerprint(this.config.fingerprint);
+    }
+  };
   FrontendMonitor.prototype.getFingerprint = function () {
     return this.fingerprint;
   };
@@ -92,24 +102,9 @@ var FrontendMonitor = function () {
       }
     }
   };
-  FrontendMonitor.prototype.error = function (info) {
+  FrontendMonitor.prototype.reportInfo = function (level, info) {
     this.log(__assign$1(__assign$1({}, info), {
-      level: 'ERROR'
-    }));
-  };
-  FrontendMonitor.prototype.warn = function (info) {
-    this.log(__assign$1(__assign$1({}, info), {
-      level: 'WARN'
-    }));
-  };
-  FrontendMonitor.prototype.info = function (info) {
-    this.log(__assign$1(__assign$1({}, info), {
-      level: 'INFO'
-    }));
-  };
-  FrontendMonitor.prototype.debug = function (info) {
-    this.log(__assign$1(__assign$1({}, info), {
-      level: 'DEBUG'
+      level: level
     }));
   };
   FrontendMonitor.prototype.checkAndReportStored = function () {
@@ -231,7 +226,7 @@ var XhrPlugin = (function () {
                 this.addEventListener('error', function () {
                     var endTime = getTimestamp();
                     var duration = endTime - xhrInfo.startTime;
-                    self.monitor.error({
+                    self.monitor.reportInfo('INFO', {
                         pluginName: self.name,
                         message: "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                         url: window.location.href,
@@ -254,7 +249,7 @@ var XhrPlugin = (function () {
                 this.addEventListener('timeout', function () {
                     var endTime = getTimestamp();
                     var duration = endTime - xhrInfo.startTime;
-                    self.monitor.error({
+                    self.monitor.reportInfo('INFO', {
                         pluginName: self.name,
                         message: "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                         url: window.location.href,
@@ -318,7 +313,7 @@ var FetchPlugin = (function () {
             }).catch(function (error) {
                 var endTime = getTimestamp();
                 var duration = endTime - startTime;
-                self.monitor.error({
+                self.monitor.reportInfo('ERROR', {
                     pluginName: self.name,
                     message: "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message),
                     url: window.location.href,
@@ -1282,7 +1277,7 @@ var DomPlugin = (function () {
         this.abortController = new AbortController();
         var signal = this.abortController.signal;
         this.config.error && window.addEventListener('error', function (event) {
-            _this.monitor.error({
+            _this.monitor.reportInfo('ERROR', {
                 pluginName: _this.name,
                 message: "JavaScript Error: ".concat(event.message),
                 url: window.location.href,
@@ -1299,7 +1294,7 @@ var DomPlugin = (function () {
         }, { signal: signal });
         this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
             var _a, _b, _c;
-            _this.monitor.error({
+            _this.monitor.reportInfo('ERROR', {
                 pluginName: _this.name,
                 message: "Unhandled Promise Rejection: ".concat(event.reason),
                 url: window.location.href,
@@ -1381,7 +1376,7 @@ var DomPlugin = (function () {
             if (!reportEl) {
                 return;
             }
-            _this.monitor.debug({
+            _this.monitor.reportInfo('DEBUG', {
                 pluginName: _this.name,
                 message: "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''),
                 extraData: {
@@ -1417,8 +1412,9 @@ var DomPlugin = (function () {
             }
         }
         this.config.resize && window.addEventListener('resize', g$1(function () {
+            var _a;
             var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
-            _this.monitor.debug({
+            (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('DEBUG', {
                 pluginName: _this.name,
                 message: "Window Resize: ".concat(innerWidth, "x").concat(innerHeight),
                 url: window.location.href,
@@ -1479,7 +1475,7 @@ var DomPlugin = (function () {
                 return;
             }
             var path = this.buildPathFromEvent(event);
-            this.monitor.info({
+            this.monitor.reportInfo('INFO', {
                 pluginName: this.name,
                 message: 'click_path',
                 extraData: {
@@ -1539,7 +1535,7 @@ var RoutePlugin = (function () {
                     enterTime: getTimestamp(),
                     target: a.target
                 };
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: "A tag clicked -> ".concat(href),
                     url: window.location.href,
@@ -1605,7 +1601,7 @@ var RoutePlugin = (function () {
         this.wrapWindowOpen();
         window.addEventListener('beforeunload', this.handleBeforeUnload, { signal: (_d = this.abortController) === null || _d === void 0 ? void 0 : _d.signal });
         this.recordRouteEnter();
-        this.monitor.info({
+        this.monitor.reportInfo('INFO', {
             pluginName: this.name,
             message: "Initial Route: ".concat(this.lastRoute),
             extraData: {
@@ -1630,7 +1626,7 @@ var RoutePlugin = (function () {
                 changeType: changeType,
                 enterTime: this.routeEnterTime
             };
-            this.monitor.info({
+            this.monitor.reportInfo('INFO', {
                 pluginName: this.name,
                 message: "Route Changed (".concat(changeType, "): ").concat(currentRoute),
                 extraData: data,
@@ -1684,7 +1680,7 @@ var RoutePlugin = (function () {
                         changeType: 'window.open',
                         enterTime: getTimestamp()
                     };
-                    self.monitor.info({
+                    self.monitor.reportInfo('INFO', {
                         pluginName: self.name,
                         message: "window.open -> ".concat(url),
                         url: window.location.href,
@@ -1709,7 +1705,7 @@ var RoutePlugin = (function () {
         if (this.lastRoute && this.routeEnterTime) {
             var leaveTime = getTimestamp();
             var duration = leaveTime - this.routeEnterTime;
-            this.monitor.info({
+            this.monitor.reportInfo('INFO', {
                 pluginName: this.name,
                 message: "Route Left: ".concat(this.lastRoute),
                 extraData: {
@@ -2088,7 +2084,7 @@ var PerformancePlugin = (function () {
                 list.getEntries().forEach(function (entry) {
                     var _a;
                     if (entry.entryType === 'longtask') {
-                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info({
+                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                             pluginName: _this.name,
                             message: 'Long Task Detected',
                             url: window.location.href,
@@ -2170,7 +2166,7 @@ var PerformancePlugin = (function () {
                         totalDiff > 5 * 1024 * 1024 ||
                         percent > 0.9 ||
                         isLeakDetected) {
-                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info({
+                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                             pluginName: _this.name,
                             message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
                             url: window.location.href,
@@ -2251,7 +2247,7 @@ var PerformancePlugin = (function () {
             var frameTime = now - lastFrameTime;
             if (frameTime > 33) {
                 var isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
-                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.warn({
+                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'Frame Drop Detected',
                     url: window.location.href,
@@ -2278,7 +2274,7 @@ var PerformancePlugin = (function () {
                     avgFps = Math.round(fpsList.reduce(function (a, b) { return a + b; }, 0) / fpsList.length);
                 }
                 if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
-                    (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.info({
+                    (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.reportInfo('INFO', {
                         pluginName: _this.name,
                         message: 'FPS Report',
                         url: window.location.href,
@@ -2359,7 +2355,7 @@ var PerformancePlugin = (function () {
                         var encodedBodySize = typeof resourceEntry.encodedBodySize === 'number' ? resourceEntry.encodedBodySize : 0;
                         var decodedBodySize = typeof resourceEntry.decodedBodySize === 'number' ? resourceEntry.decodedBodySize : 0;
                         var fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
-                        _this.monitor.info({
+                        _this.monitor.reportInfo('INFO', {
                             pluginName: _this.name,
                             message: "Resource loaded: ".concat(resourceEntry.name),
                             url: window.location.href,
@@ -2393,7 +2389,7 @@ var PerformancePlugin = (function () {
                 list.getEntries().forEach(function (entry) {
                     if (entry.entryType === 'navigation') {
                         var navEntry = entry;
-                        _this.monitor.info({
+                        _this.monitor.reportInfo('INFO', {
                             pluginName: _this.name,
                             message: 'Page navigation performance',
                             url: window.location.href,
@@ -2414,7 +2410,7 @@ var PerformancePlugin = (function () {
         var _this = this;
         try {
             x(function (metric) {
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'Largest Contentful Paint (LCP)',
                     url: window.location.href,
@@ -2424,7 +2420,7 @@ var PerformancePlugin = (function () {
                 });
             });
             S(function (metric) {
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'Interaction to Next Paint (INP)',
                     url: window.location.href,
@@ -2434,7 +2430,7 @@ var PerformancePlugin = (function () {
                 });
             });
             L(function (metric) {
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'Cumulative Layout Shift (CLS)',
                     url: window.location.href,
@@ -2450,7 +2446,7 @@ var PerformancePlugin = (function () {
                 });
             });
             E(function (metric) {
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'First Contentful Paint (FCP)',
                     url: window.location.href,
@@ -2460,7 +2456,7 @@ var PerformancePlugin = (function () {
                 });
             });
             $(function (metric) {
-                _this.monitor.info({
+                _this.monitor.reportInfo('INFO', {
                     pluginName: _this.name,
                     message: 'Time to First Byte (TTFB)',
                     url: window.location.href,
@@ -2640,7 +2636,7 @@ var WhiteScreenPlugin = (function () {
         if (!this.monitor) {
             return;
         }
-        this.monitor.info({
+        this.monitor.reportInfo('INFO', {
             pluginName: this.name,
             message: "WhiteScreen check ".concat(status),
             url: window.location.href,
@@ -2702,7 +2698,7 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.error({
+                        self.monitor && self.monitor.reportInfo('ERROR', {
                             pluginName: self.name,
                             message: message || 'console.error',
                             url: window.location.href,
@@ -2736,7 +2732,7 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn({
+                        self.monitor && self.monitor.reportInfo('WARN', {
                             pluginName: self.name,
                             message: message || 'console.warn',
                             url: window.location.href,
@@ -2821,10 +2817,7 @@ var AnalyticsPlugin = (function () {
         }
     };
     AnalyticsPlugin.prototype.getTodayDate = function () {
-        if (this.monitor) {
-            return formatTimestamp('YYYY/MM/DD', getTimestamp());
-        }
-        return new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+        return formatTimestamp('YYYY/MM/DD', getTimestamp());
     };
     AnalyticsPlugin.prototype.getTodayKey = function (suffix) {
         var date = this.getTodayDate();
@@ -2856,7 +2849,7 @@ var AnalyticsPlugin = (function () {
                 });
                 try {
                     if (this.monitor) {
-                        this.monitor.info({
+                        this.monitor.reportInfo('INFO', {
                             pluginName: this.name,
                             message: 'analytics_history_before_cleanup',
                             extraData: {
@@ -2981,7 +2974,7 @@ var AnalyticsPlugin = (function () {
                 ip: ip || this.ipCached || null,
                 timestamp: getTimestamp(),
             };
-            this.monitor.info({
+            this.monitor.reportInfo('INFO', {
                 pluginName: this.name,
                 message: 'analytics_report',
                 url: window.location.href,
@@ -3009,6 +3002,8 @@ var BrowserMonitor = (function () {
         this.plugins = [];
         this.monitor = new FrontendMonitor();
         this.abortController = null;
+        this.isOnline = navigator.onLine;
+        this.cacheLog = [];
         var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g, _h = _a.consolePluginEnabled, consolePluginEnabled = _h === void 0 ? true : _h, _j = _a.analyticsPluginEnabled, analyticsPluginEnabled = _j === void 0 ? true : _j;
         this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
         var pluginsToRegister = [
@@ -3025,6 +3020,7 @@ var BrowserMonitor = (function () {
             _this.use(plugin.creator());
         });
         this.init();
+        this.setupNetworkListener();
     }
     BrowserMonitor.prototype.init = function () {
         var _this = this;
@@ -3046,8 +3042,55 @@ var BrowserMonitor = (function () {
             });
         }
     };
+    BrowserMonitor.prototype.setupNetworkListener = function () {
+        var _this = this;
+        var _a, _b;
+        window.addEventListener('online', function () {
+            _this.isOnline = true;
+            _this.monitor.reportInfo('INFO', {
+                pluginName: 'monitor-browser',
+                url: window.location.href,
+                extraData: {},
+                timestamp: getTimestamp(),
+                date: formatTimestamp(),
+                message: '设备恢复在线'
+            });
+            if (_this.cacheLog.length) {
+                _this.cacheLog.forEach(function (item) {
+                    _this.monitor.reportInfo(item.type, item.data);
+                });
+                _this.cacheLog = [];
+            }
+        }, { signal: (_a = this.abortController) === null || _a === void 0 ? void 0 : _a.signal });
+        window.addEventListener('offline', function () {
+            _this.isOnline = false;
+            _this.cacheLog.push({
+                type: 'OFF',
+                data: {
+                    pluginName: 'monitor-browser',
+                    url: window.location.href,
+                    extraData: {},
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp(),
+                    message: '设备离线'
+                }
+            });
+        }, {
+            signal: (_b = this.abortController) === null || _b === void 0 ? void 0 : _b.signal
+        });
+    };
     BrowserMonitor.prototype.setFingerprint = function (value) {
         this.monitor.setFingerprint(value);
+    };
+    BrowserMonitor.prototype.getFingerprint = function () {
+        return this.monitor.getFingerprint();
+    };
+    BrowserMonitor.prototype.reportInfo = function (type, data) {
+        if (!this.isOnline) {
+            this.cacheLog.push({ type: type, data: data });
+            return;
+        }
+        this.monitor.reportInfo(type, data);
     };
     BrowserMonitor.prototype.use = function (plugin) {
         if (!plugin.name) {
@@ -3064,7 +3107,7 @@ var BrowserMonitor = (function () {
             return;
         }
         this.plugins.push(plugin);
-        plugin.init(this.monitor);
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     };
     BrowserMonitor.prototype.destroy = function () {
         if (this.abortController) {

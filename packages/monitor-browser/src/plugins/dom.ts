@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
 import { getTimestamp, formatTimestamp } from '../utils';
 type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
@@ -14,7 +14,7 @@ export interface DomPluginConfig {
 }
 export class DomPlugin implements MonitorPlugin {
   name = 'dom';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
   private abortController: AbortController | null = null;
   private config: DomPluginConfig;
   constructor(config: DomPluginConfig = {}) {
@@ -27,7 +27,7 @@ export class DomPlugin implements MonitorPlugin {
     };
   }
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     this.setupDomMonitoring();
   }
@@ -50,7 +50,7 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听未捕获的错误
     this.config.error && window.addEventListener('error', (event: ErrorEvent) => {
-      this.monitor!.error({
+      this.monitor!.reportInfo('ERROR', {
         pluginName: this.name,
         message: `JavaScript Error: ${event.message}`,
         url: window.location.href,
@@ -68,7 +68,7 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听未处理的Promise拒绝
     this.config.unhandledrejection && window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      this.monitor!.error({
+      this.monitor!.reportInfo('ERROR', {
         pluginName: this.name,
         message: `Unhandled Promise Rejection: ${event.reason}`,
         url: window.location.href,
@@ -154,7 +154,7 @@ export class DomPlugin implements MonitorPlugin {
 
       if (!reportEl) { return; }
 
-      this.monitor!.debug({
+      this.monitor!.reportInfo('DEBUG', {
         pluginName: this.name,
         message: `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
         extraData: {
@@ -195,7 +195,7 @@ export class DomPlugin implements MonitorPlugin {
     // 监听窗口大小变化
     this.config.resize && window.addEventListener('resize', debounce(() => {
       const { innerWidth, innerHeight } = window;
-      this.monitor!.debug({
+      this.monitor?.reportInfo('DEBUG', {
         pluginName: this.name,
         message: `Window Resize: ${innerWidth}x${innerHeight}`,
         url: window.location.href,
@@ -249,7 +249,7 @@ export class DomPlugin implements MonitorPlugin {
     try {
       if (!this.monitor) { return; }
       const path = this.buildPathFromEvent(event);
-      this.monitor.info({
+      this.monitor.reportInfo('INFO', {
         pluginName: this.name,
         message: 'click_path',
         extraData: {

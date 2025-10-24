@@ -66,13 +66,19 @@ export interface ErrorInfo {
   [key: string]: any;
 }
 
+export type ReportInfo = (level: ReportingLevel, data: LogData) => void;
+export type MonitorPluginInitArg = {
+  reportInfo: ReportInfo;
+  getFingerprint: () => string;
+};
+
 // 插件接口
 export interface MonitorPlugin {
   // 插件名称
   name: string;
 
   // 插件初始化方法
-  init: (monitor: FrontendMonitor) => void;
+  init: (data: MonitorPluginInitArg) => void;
 
   // 插件销毁方法
   destroy?: () => void;
@@ -85,4 +91,12 @@ export interface LogData {
   extraData: Record<string, any>;
   timestamp: number;
   date: string;
+}
+
+export interface MonitorInstance {
+  reportInfo: ReportInfo;
+  setFingerprint: (value: string) => void;
+  getFingerprint: () => string;
+  use: (plugin: MonitorPlugin) => void
+  destroy: () => void
 }

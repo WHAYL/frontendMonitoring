@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { FrontendMonitor } from '@whayl/monitor-core';
+import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
@@ -15,7 +15,7 @@ export interface PerformancePluginConfig {
 
 export class PerformancePlugin implements MonitorPlugin {
   name = 'performance';
-  private monitor: FrontendMonitor | null = null;
+  private monitor: MonitorPluginInitArg | null = null;
   private resourceObserver: PerformanceObserver | null = null;
   private navigationObserver: PerformanceObserver | null = null;
   private paintObserver: PerformanceObserver | null = null;
@@ -38,7 +38,7 @@ export class PerformancePlugin implements MonitorPlugin {
     };
   }
 
-  init(monitor: FrontendMonitor): void {
+  init(monitor: MonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();
@@ -94,7 +94,7 @@ export class PerformancePlugin implements MonitorPlugin {
       this.longTaskObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
           if (entry.entryType === 'longtask') {
-            this.monitor?.info({
+            this.monitor?.reportInfo('INFO', {
               pluginName: this.name,
               message: 'Long Task Detected',
               url: window.location.href,
@@ -203,7 +203,7 @@ export class PerformancePlugin implements MonitorPlugin {
             percent > 0.9 || // 使用率超过90%
             isLeakDetected // 检测到内存泄漏
           ) {
-            this.monitor?.info({
+            this.monitor?.reportInfo('INFO', {
               pluginName: this.name,
               message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
               url: window.location.href,
@@ -322,7 +322,7 @@ export class PerformancePlugin implements MonitorPlugin {
       if (frameTime > 33) { // 超过2帧的时间(33ms)视为卡顿
         const isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
 
-        this.monitor?.warn({
+        this.monitor?.reportInfo('INFO', {
           pluginName: this.name,
           message: 'Frame Drop Detected',
           url: window.location.href,
@@ -355,7 +355,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
         // 上报条件：FPS低于阈值或波动较大
         if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
-          this.monitor?.info({
+          this.monitor?.reportInfo('INFO', {
             pluginName: this.name,
             message: 'FPS Report',
             url: window.location.href,
@@ -464,7 +464,7 @@ export class PerformancePlugin implements MonitorPlugin {
             const fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
 
             // 单独报告每个资源的加载情况（按需打开）
-            this.monitor!.info({
+            this.monitor!.reportInfo('INFO', {
               pluginName: this.name,
               message: `Resource loaded: ${resourceEntry.name}`,
               url: window.location.href,
@@ -504,7 +504,7 @@ export class PerformancePlugin implements MonitorPlugin {
             const navEntry = entry as PerformanceNavigationTiming;
 
             // 报告页面加载性能数据
-            this.monitor!.info({
+            this.monitor!.reportInfo('INFO', {
               pluginName: this.name,
               message: 'Page navigation performance',
               url: window.location.href,
@@ -534,7 +534,7 @@ export class PerformancePlugin implements MonitorPlugin {
     try {
       // 监控最大内容绘制 (LCP)
       onLCP((metric: LCPMetricWithAttribution) => {
-        this.monitor!.info({
+        this.monitor!.reportInfo('INFO', {
           pluginName: this.name,
           message: 'Largest Contentful Paint (LCP)',
           url: window.location.href,
@@ -554,7 +554,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
       // 监控首次输入延迟 (INP)
       onINP((metric: INPMetricWithAttribution) => {
-        this.monitor!.info({
+        this.monitor!.reportInfo('INFO', {
           pluginName: this.name,
           message: 'Interaction to Next Paint (INP)',
           url: window.location.href,
@@ -574,7 +574,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
       // 监控累积布局偏移 (CLS)
       onCLS((metric: CLSMetric) => {
-        this.monitor!.info({
+        this.monitor!.reportInfo('INFO', {
           pluginName: this.name,
           message: 'Cumulative Layout Shift (CLS)',
           url: window.location.href,
@@ -592,7 +592,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
       // 监控首次内容绘制 (FCP)
       onFCP((metric: FCPMetricWithAttribution) => {
-        this.monitor!.info(
+        this.monitor!.reportInfo('INFO',
           {
             pluginName: this.name,
             message: 'First Contentful Paint (FCP)',
@@ -614,7 +614,7 @@ export class PerformancePlugin implements MonitorPlugin {
 
       // 监控首字节时间 (TTFB)
       onTTFB((metric: TTFBMetricWithAttribution) => {
-        this.monitor!.info(
+        this.monitor!.reportInfo('INFO',
           {
             pluginName: this.name,
             message: 'Time to First Byte (TTFB)',

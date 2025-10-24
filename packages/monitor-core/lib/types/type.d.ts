@@ -1,4 +1,3 @@
-import type { FrontendMonitor } from "./monitor";
 export declare enum ReportLevelEnum {
     ERROR = 0,
     WARN = 1,
@@ -26,9 +25,14 @@ export interface ErrorInfo {
     userAgent?: string;
     [key: string]: any;
 }
+export type ReportInfo = (level: ReportingLevel, data: LogData) => void;
+export type MonitorPluginInitArg = {
+    reportInfo: ReportInfo;
+    getFingerprint: () => string;
+};
 export interface MonitorPlugin {
     name: string;
-    init: (monitor: FrontendMonitor) => void;
+    init: (data: MonitorPluginInitArg) => void;
     destroy?: () => void;
 }
 export interface LogData {
@@ -38,4 +42,11 @@ export interface LogData {
     extraData: Record<string, any>;
     timestamp: number;
     date: string;
+}
+export interface MonitorInstance {
+    reportInfo: ReportInfo;
+    setFingerprint: (value: string) => void;
+    getFingerprint: () => string;
+    use: (plugin: MonitorPlugin) => void;
+    destroy: () => void;
 }
