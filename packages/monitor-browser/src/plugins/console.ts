@@ -1,5 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
+import { getTimestamp, formatTimestamp } from '../utils';
 export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
@@ -38,7 +39,14 @@ export class ConsolePlugin implements MonitorPlugin {
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args, stack }, window.location.href);
+                        self.monitor && self.monitor.error({
+                            pluginName: self.name,
+                            message: message || 'console.error',
+                            url: window.location.href,
+                            extraData: { args, stack },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     } catch (e) {
                         // 忽略上报自身的错误
                     }
@@ -57,7 +65,14 @@ export class ConsolePlugin implements MonitorPlugin {
                         }).join(' ');
 
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args, stack }, window.location.href);
+                        self.monitor && self.monitor.warn({
+                            pluginName: self.name,
+                            message: message || 'console.warn',
+                            url: window.location.href,
+                            extraData: { args, stack },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     } catch (e) {
                         // 忽略
                     }

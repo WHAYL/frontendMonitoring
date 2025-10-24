@@ -1,6 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
+import { getTimestamp, formatTimestamp } from '../utils';
 type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
 export interface DomPluginConfig {
   error?: boolean;
@@ -49,26 +50,29 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听未捕获的错误
     this.config.error && window.addEventListener('error', (event: ErrorEvent) => {
-      this.monitor!.error(
-        this.name,
-        `JavaScript Error: ${event.message}`,
-        {
+      this.monitor!.error({
+        pluginName: this.name,
+        message: `JavaScript Error: ${event.message}`,
+        url: window.location.href,
+        extraData: {
           message: event.message,           // 错误信息
           filename: event.filename,         // 发生错误的文件
           lineno: event.lineno,             // 行号
           colno: event.colno,               // 列号
           error: event.error,               // Error 对象
         },
-        window.location.href
-      );
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     }, { signal });
 
     // 监听未处理的Promise拒绝
     this.config.unhandledrejection && window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      this.monitor!.error(
-        this.name,
-        `Unhandled Promise Rejection: ${event.reason}`,
-        {
+      this.monitor!.error({
+        pluginName: this.name,
+        message: `Unhandled Promise Rejection: ${event.reason}`,
+        url: window.location.href,
+        extraData: {
           type: event.type,
           // Promise 相关信息
           promise: event.promise,              // 被拒绝的 Promise 对象
@@ -83,8 +87,9 @@ export class DomPlugin implements MonitorPlugin {
           errorStack: event.reason?.stack,
           errorName: event.reason?.name,
         },
-        window.location.href
-      );
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     }, { signal });
 
     // 监听点击事件，记录用户交互
@@ -149,10 +154,10 @@ export class DomPlugin implements MonitorPlugin {
 
       if (!reportEl) { return; }
 
-      this.monitor!.debug(
-        this.name,
-        `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
-        {
+      this.monitor!.debug({
+        pluginName: this.name,
+        message: `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
+        extraData: {
           localName: reportEl.localName,
           // textContent: reportEl.textContent,
           classList: Array.from(reportEl.classList).join(','),
@@ -162,8 +167,10 @@ export class DomPlugin implements MonitorPlugin {
           tagName: reportEl.tagName,
           dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
         },
-        window.location.href
-      );
+        url: window.location.href,
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     };
 
     // 批量添加鼠标事件监听器
@@ -188,16 +195,18 @@ export class DomPlugin implements MonitorPlugin {
     // 监听窗口大小变化
     this.config.resize && window.addEventListener('resize', debounce(() => {
       const { innerWidth, innerHeight } = window;
-      this.monitor!.debug(
-        this.name,
-        `Window Resize: ${innerWidth}x${innerHeight}`,
-        {
+      this.monitor!.debug({
+        pluginName: this.name,
+        message: `Window Resize: ${innerWidth}x${innerHeight}`,
+        url: window.location.href,
+        extraData: {
           innerWidth,
           innerHeight,
           devicePixelRatio
         },
-        window.location.href
-      );
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     }, 500, true, true), { signal });
   }
 
@@ -240,19 +249,26 @@ export class DomPlugin implements MonitorPlugin {
     try {
       if (!this.monitor) { return; }
       const path = this.buildPathFromEvent(event);
-      this.monitor.info(this.name, 'click_path', {
-        timestamp: this.monitor.getTimestamp(),
-        path,
-        // 位置信息
-        x: event.clientX,
-        y: event.clientY,
-        // 页面状态
-        scrollX: window.scrollX,
-        scrollY: window.scrollY,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        url: typeof window !== 'undefined' ? window.location.href : '',
-      }, window.location.href);
+      this.monitor.info({
+        pluginName: this.name,
+        message: 'click_path',
+        extraData: {
+          timestamp: getTimestamp(),
+          path,
+          // 位置信息
+          x: event.clientX,
+          y: event.clientY,
+          // 页面状态
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          url: typeof window !== 'undefined' ? window.location.href : '',
+        },
+        url: window.location.href,
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     } catch (e) {
       // ignore
     }

@@ -1,5 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
+import { getTimestamp, formatTimestamp } from '../utils';
 
 interface XhrInfo {
   method: string;
@@ -27,7 +28,7 @@ export class XhrPlugin implements MonitorPlugin {
       this._xhrInfo = {
         method: method,
         url: url.toString(),
-        startTime: self.monitor!.getTimestamp()
+        startTime: getTimestamp()
       };
       // @ts-ignore
       self.xhrMap.set(this, this._xhrInfo);
@@ -64,13 +65,16 @@ export class XhrPlugin implements MonitorPlugin {
         // });
 
         this.addEventListener('error', function () {
-          const endTime = self.monitor!.getTimestamp();
+          const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
-          self.monitor!.error(
-            self.name,
-            `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
-            {
+          self.monitor!.error({
+            pluginName: self.name,
+            message: `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
+            url: window.location.href,
+            timestamp: getTimestamp(),
+            date: formatTimestamp(),
+            extraData: {
               type: 'xhr',
               url: xhrInfo.url,
               method: xhrInfo.method,
@@ -78,22 +82,24 @@ export class XhrPlugin implements MonitorPlugin {
               startTime: xhrInfo.startTime,
               endTime,
               duration
-            },
-            window.location.href
-          );
+            }
+          });
 
           // 清理
           self.xhrMap.delete(this);
         });
 
         this.addEventListener('timeout', function () {
-          const endTime = self.monitor!.getTimestamp();
+          const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
-          self.monitor!.error(
-            self.name,
-            `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
-            {
+          self.monitor!.error({
+            pluginName: self.name,
+            message: `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
+            url: window.location.href,
+            timestamp: getTimestamp(),
+            date: formatTimestamp(),
+            extraData: {
               type: 'xhr',
               url: xhrInfo.url,
               method: xhrInfo.method,
@@ -101,9 +107,8 @@ export class XhrPlugin implements MonitorPlugin {
               startTime: xhrInfo.startTime,
               endTime,
               duration
-            },
-            window.location.href
-          );
+            }
+          });
 
           // 清理
           self.xhrMap.delete(this);

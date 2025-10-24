@@ -31,3 +31,11 @@ export interface MonitorPlugin {
     init: (monitor: FrontendMonitor) => void;
     destroy?: () => void;
 }
+export interface LogData {
+    pluginName: string;
+    message: string;
+    url: string;
+    extraData: Record<string, any>;
+    timestamp: number;
+    date: string;
+}

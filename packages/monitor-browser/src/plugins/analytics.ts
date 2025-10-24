@@ -1,6 +1,7 @@
 import type { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { monitor } from '@whayl/monitor-core';
+import { getTimestamp, formatTimestamp } from '../utils';
 
 export interface AnalyticsPluginConfig {
     // 可选获取公网 IP 的异步函数（例如调用第三方服务），返回 IP 字符串
@@ -73,7 +74,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
         // 返回 YYYY/MM/DD
         if (this.monitor) {
             // 使用 monitor 的 formatTimestamp，参数顺序为 (format, timestamp)
-            return this.monitor.formatTimestamp('YYYY/MM/DD', this.monitor.getTimestamp());
+            return formatTimestamp('YYYY/MM/DD', getTimestamp());
         }
         return new Date().toISOString().slice(0, 10).replace(/-/g, '/');
     }
@@ -113,10 +114,17 @@ export class AnalyticsPlugin implements MonitorPlugin {
 
                 try {
                     if (this.monitor) {
-                        this.monitor.info(this.name, 'analytics_history_before_cleanup', {
-                            reportedAt: this.monitor.getTimestamp(),
-                            items: oldRecords,
-                        }, window.location.href);
+                        this.monitor.info({
+                            pluginName: this.name,
+                            message: 'analytics_history_before_cleanup',
+                            extraData: {
+                                reportedAt: getTimestamp(),
+                                items: oldRecords,
+                            },
+                            url: window.location.href,
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                 } catch (e) {
                     // ignore reporting errors
@@ -148,7 +156,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             const uvSet = safeJSONParse<Record<string, number>>(localStorage.getItem(key), {});
             const id = fp || this.getClientId();
             if (!uvSet[id]) {
-                uvSet[id] = this.monitor?.getTimestamp() || Date.now();
+                uvSet[id] = getTimestamp() || Date.now();
                 localStorage.setItem(key, JSON.stringify(uvSet));
             }
         } catch (e) {
@@ -166,7 +174,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
                 const key = this.getTodayKey('vv');
                 const cur = safeJSONParse<number>(localStorage.getItem(key), 0) as number;
                 localStorage.setItem(key, JSON.stringify(cur + 1));
-                sessionStorage.setItem(sessionFlag, String(this.monitor?.getTimestamp() || Date.now()));
+                sessionStorage.setItem(sessionFlag, String(getTimestamp() || Date.now()));
             }
         } catch (e) {
             // ignore
@@ -198,7 +206,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             const key = '__whayl_client_id__';
             let id = localStorage.getItem(key);
             if (!id) {
-                id = `${this.monitor?.getTimestamp() || Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+                id = `${getTimestamp() || Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
                 localStorage.setItem(key, id);
             }
             return id;
@@ -228,11 +236,18 @@ export class AnalyticsPlugin implements MonitorPlugin {
                 uv,
                 vv,
                 ip: ip || this.ipCached || null,
-                timestamp: this.monitor.getTimestamp(),
+                timestamp: getTimestamp(),
             };
 
             // 使用 info 级别上报统计数据
-            this.monitor.info(this.name, 'analytics_report', payload, window.location.href);
+            this.monitor.info({
+                pluginName: this.name,
+                message: 'analytics_report',
+                url: window.location.href,
+                extraData: payload,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         } catch (e) {
             // ignore
         }

@@ -1,7 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
-
+import { getTimestamp, formatTimestamp } from '../utils';
 export class RoutePlugin implements MonitorPlugin {
   name = 'route';
   private monitor: FrontendMonitor | null = null;
@@ -65,15 +65,17 @@ export class RoutePlugin implements MonitorPlugin {
     this.recordRouteEnter();
 
     // 记录初始路由
-    this.monitor!.info(
-      this.name,
-      `Initial Route: ${this.lastRoute}`,
-      {
+    this.monitor!.info({
+      pluginName: this.name,
+      message: `Initial Route: ${this.lastRoute}`,
+      extraData: {
         route: this.lastRoute,
         enterTime: this.routeEnterTime
       },
-      window.location.href
-    );
+      url: window.location.href,
+      timestamp: getTimestamp(),
+      date: formatTimestamp()
+    });
   }
 
   private handleHashChange(): void {
@@ -107,12 +109,14 @@ export class RoutePlugin implements MonitorPlugin {
         enterTime: this.routeEnterTime
       };
       // 记录路由变更
-      this.monitor!.info(
-        this.name,
-        `Route Changed (${changeType}): ${currentRoute}`,
-        data,
-        window.location.href
-      );
+      this.monitor!.info({
+        pluginName: this.name,
+        message: `Route Changed (${changeType}): ${currentRoute}`,
+        extraData: data,
+        url: window.location.href,
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
       monitorRouteChange.emit("monitorRouteChange", data);
     }
   }
@@ -157,9 +161,16 @@ export class RoutePlugin implements MonitorPlugin {
             previousRoute: self.lastRoute,
             currentRoute: url,
             changeType: 'window.open',
-            enterTime: self.monitor!.getTimestamp()
+            enterTime: getTimestamp()
           };
-          self.monitor!.info(self.name, `window.open -> ${url}`, data, window.location.href);
+          self.monitor!.info({
+            pluginName: self.name,
+            message: `window.open -> ${url}`,
+            url: window.location.href,
+            extraData: data,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+          });
           monitorRouteChange.emit('monitorRouteChange', data);
         } catch (e) {
           // ignore
@@ -188,11 +199,18 @@ export class RoutePlugin implements MonitorPlugin {
         previousRoute: this.lastRoute,
         currentRoute: href,
         changeType: 'a.click',
-        enterTime: self.monitor!.getTimestamp(),
+        enterTime: getTimestamp(),
         target: a.target
       } as any;
 
-      this.monitor!.info(this.name, `A tag clicked -> ${href}`, data, window.location.href);
+      this.monitor!.info({
+        pluginName: this.name,
+        message: `A tag clicked -> ${href}`,
+        url: window.location.href,
+        extraData: data,
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
       monitorRouteChange.emit('monitorRouteChange', data);
     } catch (e) {
       // ignore
@@ -211,7 +229,7 @@ export class RoutePlugin implements MonitorPlugin {
    * 记录路由进入时间
    */
   private recordRouteEnter(): void {
-    this.routeEnterTime = this.monitor!.getTimestamp();
+    this.routeEnterTime = getTimestamp();
   }
 
   /**
@@ -219,20 +237,22 @@ export class RoutePlugin implements MonitorPlugin {
    */
   private recordRouteLeave(): void {
     if (this.lastRoute && this.routeEnterTime) {
-      const leaveTime = this.monitor!.getTimestamp();
+      const leaveTime = getTimestamp();
       const duration = leaveTime - this.routeEnterTime;
 
-      this.monitor!.info(
-        this.name,
-        `Route Left: ${this.lastRoute}`,
-        {
+      this.monitor!.info({
+        pluginName: this.name,
+        message: `Route Left: ${this.lastRoute}`,
+        extraData: {
           route: this.lastRoute,
           enterTime: this.routeEnterTime,
           leaveTime: leaveTime,
           duration: duration
         },
-        window.location.href
-      );
+        url: window.location.href,
+        timestamp: getTimestamp(),
+        date: formatTimestamp()
+      });
     }
   }
 }

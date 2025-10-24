@@ -1,6 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
+import { getTimestamp, formatTimestamp } from '../utils';
 export interface WhiteScreenPluginConfig {
   keySelectors?: string[]; // 关键渲染元素选择器
   checkInterval?: number; // 检测间隔ms
@@ -34,7 +35,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   }
   run(): void {
     if (!this.monitor) { return; }
-    this.startTime = this.monitor.getTimestamp();
+    this.startTime = getTimestamp();
     this.resolved = false;
     this.startCheck();
   }
@@ -61,16 +62,16 @@ export class WhiteScreenPlugin implements MonitorPlugin {
   private startCheck() {
     const { checkInterval, timeout } = this.config;
     if (!this.monitor) { return; }
-    const start = this.monitor.getTimestamp();
+    const start = getTimestamp();
     this.timer = window.setInterval(() => {
       if (this.resolved || !this.monitor) { return; }
       const visible = this.checkKeyElements();
       if (visible) {
-        this.endTime = this.monitor.getTimestamp();
+        this.endTime = getTimestamp();
         this.report('success');
         this.clearEffects();
-      } else if (this.monitor.getTimestamp() - start > (timeout || 8000)) {
-        this.endTime = this.monitor.getTimestamp();
+      } else if (getTimestamp() - start > (timeout || 8000)) {
+        this.endTime = getTimestamp();
         this.report('timeout');
         this.clearEffects();
       }
@@ -154,10 +155,11 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
   private report(status: 'success' | 'timeout') {
     if (!this.monitor) { return; }
-    this.monitor.info(
-      this.name,
-      `WhiteScreen check ${status}`,
-      {
+    this.monitor.info({
+      pluginName: this.name,
+      message: `WhiteScreen check ${status}`,
+      url: window.location.href,
+      extraData: {
         status,
         page: window.location.href,
         startTime: this.startTime,
@@ -165,7 +167,8 @@ export class WhiteScreenPlugin implements MonitorPlugin {
         duration: this.endTime - this.startTime,
         selectors: this.config.keySelectors
       },
-      window.location.href
-    );
+      timestamp: getTimestamp(),
+      date: formatTimestamp()
+    });
   }
 }

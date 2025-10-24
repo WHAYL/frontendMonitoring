@@ -2,6 +2,7 @@ import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
 import { monitorRouteChange } from '../eventBus';
+import { getTimestamp, formatTimestamp } from '../utils';
 
 export interface PerformancePluginConfig {
   longTaskEnabled?: boolean;
@@ -90,18 +91,20 @@ export class PerformancePlugin implements MonitorPlugin {
       this.longTaskObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
           if (entry.entryType === 'longtask') {
-            this.monitor?.info(
-              this.name,
-              'Long Task Detected',
-              {
+            this.monitor?.info({
+              pluginName: this.name,
+              message: 'Long Task Detected',
+              url: window.location.href,
+              extraData: {
                 type: 'longtask',
                 name: (entry as any).name,
                 startTime: entry.startTime,
                 duration: entry.duration,
                 attribution: (entry as any).attribution || []
               },
-              window.location.href
-            );
+              timestamp: getTimestamp(),
+              date: formatTimestamp()
+            });
           }
         });
       });
@@ -197,10 +200,11 @@ export class PerformancePlugin implements MonitorPlugin {
             percent > 0.9 || // 使用率超过90%
             isLeakDetected // 检测到内存泄漏
           ) {
-            this.monitor?.info(
-              this.name,
-              isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
-              {
+            this.monitor?.info({
+              pluginName: this.name,
+              message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
+              url: window.location.href,
+              extraData: {
                 type: 'memory',
                 jsHeapSizeLimit: memory.jsHeapSizeLimit,
                 totalJSHeapSize: memory.totalJSHeapSize,
@@ -214,8 +218,9 @@ export class PerformancePlugin implements MonitorPlugin {
                 timestamp: Date.now(),
                 isLeakDetected
               },
-              window.location.href
-            );
+              timestamp: getTimestamp(),
+              date: formatTimestamp()
+            });
           }
 
           lastUsed = memory.usedJSHeapSize;
@@ -315,10 +320,11 @@ export class PerformancePlugin implements MonitorPlugin {
       if (frameTime > 33) { // 超过2帧的时间(33ms)视为卡顿
         const isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
 
-        this.monitor?.warn(
-          this.name,
-          'Frame Drop Detected',
-          {
+        this.monitor?.warn({
+          pluginName: this.name,
+          message: 'Frame Drop Detected',
+          url: window.location.href,
+          extraData: {
             type: 'frame_drop',
             frameTime: Math.round(frameTime * 100) / 100, // 保留2位小数
             expectedFrameTime: 16.67,
@@ -326,8 +332,9 @@ export class PerformancePlugin implements MonitorPlugin {
             isDuringInteraction,
             timeSinceLastInteraction: now - lastUserInteraction
           },
-          window.location.href
-        );
+          timestamp: getTimestamp(),
+          date: formatTimestamp()
+        });
       }
 
       // 每秒计算一次FPS
@@ -346,10 +353,11 @@ export class PerformancePlugin implements MonitorPlugin {
 
         // 上报条件：FPS低于阈值或波动较大
         if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
-          this.monitor?.info(
-            this.name,
-            'FPS Report',
-            {
+          this.monitor?.info({
+            pluginName: this.name,
+            message: 'FPS Report',
+            url: window.location.href,
+            extraData: {
               type: 'fps',
               fps,
               minFps: Math.round(minFps),
@@ -359,8 +367,9 @@ export class PerformancePlugin implements MonitorPlugin {
               timestamp: now,
               duration: now - lastReportTime
             },
-            window.location.href
-          );
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+          });
         }
 
         // 保持FPS历史记录在合理范围内
@@ -448,10 +457,11 @@ export class PerformancePlugin implements MonitorPlugin {
             const fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
 
             // 单独报告每个资源的加载情况（按需打开）
-            this.monitor!.info(
-              this.name,
-              `Resource loaded: ${resourceEntry.name}`,
-              {
+            this.monitor!.info({
+              pluginName: this.name,
+              message: `Resource loaded: ${resourceEntry.name}`,
+              url: window.location.href,
+              extraData: {
                 type: 'resource',
                 name: resourceEntry.name,
                 duration: resourceEntry.duration,
@@ -462,8 +472,9 @@ export class PerformancePlugin implements MonitorPlugin {
                 initiatorType: initiatorType,
                 cached: fromCache
               },
-              window.location.href
-            );
+              timestamp: getTimestamp(),
+              date: formatTimestamp()
+            });
           }
         });
 
@@ -486,15 +497,17 @@ export class PerformancePlugin implements MonitorPlugin {
             const navEntry = entry as PerformanceNavigationTiming;
 
             // 报告页面加载性能数据
-            this.monitor!.info(
-              this.name,
-              'Page navigation performance',
-              {
+            this.monitor!.info({
+              pluginName: this.name,
+              message: 'Page navigation performance',
+              url: window.location.href,
+              extraData: {
                 type: 'navigation',
                 ...navEntry.toJSON()
               },
-              window.location.href
-            );
+              timestamp: getTimestamp(),
+              date: formatTimestamp()
+            });
 
           }
         });
@@ -514,10 +527,11 @@ export class PerformancePlugin implements MonitorPlugin {
     try {
       // 监控最大内容绘制 (LCP)
       onLCP((metric: LCPMetricWithAttribution) => {
-        this.monitor!.info(
-          this.name,
-          'Largest Contentful Paint (LCP)',
-          {
+        this.monitor!.info({
+          pluginName: this.name,
+          message: 'Largest Contentful Paint (LCP)',
+          url: window.location.href,
+          extraData: {
             type: 'web_vitals',
             metric: 'LCP',
             value: metric.value,
@@ -526,16 +540,18 @@ export class PerformancePlugin implements MonitorPlugin {
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 2500, 4000) // LCP评级：好(<=2.5s)、需要改进(<=4s)、差(>4s)
           },
-          window.location.href
-        );
+          timestamp: getTimestamp(),
+          date: formatTimestamp()
+        });
       });
 
       // 监控首次输入延迟 (INP)
       onINP((metric: INPMetricWithAttribution) => {
-        this.monitor!.info(
-          this.name,
-          'Interaction to Next Paint (INP)',
-          {
+        this.monitor!.info({
+          pluginName: this.name,
+          message: 'Interaction to Next Paint (INP)',
+          url: window.location.href,
+          extraData: {
             type: 'web_vitals',
             metric: 'INP',
             value: metric.value,
@@ -544,59 +560,70 @@ export class PerformancePlugin implements MonitorPlugin {
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 200, 500) // INP评级：好(<=200ms)、需要改进(<=500ms)、差(>500ms)
           },
-          window.location.href
-        );
+          timestamp: getTimestamp(),
+          date: formatTimestamp()
+        });
       });
 
       // 监控累积布局偏移 (CLS)
       onCLS((metric: CLSMetric) => {
-        this.monitor!.info(
-          this.name,
-          'Cumulative Layout Shift (CLS)',
-          {
+        this.monitor!.info({
+          pluginName: this.name,
+          message: 'Cumulative Layout Shift (CLS)',
+          url: window.location.href,
+          extraData: {
             type: 'web_vitals',
             metric: 'CLS',
             value: metric.value,
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 0.1, 0.25) // CLS评级：好(<=0.1)、需要改进(<=0.25)、差(>0.25)
           },
-          window.location.href
-        );
+          timestamp: getTimestamp(),
+          date: formatTimestamp()
+        });
       });
 
       // 监控首次内容绘制 (FCP)
       onFCP((metric: FCPMetricWithAttribution) => {
         this.monitor!.info(
-          this.name,
-          'First Contentful Paint (FCP)',
           {
-            type: 'web_vitals',
-            metric: 'FCP',
-            value: metric.value,
-            // attribution 只在 FCP 中存在
-            ...(metric.attribution && { attribution: metric.attribution }),
-            navigationType: metric.navigationType,
-            rating: this.getRating(metric.value, 1800, 3000) // FCP评级：好(<=1.8s)、需要改进(<=3s)、差(>3s)
-          },
-          window.location.href
+            pluginName: this.name,
+            message: 'First Contentful Paint (FCP)',
+            url: window.location.href,
+            extraData: {
+              type: 'web_vitals',
+              metric: 'FCP',
+              value: metric.value,
+              // attribution 只在 FCP 中存在
+              ...(metric.attribution && { attribution: metric.attribution }),
+              navigationType: metric.navigationType,
+              rating: this.getRating(metric.value, 1800, 3000) // FCP评级：好(<=1.8s)、需要改进(<=3s)、差(>3s)
+            },
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+          }
         );
       });
 
       // 监控首字节时间 (TTFB)
       onTTFB((metric: TTFBMetricWithAttribution) => {
         this.monitor!.info(
-          this.name,
-          'Time to First Byte (TTFB)',
           {
-            type: 'web_vitals',
-            metric: 'TTFB',
-            value: metric.value,
-            // attribution 只在 TTFB 中存在
-            ...(metric.attribution && { attribution: metric.attribution }),
-            navigationType: metric.navigationType,
-            rating: this.getRating(metric.value, 800, 1800) // TTFB评级：好(<=800ms)、需要改进(<=1.8s)、差(>1.8s)
-          },
-          window.location.href
+            pluginName: this.name,
+            message: 'Time to First Byte (TTFB)',
+            url: window.location.href,
+            extraData: {
+              type: 'web_vitals',
+              metric: 'TTFB',
+              value: metric.value,
+              // attribution 只在 TTFB 中存在
+              ...(metric.attribution && { attribution: metric.attribution }),
+              navigationType: metric.navigationType,
+              rating: this.getRating(metric.value, 800, 1800) // TTFB评级：好(<=800ms)、需要改进(<=1.8s)、差(>1.8s)
+            },
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+          }
         );
       });
     } catch (error) {

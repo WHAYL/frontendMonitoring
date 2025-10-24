@@ -1,20 +1,18 @@
-import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin } from './type';
+import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin, type LogData } from './type';
 export declare class FrontendMonitor {
     private config;
     private storageQueue;
     private removedItems;
     private fingerprint;
     private oldFingerprint;
-    getTimestamp(): number;
-    formatTimestamp(format?: string, timestamp?: number): string;
     init(config: MonitorConfig): void;
     getFingerprint(): string;
     setFingerprint(fingerprint: string): void;
     private log;
-    error(pluginName: string, message: string, extraData: Record<string, any> | undefined, url: string): void;
-    warn(pluginName: string, message: string, extraData: Record<string, any> | undefined, url: string): void;
-    info(pluginName: string, message: string, extraData: Record<string, any> | undefined, url: string): void;
-    debug(pluginName: string, message: string, extraData: Record<string, any> | undefined, url: string): void;
+    error(info: LogData): void;
+    warn(info: LogData): void;
+    info(info: LogData): void;
+    debug(info: LogData): void;
     private checkAndReportStored;
     updateReportLevel(level: keyof typeof ReportLevelEnum): void;
     getStorageQueue(): ErrorInfo[];

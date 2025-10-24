@@ -1,4 +1,4 @@
-import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin } from './type';
+import { ReportLevelEnum, type MonitorConfig, type ErrorInfo, type MonitorPlugin, type LogData } from './type';
 import { MYSTORAGE_COUNT, IMMEDIATE_REPORT_LEVEL } from './const';
 
 /**
@@ -23,45 +23,6 @@ export class FrontendMonitor {
     private fingerprint: string = '';
 
     private oldFingerprint: string = '';
-
-    /**
-     * 获取高精度时间戳
-     * 优先使用 performance.now() + performance.timeOrigin，如果不支持则回退到 Date.now()
-     * @returns 时间戳（毫秒）
-     */
-    getTimestamp(): number {
-        return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
-            ? performance.now() + performance.timeOrigin
-            : Date.now();
-    }
-
-    /**
-     * 将高精度时间戳格式化为指定格式（默认 'YYYY/MM/DD hh:mm:ss.SSS'），支持占位符：YYYY, MM, DD, hh, mm, ss, SSS
-     * @param format 可选的格式字符串，默认为 'YYYY/MM/DD hh:mm:ss.SSS'
-     * @param timestamp 可选的时间戳（毫秒），不传则使用 getTimestamp()
-     */
-    formatTimestamp(format: string = 'YYYY/MM/DD hh:mm:ss.SSS', timestamp?: number,): string {
-        const ts = typeof timestamp === 'number' ? timestamp : this.getTimestamp();
-        const d = new Date(Math.floor(ts));
-        const pad = (n: number, len = 2) => n.toString().padStart(len, '0');
-        const year = d.getFullYear().toString();
-        const month = pad(d.getMonth() + 1);
-        const day = pad(d.getDate());
-        const hour = pad(d.getHours());
-        const minute = pad(d.getMinutes());
-        const second = pad(d.getSeconds());
-        const ms = pad(d.getMilliseconds(), 3);
-
-        // 简单的 token 替换
-        return format
-            .replace(/YYYY/g, year)
-            .replace(/MM/g, month)
-            .replace(/DD/g, day)
-            .replace(/hh/g, hour)
-            .replace(/mm/g, minute)
-            .replace(/ss/g, second)
-            .replace(/SSS/g, ms);
-    }
 
     /**
      * 初始化监控配置
@@ -93,26 +54,20 @@ export class FrontendMonitor {
      * @param message 日志消息
      * @param extraData 额外数据
      */
-    private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}, url: string): void {
+    private log(info: LogData & { level: keyof typeof ReportLevelEnum }): void {
         // 如果监控未启用，则直接返回
         if (!this.config.enabled) { return; }
 
         // 创建错误信息对象
         const errorInfo: ErrorInfo = {
-            level,
-            message,
-            timestamp: this.getTimestamp(), // 使用高精度时间戳
-            date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-            url,
-            pluginName,
+            ...info,
             fingerprint: this.fingerprint,
             oldFingerprint: this.oldFingerprint,
-            extraData,
             platform: this.config.platform
         };
 
         // 判断是否需要立即上报
-        if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
+        if (ReportLevelEnum[info.level] <= ReportLevelEnum[this.config.reportLevel]) {
             // 立即上报
             this.report(errorInfo);
         } else {
@@ -140,8 +95,8 @@ export class FrontendMonitor {
      * @param message 错误消息
      * @param extraData 额外数据
      */
-    error(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
-        this.log(pluginName, 'ERROR', message, extraData, url);
+    error(info: LogData): void {
+        this.log({ ...info, level: 'ERROR' });
     }
 
     /**
@@ -150,8 +105,8 @@ export class FrontendMonitor {
      * @param message 警告消息
      * @param extraData 额外数据
      */
-    warn(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
-        this.log(pluginName, 'WARN', message, extraData, url);
+    warn(info: LogData): void {
+        this.log({ ...info, level: 'WARN' });
     }
 
     /**
@@ -160,8 +115,8 @@ export class FrontendMonitor {
      * @param message 信息消息
      * @param extraData 额外数据
      */
-    info(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
-        this.log(pluginName, 'INFO', message, extraData, url);
+    info(info: LogData): void {
+        this.log({ ...info, level: 'INFO' });
     }
 
     /**
@@ -170,8 +125,11 @@ export class FrontendMonitor {
      * @param message 调试消息
      * @param extraData 额外数据
      */
-    debug(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
-        this.log(pluginName, 'DEBUG', message, extraData, url);
+    debug(info: LogData): void {
+        this.log({
+            ...info,
+            level: 'DEBUG'
+        });
     }
 
     /**

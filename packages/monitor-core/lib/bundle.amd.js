@@ -12,6 +12,37 @@ define(['exports'], (function (exports) { 'use strict';
         ReportLevelEnum[ReportLevelEnum["OFF"] = 4] = "OFF";
     })(exports.ReportLevelEnum || (exports.ReportLevelEnum = {}));
 
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+    var __assign = function () {
+      __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+      var e = new Error(message);
+      return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
     var FrontendMonitor = (function () {
         function FrontendMonitor() {
             this.config = {
@@ -26,35 +57,6 @@ define(['exports'], (function (exports) { 'use strict';
             this.fingerprint = '';
             this.oldFingerprint = '';
         }
-        FrontendMonitor.prototype.getTimestamp = function () {
-            return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
-                ? performance.now() + performance.timeOrigin
-                : Date.now();
-        };
-        FrontendMonitor.prototype.formatTimestamp = function (format, timestamp) {
-            if (format === void 0) { format = 'YYYY/MM/DD hh:mm:ss.SSS'; }
-            var ts = typeof timestamp === 'number' ? timestamp : this.getTimestamp();
-            var d = new Date(Math.floor(ts));
-            var pad = function (n, len) {
-                if (len === void 0) { len = 2; }
-                return n.toString().padStart(len, '0');
-            };
-            var year = d.getFullYear().toString();
-            var month = pad(d.getMonth() + 1);
-            var day = pad(d.getDate());
-            var hour = pad(d.getHours());
-            var minute = pad(d.getMinutes());
-            var second = pad(d.getSeconds());
-            var ms = pad(d.getMilliseconds(), 3);
-            return format
-                .replace(/YYYY/g, year)
-                .replace(/MM/g, month)
-                .replace(/DD/g, day)
-                .replace(/hh/g, hour)
-                .replace(/mm/g, minute)
-                .replace(/ss/g, second)
-                .replace(/SSS/g, ms);
-        };
         FrontendMonitor.prototype.init = function (config) {
             var _a;
             this.config = Object.assign(this.config, config);
@@ -67,24 +69,12 @@ define(['exports'], (function (exports) { 'use strict';
             this.oldFingerprint = this.fingerprint;
             this.fingerprint = fingerprint;
         };
-        FrontendMonitor.prototype.log = function (pluginName, level, message, extraData, url) {
-            if (extraData === void 0) { extraData = {}; }
+        FrontendMonitor.prototype.log = function (info) {
             if (!this.config.enabled) {
                 return;
             }
-            var errorInfo = {
-                level: level,
-                message: message,
-                timestamp: this.getTimestamp(),
-                date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-                url: url,
-                pluginName: pluginName,
-                fingerprint: this.fingerprint,
-                oldFingerprint: this.oldFingerprint,
-                extraData: extraData,
-                platform: this.config.platform
-            };
-            if (exports.ReportLevelEnum[level] <= exports.ReportLevelEnum[this.config.reportLevel]) {
+            var errorInfo = __assign(__assign({}, info), { fingerprint: this.fingerprint, oldFingerprint: this.oldFingerprint, platform: this.config.platform });
+            if (exports.ReportLevelEnum[info.level] <= exports.ReportLevelEnum[this.config.reportLevel]) {
                 this.report(errorInfo);
             }
             else {
@@ -101,21 +91,17 @@ define(['exports'], (function (exports) { 'use strict';
                 }
             }
         };
-        FrontendMonitor.prototype.error = function (pluginName, message, extraData, url) {
-            if (extraData === void 0) { extraData = {}; }
-            this.log(pluginName, 'ERROR', message, extraData, url);
+        FrontendMonitor.prototype.error = function (info) {
+            this.log(__assign(__assign({}, info), { level: 'ERROR' }));
         };
-        FrontendMonitor.prototype.warn = function (pluginName, message, extraData, url) {
-            if (extraData === void 0) { extraData = {}; }
-            this.log(pluginName, 'WARN', message, extraData, url);
+        FrontendMonitor.prototype.warn = function (info) {
+            this.log(__assign(__assign({}, info), { level: 'WARN' }));
         };
-        FrontendMonitor.prototype.info = function (pluginName, message, extraData, url) {
-            if (extraData === void 0) { extraData = {}; }
-            this.log(pluginName, 'INFO', message, extraData, url);
+        FrontendMonitor.prototype.info = function (info) {
+            this.log(__assign(__assign({}, info), { level: 'INFO' }));
         };
-        FrontendMonitor.prototype.debug = function (pluginName, message, extraData, url) {
-            if (extraData === void 0) { extraData = {}; }
-            this.log(pluginName, 'DEBUG', message, extraData, url);
+        FrontendMonitor.prototype.debug = function (info) {
+            this.log(__assign(__assign({}, info), { level: 'DEBUG' }));
         };
         FrontendMonitor.prototype.checkAndReportStored = function () {
             var _this = this;

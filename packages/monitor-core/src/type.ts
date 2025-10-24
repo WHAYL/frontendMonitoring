@@ -77,3 +77,12 @@ export interface MonitorPlugin {
   // 插件销毁方法
   destroy?: () => void;
 }
+
+export interface LogData {
+  pluginName: string;
+  message: string;
+  url: string;
+  extraData: Record<string, any>;
+  timestamp: number;
+  date: string;
+}

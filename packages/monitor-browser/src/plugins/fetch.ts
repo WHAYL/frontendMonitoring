@@ -1,6 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { FrontendMonitor } from '@whayl/monitor-core';
-
+import { getTimestamp, formatTimestamp } from '../utils';
 export class FetchPlugin implements MonitorPlugin {
   name = 'fetch';
   private monitor: FrontendMonitor | null = null;
@@ -15,7 +15,7 @@ export class FetchPlugin implements MonitorPlugin {
     const self = this;
 
     window.fetch = function (...args) {
-      const startTime = self.monitor!.getTimestamp();
+      const startTime = getTimestamp();
       const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url;
       let method = 'GET';
 
@@ -24,7 +24,7 @@ export class FetchPlugin implements MonitorPlugin {
       }
 
       return originalFetch.apply(this, args).then(response => {
-        const endTime = self.monitor!.getTimestamp();
+        const endTime = getTimestamp();
         const duration = endTime - startTime;
 
         // self.monitor!.info(
@@ -44,13 +44,14 @@ export class FetchPlugin implements MonitorPlugin {
 
         return response;
       }).catch(error => {
-        const endTime = self.monitor!.getTimestamp();
+        const endTime = getTimestamp();
         const duration = endTime - startTime;
 
-        self.monitor!.error(
-          self.name,
-          `Fetch Error: ${method} ${url} - ${error.message}`,
-          {
+        self.monitor!.error({
+          pluginName: self.name,
+          message: `Fetch Error: ${method} ${url} - ${error.message}`,
+          url: window.location.href,
+          extraData: {
             type: 'fetch',
             url,
             method,
@@ -60,8 +61,9 @@ export class FetchPlugin implements MonitorPlugin {
             endTime,
             duration
           },
-          window.location.href
-        );
+          timestamp: getTimestamp(),
+          date: formatTimestamp()
+        });
 
         throw error;
       });

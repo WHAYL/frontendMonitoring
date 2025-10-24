@@ -10,6 +10,37 @@ var ReportLevelEnum;
   ReportLevelEnum[ReportLevelEnum["DEBUG"] = 3] = "DEBUG";
   ReportLevelEnum[ReportLevelEnum["OFF"] = 4] = "OFF";
 })(ReportLevelEnum || (ReportLevelEnum = {}));
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+var __assign$1 = function () {
+  __assign$1 = Object.assign || function __assign(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+    }
+    return t;
+  };
+  return __assign$1.apply(this, arguments);
+};
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+  var e = new Error(message);
+  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 var FrontendMonitor = function () {
   function FrontendMonitor() {
     this.config = {
@@ -24,30 +55,6 @@ var FrontendMonitor = function () {
     this.fingerprint = '';
     this.oldFingerprint = '';
   }
-  FrontendMonitor.prototype.getTimestamp = function () {
-    return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number' ? performance.now() + performance.timeOrigin : Date.now();
-  };
-  FrontendMonitor.prototype.formatTimestamp = function (format, timestamp) {
-    if (format === void 0) {
-      format = 'YYYY/MM/DD hh:mm:ss.SSS';
-    }
-    var ts = typeof timestamp === 'number' ? timestamp : this.getTimestamp();
-    var d = new Date(Math.floor(ts));
-    var pad = function (n, len) {
-      if (len === void 0) {
-        len = 2;
-      }
-      return n.toString().padStart(len, '0');
-    };
-    var year = d.getFullYear().toString();
-    var month = pad(d.getMonth() + 1);
-    var day = pad(d.getDate());
-    var hour = pad(d.getHours());
-    var minute = pad(d.getMinutes());
-    var second = pad(d.getSeconds());
-    var ms = pad(d.getMilliseconds(), 3);
-    return format.replace(/YYYY/g, year).replace(/MM/g, month).replace(/DD/g, day).replace(/hh/g, hour).replace(/mm/g, minute).replace(/ss/g, second).replace(/SSS/g, ms);
-  };
   FrontendMonitor.prototype.init = function (config) {
     var _a;
     this.config = Object.assign(this.config, config);
@@ -60,26 +67,16 @@ var FrontendMonitor = function () {
     this.oldFingerprint = this.fingerprint;
     this.fingerprint = fingerprint;
   };
-  FrontendMonitor.prototype.log = function (pluginName, level, message, extraData, url) {
-    if (extraData === void 0) {
-      extraData = {};
-    }
+  FrontendMonitor.prototype.log = function (info) {
     if (!this.config.enabled) {
       return;
     }
-    var errorInfo = {
-      level: level,
-      message: message,
-      timestamp: this.getTimestamp(),
-      date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-      url: url,
-      pluginName: pluginName,
+    var errorInfo = __assign$1(__assign$1({}, info), {
       fingerprint: this.fingerprint,
       oldFingerprint: this.oldFingerprint,
-      extraData: extraData,
       platform: this.config.platform
-    };
-    if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
+    });
+    if (ReportLevelEnum[info.level] <= ReportLevelEnum[this.config.reportLevel]) {
       this.report(errorInfo);
     } else {
       this.storageQueue.push(errorInfo);
@@ -95,29 +92,25 @@ var FrontendMonitor = function () {
       }
     }
   };
-  FrontendMonitor.prototype.error = function (pluginName, message, extraData, url) {
-    if (extraData === void 0) {
-      extraData = {};
-    }
-    this.log(pluginName, 'ERROR', message, extraData, url);
+  FrontendMonitor.prototype.error = function (info) {
+    this.log(__assign$1(__assign$1({}, info), {
+      level: 'ERROR'
+    }));
   };
-  FrontendMonitor.prototype.warn = function (pluginName, message, extraData, url) {
-    if (extraData === void 0) {
-      extraData = {};
-    }
-    this.log(pluginName, 'WARN', message, extraData, url);
+  FrontendMonitor.prototype.warn = function (info) {
+    this.log(__assign$1(__assign$1({}, info), {
+      level: 'WARN'
+    }));
   };
-  FrontendMonitor.prototype.info = function (pluginName, message, extraData, url) {
-    if (extraData === void 0) {
-      extraData = {};
-    }
-    this.log(pluginName, 'INFO', message, extraData, url);
+  FrontendMonitor.prototype.info = function (info) {
+    this.log(__assign$1(__assign$1({}, info), {
+      level: 'INFO'
+    }));
   };
-  FrontendMonitor.prototype.debug = function (pluginName, message, extraData, url) {
-    if (extraData === void 0) {
-      extraData = {};
-    }
-    this.log(pluginName, 'DEBUG', message, extraData, url);
+  FrontendMonitor.prototype.debug = function (info) {
+    this.log(__assign$1(__assign$1({}, info), {
+      level: 'DEBUG'
+    }));
   };
   FrontendMonitor.prototype.checkAndReportStored = function () {
     var _this = this;
@@ -177,6 +170,36 @@ var FrontendMonitor = function () {
 }();
 var monitor = new FrontendMonitor();
 
+function getTimestamp() {
+    return typeof performance !== 'undefined' && typeof performance.now === 'function' && typeof performance.timeOrigin === 'number'
+        ? performance.now() + performance.timeOrigin
+        : Date.now();
+}
+function formatTimestamp(format, timestamp) {
+    if (format === void 0) { format = 'YYYY/MM/DD hh:mm:ss.SSS'; }
+    var ts = typeof timestamp === 'number' ? timestamp : getTimestamp();
+    var d = new Date(Math.floor(ts));
+    var pad = function (n, len) {
+        if (len === void 0) { len = 2; }
+        return n.toString().padStart(len, '0');
+    };
+    var year = d.getFullYear().toString();
+    var month = pad(d.getMonth() + 1);
+    var day = pad(d.getDate());
+    var hour = pad(d.getHours());
+    var minute = pad(d.getMinutes());
+    var second = pad(d.getSeconds());
+    var ms = pad(d.getMilliseconds(), 3);
+    return format
+        .replace(/YYYY/g, year)
+        .replace(/MM/g, month)
+        .replace(/DD/g, day)
+        .replace(/hh/g, hour)
+        .replace(/mm/g, minute)
+        .replace(/ss/g, second)
+        .replace(/SSS/g, ms);
+}
+
 var XhrPlugin = (function () {
     function XhrPlugin() {
         this.name = 'xhr';
@@ -195,7 +218,7 @@ var XhrPlugin = (function () {
             this._xhrInfo = {
                 method: method,
                 url: url.toString(),
-                startTime: self.monitor.getTimestamp()
+                startTime: getTimestamp()
             };
             self.xhrMap.set(this, this._xhrInfo);
             originalOpen.apply(this, arguments);
@@ -204,31 +227,45 @@ var XhrPlugin = (function () {
             var xhrInfo = self.xhrMap.get(this);
             if (xhrInfo) {
                 this.addEventListener('error', function () {
-                    var endTime = self.monitor.getTimestamp();
+                    var endTime = getTimestamp();
                     var duration = endTime - xhrInfo.startTime;
-                    self.monitor.error(self.name, "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
-                        type: 'xhr',
-                        url: xhrInfo.url,
-                        method: xhrInfo.method,
-                        error: 'Network Error',
-                        startTime: xhrInfo.startTime,
-                        endTime: endTime,
-                        duration: duration
-                    }, window.location.href);
+                    self.monitor.error({
+                        pluginName: self.name,
+                        message: "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
+                        url: window.location.href,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        extraData: {
+                            type: 'xhr',
+                            url: xhrInfo.url,
+                            method: xhrInfo.method,
+                            error: 'Network Error',
+                            startTime: xhrInfo.startTime,
+                            endTime: endTime,
+                            duration: duration
+                        }
+                    });
                     self.xhrMap.delete(this);
                 });
                 this.addEventListener('timeout', function () {
-                    var endTime = self.monitor.getTimestamp();
+                    var endTime = getTimestamp();
                     var duration = endTime - xhrInfo.startTime;
-                    self.monitor.error(self.name, "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url), {
-                        type: 'xhr',
-                        url: xhrInfo.url,
-                        method: xhrInfo.method,
-                        error: 'Timeout',
-                        startTime: xhrInfo.startTime,
-                        endTime: endTime,
-                        duration: duration
-                    }, window.location.href);
+                    self.monitor.error({
+                        pluginName: self.name,
+                        message: "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
+                        url: window.location.href,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        extraData: {
+                            type: 'xhr',
+                            url: xhrInfo.url,
+                            method: xhrInfo.method,
+                            error: 'Timeout',
+                            startTime: xhrInfo.startTime,
+                            endTime: endTime,
+                            duration: duration
+                        }
+                    });
                     self.xhrMap.delete(this);
                 });
             }
@@ -259,28 +296,35 @@ var FetchPlugin = (function () {
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
-            var startTime = self.monitor.getTimestamp();
+            var startTime = getTimestamp();
             var url = typeof args[0] === 'string' ? args[0] : args[0].url;
             var method = 'GET';
             if (args[1] && args[1].method) {
                 method = args[1].method;
             }
             return originalFetch.apply(this, args).then(function (response) {
-                self.monitor.getTimestamp();
+                getTimestamp();
                 return response;
             }).catch(function (error) {
-                var endTime = self.monitor.getTimestamp();
+                var endTime = getTimestamp();
                 var duration = endTime - startTime;
-                self.monitor.error(self.name, "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message), {
-                    type: 'fetch',
-                    url: url,
-                    method: method,
-                    error: error.message,
-                    stack: error.stack,
-                    startTime: startTime,
-                    endTime: endTime,
-                    duration: duration
-                }, window.location.href);
+                self.monitor.error({
+                    pluginName: self.name,
+                    message: "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message),
+                    url: window.location.href,
+                    extraData: {
+                        type: 'fetch',
+                        url: url,
+                        method: method,
+                        error: error.message,
+                        stack: error.stack,
+                        startTime: startTime,
+                        endTime: endTime,
+                        duration: duration
+                    },
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
                 throw error;
             });
         };
@@ -1228,26 +1272,40 @@ var DomPlugin = (function () {
         this.abortController = new AbortController();
         var signal = this.abortController.signal;
         this.config.error && window.addEventListener('error', function (event) {
-            _this.monitor.error(_this.name, "JavaScript Error: ".concat(event.message), {
-                message: event.message,
-                filename: event.filename,
-                lineno: event.lineno,
-                colno: event.colno,
-                error: event.error,
-            }, window.location.href);
+            _this.monitor.error({
+                pluginName: _this.name,
+                message: "JavaScript Error: ".concat(event.message),
+                url: window.location.href,
+                extraData: {
+                    message: event.message,
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno,
+                    error: event.error,
+                },
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }, { signal: signal });
         this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
             var _a, _b, _c;
-            _this.monitor.error(_this.name, "Unhandled Promise Rejection: ".concat(event.reason), {
-                type: event.type,
-                promise: event.promise,
-                reason: event.reason,
-                reasonType: typeof event.reason,
-                isError: event.reason instanceof Error,
-                errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
-                errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
-                errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
-            }, window.location.href);
+            _this.monitor.error({
+                pluginName: _this.name,
+                message: "Unhandled Promise Rejection: ".concat(event.reason),
+                url: window.location.href,
+                extraData: {
+                    type: event.type,
+                    promise: event.promise,
+                    reason: event.reason,
+                    reasonType: typeof event.reason,
+                    isError: event.reason instanceof Error,
+                    errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
+                    errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
+                    errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
+                },
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }, { signal: signal });
         var mouseEventHandler = function (eventType) { return function (event) {
             if (!_this.config.mouseEvents || !_this.config.mouseEvents[eventType]) {
@@ -1313,18 +1371,25 @@ var DomPlugin = (function () {
             if (!reportEl) {
                 return;
             }
-            _this.monitor.debug(_this.name, "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''), {
-                localName: reportEl.localName,
-                classList: Array.from(reportEl.classList).join(','),
-                className: reportEl.className,
-                id: reportEl.id,
-                nodeName: reportEl.nodeName,
-                tagName: reportEl.tagName,
-                dataSet: Object.entries(reportEl.dataset).map(function (_a) {
-                    var key = _a[0], value = _a[1];
-                    return "".concat(key, ":").concat(value);
-                }).join(','),
-            }, window.location.href);
+            _this.monitor.debug({
+                pluginName: _this.name,
+                message: "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''),
+                extraData: {
+                    localName: reportEl.localName,
+                    classList: Array.from(reportEl.classList).join(','),
+                    className: reportEl.className,
+                    id: reportEl.id,
+                    nodeName: reportEl.nodeName,
+                    tagName: reportEl.tagName,
+                    dataSet: Object.entries(reportEl.dataset).map(function (_a) {
+                        var key = _a[0], value = _a[1];
+                        return "".concat(key, ":").concat(value);
+                    }).join(','),
+                },
+                url: window.location.href,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }; };
         if (this.config.mouseEvents && Object.keys(this.config.mouseEvents).length > 0) {
             Object.keys(this.config.mouseEvents).forEach(function (eventType) {
@@ -1343,11 +1408,18 @@ var DomPlugin = (function () {
         }
         this.config.resize && window.addEventListener('resize', g$1(function () {
             var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
-            _this.monitor.debug(_this.name, "Window Resize: ".concat(innerWidth, "x").concat(innerHeight), {
-                innerWidth: innerWidth,
-                innerHeight: innerHeight,
-                devicePixelRatio: devicePixelRatio
-            }, window.location.href);
+            _this.monitor.debug({
+                pluginName: _this.name,
+                message: "Window Resize: ".concat(innerWidth, "x").concat(innerHeight),
+                url: window.location.href,
+                extraData: {
+                    innerWidth: innerWidth,
+                    innerHeight: innerHeight,
+                    devicePixelRatio: devicePixelRatio
+                },
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }, 500, true), { signal: signal });
     };
     DomPlugin.prototype.describeElement = function (el) {
@@ -1397,17 +1469,24 @@ var DomPlugin = (function () {
                 return;
             }
             var path = this.buildPathFromEvent(event);
-            this.monitor.info(this.name, 'click_path', {
-                timestamp: this.monitor.getTimestamp(),
-                path: path,
-                x: event.clientX,
-                y: event.clientY,
-                scrollX: window.scrollX,
-                scrollY: window.scrollY,
-                innerWidth: window.innerWidth,
-                innerHeight: window.innerHeight,
-                url: typeof window !== 'undefined' ? window.location.href : '',
-            }, window.location.href);
+            this.monitor.info({
+                pluginName: this.name,
+                message: 'click_path',
+                extraData: {
+                    timestamp: getTimestamp(),
+                    path: path,
+                    x: event.clientX,
+                    y: event.clientY,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight,
+                    url: typeof window !== 'undefined' ? window.location.href : '',
+                },
+                url: window.location.href,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }
         catch (e) {
         }
@@ -1429,7 +1508,6 @@ var RoutePlugin = (function () {
         this.originalReplaceState = null;
         this.originalWindowOpen = null;
         this.handleDocumentClick = function (ev) {
-            var self = _this;
             try {
                 var target = ev.target;
                 if (!target || !(target instanceof Element)) {
@@ -1447,10 +1525,17 @@ var RoutePlugin = (function () {
                     previousRoute: _this.lastRoute,
                     currentRoute: href,
                     changeType: 'a.click',
-                    enterTime: self.monitor.getTimestamp(),
+                    enterTime: getTimestamp(),
                     target: a.target
                 };
-                _this.monitor.info(_this.name, "A tag clicked -> ".concat(href), data, window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: "A tag clicked -> ".concat(href),
+                    url: window.location.href,
+                    extraData: data,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
                 monitorRouteChange.emit('monitorRouteChange', data);
             }
             catch (e) {
@@ -1502,10 +1587,17 @@ var RoutePlugin = (function () {
         this.wrapWindowOpen();
         window.addEventListener('beforeunload', this.handleBeforeUnload);
         this.recordRouteEnter();
-        this.monitor.info(this.name, "Initial Route: ".concat(this.lastRoute), {
-            route: this.lastRoute,
-            enterTime: this.routeEnterTime
-        }, window.location.href);
+        this.monitor.info({
+            pluginName: this.name,
+            message: "Initial Route: ".concat(this.lastRoute),
+            extraData: {
+                route: this.lastRoute,
+                enterTime: this.routeEnterTime
+            },
+            url: window.location.href,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
     };
     RoutePlugin.prototype.handleHashChange = function () {
         this.handleRouteChange('hash');
@@ -1526,7 +1618,14 @@ var RoutePlugin = (function () {
                 changeType: changeType,
                 enterTime: this.routeEnterTime
             };
-            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(currentRoute), data, window.location.href);
+            this.monitor.info({
+                pluginName: this.name,
+                message: "Route Changed (".concat(changeType, "): ").concat(currentRoute),
+                extraData: data,
+                url: window.location.href,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
             monitorRouteChange.emit("monitorRouteChange", data);
         }
     };
@@ -1571,9 +1670,16 @@ var RoutePlugin = (function () {
                         previousRoute: self.lastRoute,
                         currentRoute: url,
                         changeType: 'window.open',
-                        enterTime: self.monitor.getTimestamp()
+                        enterTime: getTimestamp()
                     };
-                    self.monitor.info(self.name, "window.open -> ".concat(url), data, window.location.href);
+                    self.monitor.info({
+                        pluginName: self.name,
+                        message: "window.open -> ".concat(url),
+                        url: window.location.href,
+                        extraData: data,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
                     monitorRouteChange.emit('monitorRouteChange', data);
                 }
                 catch (e) {
@@ -1585,18 +1691,25 @@ var RoutePlugin = (function () {
         }
     };
     RoutePlugin.prototype.recordRouteEnter = function () {
-        this.routeEnterTime = this.monitor.getTimestamp();
+        this.routeEnterTime = getTimestamp();
     };
     RoutePlugin.prototype.recordRouteLeave = function () {
         if (this.lastRoute && this.routeEnterTime) {
-            var leaveTime = this.monitor.getTimestamp();
+            var leaveTime = getTimestamp();
             var duration = leaveTime - this.routeEnterTime;
-            this.monitor.info(this.name, "Route Left: ".concat(this.lastRoute), {
-                route: this.lastRoute,
-                enterTime: this.routeEnterTime,
-                leaveTime: leaveTime,
-                duration: duration
-            }, window.location.href);
+            this.monitor.info({
+                pluginName: this.name,
+                message: "Route Left: ".concat(this.lastRoute),
+                extraData: {
+                    route: this.lastRoute,
+                    enterTime: this.routeEnterTime,
+                    leaveTime: leaveTime,
+                    duration: duration
+                },
+                url: window.location.href,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }
     };
     return RoutePlugin;
@@ -1961,13 +2074,20 @@ var PerformancePlugin = (function () {
                 list.getEntries().forEach(function (entry) {
                     var _a;
                     if (entry.entryType === 'longtask') {
-                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info(_this.name, 'Long Task Detected', {
-                            type: 'longtask',
-                            name: entry.name,
-                            startTime: entry.startTime,
-                            duration: entry.duration,
-                            attribution: entry.attribution || []
-                        }, window.location.href);
+                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info({
+                            pluginName: _this.name,
+                            message: 'Long Task Detected',
+                            url: window.location.href,
+                            extraData: {
+                                type: 'longtask',
+                                name: entry.name,
+                                startTime: entry.startTime,
+                                duration: entry.duration,
+                                attribution: entry.attribution || []
+                            },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                 });
             });
@@ -2036,20 +2156,27 @@ var PerformancePlugin = (function () {
                         totalDiff > 5 * 1024 * 1024 ||
                         percent > 0.9 ||
                         isLeakDetected) {
-                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info(_this.name, isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage', {
-                            type: 'memory',
-                            jsHeapSizeLimit: memory.jsHeapSizeLimit,
-                            totalJSHeapSize: memory.totalJSHeapSize,
-                            usedJSHeapSize: memory.usedJSHeapSize,
-                            percent: +(percent * 100).toFixed(2),
-                            usedDiff: usedDiff,
-                            totalDiff: totalDiff,
-                            trend: trend,
-                            samplesCount: memoryData.samples.length,
-                            peaksCount: memoryData.peaks.length,
-                            timestamp: Date.now(),
-                            isLeakDetected: isLeakDetected
-                        }, window.location.href);
+                        (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.info({
+                            pluginName: _this.name,
+                            message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
+                            url: window.location.href,
+                            extraData: {
+                                type: 'memory',
+                                jsHeapSizeLimit: memory.jsHeapSizeLimit,
+                                totalJSHeapSize: memory.totalJSHeapSize,
+                                usedJSHeapSize: memory.usedJSHeapSize,
+                                percent: +(percent * 100).toFixed(2),
+                                usedDiff: usedDiff,
+                                totalDiff: totalDiff,
+                                trend: trend,
+                                samplesCount: memoryData.samples.length,
+                                peaksCount: memoryData.peaks.length,
+                                timestamp: Date.now(),
+                                isLeakDetected: isLeakDetected
+                            },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                     lastUsed = memory.usedJSHeapSize;
                     lastTotal = memory.totalJSHeapSize;
@@ -2110,14 +2237,21 @@ var PerformancePlugin = (function () {
             var frameTime = now - lastFrameTime;
             if (frameTime > 33) {
                 var isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
-                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.warn(_this.name, 'Frame Drop Detected', {
-                    type: 'frame_drop',
-                    frameTime: Math.round(frameTime * 100) / 100,
-                    expectedFrameTime: 16.67,
-                    timestamp: now,
-                    isDuringInteraction: isDuringInteraction,
-                    timeSinceLastInteraction: now - lastUserInteraction
-                }, window.location.href);
+                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.warn({
+                    pluginName: _this.name,
+                    message: 'Frame Drop Detected',
+                    url: window.location.href,
+                    extraData: {
+                        type: 'frame_drop',
+                        frameTime: Math.round(frameTime * 100) / 100,
+                        expectedFrameTime: 16.67,
+                        timestamp: now,
+                        isDuringInteraction: isDuringInteraction,
+                        timeSinceLastInteraction: now - lastUserInteraction
+                    },
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             }
             frameCount++;
             if (now - lastReportTime >= 1000) {
@@ -2130,16 +2264,23 @@ var PerformancePlugin = (function () {
                     avgFps = Math.round(fpsList.reduce(function (a, b) { return a + b; }, 0) / fpsList.length);
                 }
                 if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
-                    (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.info(_this.name, 'FPS Report', {
-                        type: 'fps',
-                        fps: fps,
-                        minFps: Math.round(minFps),
-                        maxFps: Math.round(maxFps),
-                        avgFps: avgFps,
-                        frameCount: frameCount,
-                        timestamp: now,
-                        duration: now - lastReportTime
-                    }, window.location.href);
+                    (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.info({
+                        pluginName: _this.name,
+                        message: 'FPS Report',
+                        url: window.location.href,
+                        extraData: {
+                            type: 'fps',
+                            fps: fps,
+                            minFps: Math.round(minFps),
+                            maxFps: Math.round(maxFps),
+                            avgFps: avgFps,
+                            frameCount: frameCount,
+                            timestamp: now,
+                            duration: now - lastReportTime
+                        },
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
                 }
                 if (fpsList.length > 60) {
                     fpsList.shift();
@@ -2200,17 +2341,24 @@ var PerformancePlugin = (function () {
                         var encodedBodySize = typeof resourceEntry.encodedBodySize === 'number' ? resourceEntry.encodedBodySize : 0;
                         var decodedBodySize = typeof resourceEntry.decodedBodySize === 'number' ? resourceEntry.decodedBodySize : 0;
                         var fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
-                        _this.monitor.info(_this.name, "Resource loaded: ".concat(resourceEntry.name), {
-                            type: 'resource',
-                            name: resourceEntry.name,
-                            duration: resourceEntry.duration,
-                            startTime: resourceEntry.startTime,
-                            transferSize: resourceEntry.transferSize,
-                            encodedBodySize: resourceEntry.encodedBodySize,
-                            decodedBodySize: resourceEntry.decodedBodySize,
-                            initiatorType: initiatorType,
-                            cached: fromCache
-                        }, window.location.href);
+                        _this.monitor.info({
+                            pluginName: _this.name,
+                            message: "Resource loaded: ".concat(resourceEntry.name),
+                            url: window.location.href,
+                            extraData: {
+                                type: 'resource',
+                                name: resourceEntry.name,
+                                duration: resourceEntry.duration,
+                                startTime: resourceEntry.startTime,
+                                transferSize: resourceEntry.transferSize,
+                                encodedBodySize: resourceEntry.encodedBodySize,
+                                decodedBodySize: resourceEntry.decodedBodySize,
+                                initiatorType: initiatorType,
+                                cached: fromCache
+                            },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                 });
             });
@@ -2227,7 +2375,14 @@ var PerformancePlugin = (function () {
                 list.getEntries().forEach(function (entry) {
                     if (entry.entryType === 'navigation') {
                         var navEntry = entry;
-                        _this.monitor.info(_this.name, 'Page navigation performance', __assign({ type: 'navigation' }, navEntry.toJSON()), window.location.href);
+                        _this.monitor.info({
+                            pluginName: _this.name,
+                            message: 'Page navigation performance',
+                            url: window.location.href,
+                            extraData: __assign({ type: 'navigation' }, navEntry.toJSON()),
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                 });
             });
@@ -2241,25 +2396,60 @@ var PerformancePlugin = (function () {
         var _this = this;
         try {
             x(function (metric) {
-                _this.monitor.info(_this.name, 'Largest Contentful Paint (LCP)', __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) }), window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: 'Largest Contentful Paint (LCP)',
+                    url: window.location.href,
+                    extraData: __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) }),
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
             S(function (metric) {
-                _this.monitor.info(_this.name, 'Interaction to Next Paint (INP)', __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) }), window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: 'Interaction to Next Paint (INP)',
+                    url: window.location.href,
+                    extraData: __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) }),
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
             L(function (metric) {
-                _this.monitor.info(_this.name, 'Cumulative Layout Shift (CLS)', {
-                    type: 'web_vitals',
-                    metric: 'CLS',
-                    value: metric.value,
-                    navigationType: metric.navigationType,
-                    rating: _this.getRating(metric.value, 0.1, 0.25)
-                }, window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: 'Cumulative Layout Shift (CLS)',
+                    url: window.location.href,
+                    extraData: {
+                        type: 'web_vitals',
+                        metric: 'CLS',
+                        value: metric.value,
+                        navigationType: metric.navigationType,
+                        rating: _this.getRating(metric.value, 0.1, 0.25)
+                    },
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
             E(function (metric) {
-                _this.monitor.info(_this.name, 'First Contentful Paint (FCP)', __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) }), window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: 'First Contentful Paint (FCP)',
+                    url: window.location.href,
+                    extraData: __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) }),
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
             $(function (metric) {
-                _this.monitor.info(_this.name, 'Time to First Byte (TTFB)', __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) }), window.location.href);
+                _this.monitor.info({
+                    pluginName: _this.name,
+                    message: 'Time to First Byte (TTFB)',
+                    url: window.location.href,
+                    extraData: __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) }),
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
         }
         catch (error) {
@@ -2302,7 +2492,7 @@ var WhiteScreenPlugin = (function () {
         if (!this.monitor) {
             return;
         }
-        this.startTime = this.monitor.getTimestamp();
+        this.startTime = getTimestamp();
         this.resolved = false;
         this.startCheck();
     };
@@ -2329,19 +2519,19 @@ var WhiteScreenPlugin = (function () {
         if (!this.monitor) {
             return;
         }
-        var start = this.monitor.getTimestamp();
+        var start = getTimestamp();
         this.timer = window.setInterval(function () {
             if (_this.resolved || !_this.monitor) {
                 return;
             }
             var visible = _this.checkKeyElements();
             if (visible) {
-                _this.endTime = _this.monitor.getTimestamp();
+                _this.endTime = getTimestamp();
                 _this.report('success');
                 _this.clearEffects();
             }
-            else if (_this.monitor.getTimestamp() - start > (timeout || 8000)) {
-                _this.endTime = _this.monitor.getTimestamp();
+            else if (getTimestamp() - start > (timeout || 8000)) {
+                _this.endTime = getTimestamp();
                 _this.report('timeout');
                 _this.clearEffects();
             }
@@ -2432,14 +2622,21 @@ var WhiteScreenPlugin = (function () {
         if (!this.monitor) {
             return;
         }
-        this.monitor.info(this.name, "WhiteScreen check ".concat(status), {
-            status: status,
-            page: window.location.href,
-            startTime: this.startTime,
-            endTime: this.endTime,
-            duration: this.endTime - this.startTime,
-            selectors: this.config.keySelectors
-        }, window.location.href);
+        this.monitor.info({
+            pluginName: this.name,
+            message: "WhiteScreen check ".concat(status),
+            url: window.location.href,
+            extraData: {
+                status: status,
+                page: window.location.href,
+                startTime: this.startTime,
+                endTime: this.endTime,
+                duration: this.endTime - this.startTime,
+                selectors: this.config.keySelectors
+            },
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
     };
     return WhiteScreenPlugin;
 }());
@@ -2487,7 +2684,14 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args: args, stack: stack }, window.location.href);
+                        self.monitor && self.monitor.error({
+                            pluginName: self.name,
+                            message: message || 'console.error',
+                            url: window.location.href,
+                            extraData: { args: args, stack: stack },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                     catch (e) {
                     }
@@ -2514,7 +2718,14 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args: args, stack: stack }, window.location.href);
+                        self.monitor && self.monitor.warn({
+                            pluginName: self.name,
+                            message: message || 'console.warn',
+                            url: window.location.href,
+                            extraData: { args: args, stack: stack },
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                     catch (e) {
                     }
@@ -2593,7 +2804,7 @@ var AnalyticsPlugin = (function () {
     };
     AnalyticsPlugin.prototype.getTodayDate = function () {
         if (this.monitor) {
-            return this.monitor.formatTimestamp('YYYY/MM/DD', this.monitor.getTimestamp());
+            return formatTimestamp('YYYY/MM/DD', getTimestamp());
         }
         return new Date().toISOString().slice(0, 10).replace(/-/g, '/');
     };
@@ -2627,10 +2838,17 @@ var AnalyticsPlugin = (function () {
                 });
                 try {
                     if (this.monitor) {
-                        this.monitor.info(this.name, 'analytics_history_before_cleanup', {
-                            reportedAt: this.monitor.getTimestamp(),
-                            items: oldRecords_1,
-                        }, window.location.href);
+                        this.monitor.info({
+                            pluginName: this.name,
+                            message: 'analytics_history_before_cleanup',
+                            extraData: {
+                                reportedAt: getTimestamp(),
+                                items: oldRecords_1,
+                            },
+                            url: window.location.href,
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
                     }
                 }
                 catch (e) {
@@ -2651,14 +2869,13 @@ var AnalyticsPlugin = (function () {
         }
     };
     AnalyticsPlugin.prototype.ensureUV = function () {
-        var _a;
         try {
             var key = this.getTodayKey('uv');
             var fp = this.monitor ? this.monitor.getFingerprint() : '';
             var uvSet = safeJSONParse(localStorage.getItem(key), {});
             var id = fp || this.getClientId();
             if (!uvSet[id]) {
-                uvSet[id] = ((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.getTimestamp()) || Date.now();
+                uvSet[id] = getTimestamp() || Date.now();
                 localStorage.setItem(key, JSON.stringify(uvSet));
             }
         }
@@ -2666,7 +2883,6 @@ var AnalyticsPlugin = (function () {
         }
     };
     AnalyticsPlugin.prototype.ensureVV = function () {
-        var _a;
         try {
             var sessionFlag = this.getTodayKey('vv_session');
             var has = sessionStorage.getItem(sessionFlag);
@@ -2674,7 +2890,7 @@ var AnalyticsPlugin = (function () {
                 var key = this.getTodayKey('vv');
                 var cur = safeJSONParse(localStorage.getItem(key), 0);
                 localStorage.setItem(key, JSON.stringify(cur + 1));
-                sessionStorage.setItem(sessionFlag, String(((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.getTimestamp()) || Date.now()));
+                sessionStorage.setItem(sessionFlag, String(getTimestamp() || Date.now()));
             }
         }
         catch (e) {
@@ -2713,12 +2929,11 @@ var AnalyticsPlugin = (function () {
         });
     };
     AnalyticsPlugin.prototype.getClientId = function () {
-        var _a;
         try {
             var key = '__whayl_client_id__';
             var id = localStorage.getItem(key);
             if (!id) {
-                id = "".concat(((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.getTimestamp()) || Date.now(), "_").concat(Math.random().toString(36).slice(2, 9));
+                id = "".concat(getTimestamp() || Date.now(), "_").concat(Math.random().toString(36).slice(2, 9));
                 localStorage.setItem(key, id);
             }
             return id;
@@ -2746,9 +2961,16 @@ var AnalyticsPlugin = (function () {
                 uv: uv,
                 vv: vv,
                 ip: ip || this.ipCached || null,
-                timestamp: this.monitor.getTimestamp(),
+                timestamp: getTimestamp(),
             };
-            this.monitor.info(this.name, 'analytics_report', payload, window.location.href);
+            this.monitor.info({
+                pluginName: this.name,
+                message: 'analytics_report',
+                url: window.location.href,
+                extraData: payload,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         }
         catch (e) {
         }
