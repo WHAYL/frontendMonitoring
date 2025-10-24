@@ -14,7 +14,8 @@ var FrontendMonitor = function () {
       reportLevel: IMMEDIATE_REPORT_LEVEL,
       enabled: true,
       maxStorageCount: MYSTORAGE_COUNT,
-      uploadHandler: null
+      uploadHandler: null,
+      platform: ''
     };
     this.storageQueue = [];
     this.removedItems = [];
@@ -57,7 +58,7 @@ var FrontendMonitor = function () {
     this.oldFingerprint = this.fingerprint;
     this.fingerprint = fingerprint;
   };
-  FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
+  FrontendMonitor.prototype.log = function (pluginName, level, message, extraData, url) {
     if (extraData === void 0) {
       extraData = {};
     }
@@ -69,13 +70,12 @@ var FrontendMonitor = function () {
       message: message,
       timestamp: this.getTimestamp(),
       date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      url: url,
       pluginName: pluginName,
       fingerprint: this.fingerprint,
       oldFingerprint: this.oldFingerprint,
-      devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
-      extraData: extraData
+      extraData: extraData,
+      platform: this.config.platform
     };
     if (ReportLevelEnum[level] <= ReportLevelEnum[this.config.reportLevel]) {
       this.report(errorInfo);
@@ -93,29 +93,29 @@ var FrontendMonitor = function () {
       }
     }
   };
-  FrontendMonitor.prototype.error = function (pluginName, message, extraData) {
+  FrontendMonitor.prototype.error = function (pluginName, message, extraData, url) {
     if (extraData === void 0) {
       extraData = {};
     }
-    this.log(pluginName, 'ERROR', message, extraData);
+    this.log(pluginName, 'ERROR', message, extraData, url);
   };
-  FrontendMonitor.prototype.warn = function (pluginName, message, extraData) {
+  FrontendMonitor.prototype.warn = function (pluginName, message, extraData, url) {
     if (extraData === void 0) {
       extraData = {};
     }
-    this.log(pluginName, 'WARN', message, extraData);
+    this.log(pluginName, 'WARN', message, extraData, url);
   };
-  FrontendMonitor.prototype.info = function (pluginName, message, extraData) {
+  FrontendMonitor.prototype.info = function (pluginName, message, extraData, url) {
     if (extraData === void 0) {
       extraData = {};
     }
-    this.log(pluginName, 'INFO', message, extraData);
+    this.log(pluginName, 'INFO', message, extraData, url);
   };
-  FrontendMonitor.prototype.debug = function (pluginName, message, extraData) {
+  FrontendMonitor.prototype.debug = function (pluginName, message, extraData, url) {
     if (extraData === void 0) {
       extraData = {};
     }
-    this.log(pluginName, 'DEBUG', message, extraData);
+    this.log(pluginName, 'DEBUG', message, extraData, url);
   };
   FrontendMonitor.prototype.checkAndReportStored = function () {
     var _this = this;
@@ -212,7 +212,7 @@ var XhrPlugin = (function () {
                         startTime: xhrInfo.startTime,
                         endTime: endTime,
                         duration: duration
-                    });
+                    }, window.location.href);
                     self.xhrMap.delete(this);
                 });
                 this.addEventListener('timeout', function () {
@@ -226,7 +226,7 @@ var XhrPlugin = (function () {
                         startTime: xhrInfo.startTime,
                         endTime: endTime,
                         duration: duration
-                    });
+                    }, window.location.href);
                     self.xhrMap.delete(this);
                 });
             }
@@ -278,7 +278,7 @@ var FetchPlugin = (function () {
                     startTime: startTime,
                     endTime: endTime,
                     duration: duration
-                });
+                }, window.location.href);
                 throw error;
             });
         };
@@ -1232,7 +1232,7 @@ var DomPlugin = (function () {
                 lineno: event.lineno,
                 colno: event.colno,
                 error: event.error,
-            });
+            }, window.location.href);
         }, { signal: signal });
         this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
             var _a, _b, _c;
@@ -1245,7 +1245,7 @@ var DomPlugin = (function () {
                 errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
                 errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
                 errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
-            });
+            }, window.location.href);
         }, { signal: signal });
         var mouseEventHandler = function (eventType) { return function (event) {
             if (!_this.config.mouseEvents || !_this.config.mouseEvents[eventType]) {
@@ -1322,7 +1322,7 @@ var DomPlugin = (function () {
                     var key = _a[0], value = _a[1];
                     return "".concat(key, ":").concat(value);
                 }).join(','),
-            });
+            }, window.location.href);
         }; };
         if (this.config.mouseEvents && Object.keys(this.config.mouseEvents).length > 0) {
             Object.keys(this.config.mouseEvents).forEach(function (eventType) {
@@ -1345,7 +1345,7 @@ var DomPlugin = (function () {
                 innerWidth: innerWidth,
                 innerHeight: innerHeight,
                 devicePixelRatio: devicePixelRatio
-            });
+            }, window.location.href);
         }, 500, true), { signal: signal });
     };
     DomPlugin.prototype.describeElement = function (el) {
@@ -1405,7 +1405,7 @@ var DomPlugin = (function () {
                 innerWidth: window.innerWidth,
                 innerHeight: window.innerHeight,
                 url: typeof window !== 'undefined' ? window.location.href : '',
-            });
+            }, window.location.href);
         }
         catch (e) {
         }
@@ -1448,7 +1448,7 @@ var RoutePlugin = (function () {
                     enterTime: self.monitor.getTimestamp(),
                     target: a.target
                 };
-                _this.monitor.info(_this.name, "A tag clicked -> ".concat(href), data);
+                _this.monitor.info(_this.name, "A tag clicked -> ".concat(href), data, window.location.href);
                 monitorRouteChange.emit('monitorRouteChange', data);
             }
             catch (e) {
@@ -1503,7 +1503,7 @@ var RoutePlugin = (function () {
         this.monitor.info(this.name, "Initial Route: ".concat(this.lastRoute), {
             route: this.lastRoute,
             enterTime: this.routeEnterTime
-        });
+        }, window.location.href);
     };
     RoutePlugin.prototype.handleHashChange = function () {
         this.handleRouteChange('hash');
@@ -1524,7 +1524,7 @@ var RoutePlugin = (function () {
                 changeType: changeType,
                 enterTime: this.routeEnterTime
             };
-            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(currentRoute), data);
+            this.monitor.info(this.name, "Route Changed (".concat(changeType, "): ").concat(currentRoute), data, window.location.href);
             monitorRouteChange.emit("monitorRouteChange", data);
         }
     };
@@ -1571,7 +1571,7 @@ var RoutePlugin = (function () {
                         changeType: 'window.open',
                         enterTime: self.monitor.getTimestamp()
                     };
-                    self.monitor.info(self.name, "window.open -> ".concat(url), data);
+                    self.monitor.info(self.name, "window.open -> ".concat(url), data, window.location.href);
                     monitorRouteChange.emit('monitorRouteChange', data);
                 }
                 catch (e) {
@@ -1594,7 +1594,7 @@ var RoutePlugin = (function () {
                 enterTime: this.routeEnterTime,
                 leaveTime: leaveTime,
                 duration: duration
-            });
+            }, window.location.href);
         }
     };
     return RoutePlugin;
@@ -1965,7 +1965,7 @@ var PerformancePlugin = (function () {
                             startTime: entry.startTime,
                             duration: entry.duration,
                             attribution: entry.attribution || []
-                        });
+                        }, window.location.href);
                     }
                 });
             });
@@ -2047,7 +2047,7 @@ var PerformancePlugin = (function () {
                             peaksCount: memoryData.peaks.length,
                             timestamp: Date.now(),
                             isLeakDetected: isLeakDetected
-                        });
+                        }, window.location.href);
                     }
                     lastUsed = memory.usedJSHeapSize;
                     lastTotal = memory.totalJSHeapSize;
@@ -2115,7 +2115,7 @@ var PerformancePlugin = (function () {
                     timestamp: now,
                     isDuringInteraction: isDuringInteraction,
                     timeSinceLastInteraction: now - lastUserInteraction
-                });
+                }, window.location.href);
             }
             frameCount++;
             if (now - lastReportTime >= 1000) {
@@ -2137,7 +2137,7 @@ var PerformancePlugin = (function () {
                         frameCount: frameCount,
                         timestamp: now,
                         duration: now - lastReportTime
-                    });
+                    }, window.location.href);
                 }
                 if (fpsList.length > 60) {
                     fpsList.shift();
@@ -2208,7 +2208,7 @@ var PerformancePlugin = (function () {
                             decodedBodySize: resourceEntry.decodedBodySize,
                             initiatorType: initiatorType,
                             cached: fromCache
-                        });
+                        }, window.location.href);
                     }
                 });
             });
@@ -2225,7 +2225,7 @@ var PerformancePlugin = (function () {
                 list.getEntries().forEach(function (entry) {
                     if (entry.entryType === 'navigation') {
                         var navEntry = entry;
-                        _this.monitor.info(_this.name, 'Page navigation performance', __assign({ type: 'navigation' }, navEntry.toJSON()));
+                        _this.monitor.info(_this.name, 'Page navigation performance', __assign({ type: 'navigation' }, navEntry.toJSON()), window.location.href);
                     }
                 });
             });
@@ -2239,10 +2239,10 @@ var PerformancePlugin = (function () {
         var _this = this;
         try {
             x(function (metric) {
-                _this.monitor.info(_this.name, 'Largest Contentful Paint (LCP)', __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) }));
+                _this.monitor.info(_this.name, 'Largest Contentful Paint (LCP)', __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) }), window.location.href);
             });
             S(function (metric) {
-                _this.monitor.info(_this.name, 'Interaction to Next Paint (INP)', __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) }));
+                _this.monitor.info(_this.name, 'Interaction to Next Paint (INP)', __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) }), window.location.href);
             });
             L(function (metric) {
                 _this.monitor.info(_this.name, 'Cumulative Layout Shift (CLS)', {
@@ -2251,13 +2251,13 @@ var PerformancePlugin = (function () {
                     value: metric.value,
                     navigationType: metric.navigationType,
                     rating: _this.getRating(metric.value, 0.1, 0.25)
-                });
+                }, window.location.href);
             });
             E(function (metric) {
-                _this.monitor.info(_this.name, 'First Contentful Paint (FCP)', __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) }));
+                _this.monitor.info(_this.name, 'First Contentful Paint (FCP)', __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) }), window.location.href);
             });
             $(function (metric) {
-                _this.monitor.info(_this.name, 'Time to First Byte (TTFB)', __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) }));
+                _this.monitor.info(_this.name, 'Time to First Byte (TTFB)', __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) }), window.location.href);
             });
         }
         catch (error) {
@@ -2437,7 +2437,7 @@ var WhiteScreenPlugin = (function () {
             endTime: this.endTime,
             duration: this.endTime - this.startTime,
             selectors: this.config.keySelectors
-        });
+        }, window.location.href);
     };
     return WhiteScreenPlugin;
 }());
@@ -2485,7 +2485,7 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args: args, stack: stack });
+                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args: args, stack: stack }, window.location.href);
                     }
                     catch (e) {
                     }
@@ -2512,7 +2512,7 @@ var ConsolePlugin = (function () {
                             }
                         }).join(' ');
                         var stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args: args, stack: stack });
+                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args: args, stack: stack }, window.location.href);
                     }
                     catch (e) {
                     }
@@ -2628,7 +2628,7 @@ var AnalyticsPlugin = (function () {
                         this.monitor.info(this.name, 'analytics_history_before_cleanup', {
                             reportedAt: this.monitor.getTimestamp(),
                             items: oldRecords_1,
-                        });
+                        }, window.location.href);
                     }
                 }
                 catch (e) {
@@ -2746,7 +2746,7 @@ var AnalyticsPlugin = (function () {
                 ip: ip || this.ipCached || null,
                 timestamp: this.monitor.getTimestamp(),
             };
-            this.monitor.info(this.name, 'analytics_report', payload);
+            this.monitor.info(this.name, 'analytics_report', payload, window.location.href);
         }
         catch (e) {
         }
@@ -2763,11 +2763,10 @@ var AnalyticsPlugin = (function () {
 
 var BrowserMonitor = (function () {
     function BrowserMonitor(config) {
-        if (config === void 0) { config = {}; }
         var _this = this;
         this.plugins = [];
         var _a = config.pluginsUse || {}, _b = _a.xhrPluginEnabled, xhrPluginEnabled = _b === void 0 ? true : _b, _c = _a.fetchPluginEnabled, fetchPluginEnabled = _c === void 0 ? true : _c, _d = _a.domPluginEnabled, domPluginEnabled = _d === void 0 ? true : _d, _e = _a.routePluginEnabled, routePluginEnabled = _e === void 0 ? true : _e, _f = _a.performancePluginEnabled, performancePluginEnabled = _f === void 0 ? true : _f, _g = _a.whiteScreenPluginEnabled, whiteScreenPluginEnabled = _g === void 0 ? true : _g, _h = _a.consolePluginEnabled, consolePluginEnabled = _h === void 0 ? true : _h, _j = _a.analyticsPluginEnabled, analyticsPluginEnabled = _j === void 0 ? true : _j;
-        monitor.init((config === null || config === void 0 ? void 0 : config.monitorConfig) || {});
+        monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
         var pluginsToRegister = [
             xhrPluginEnabled && { name: 'XhrPlugin', creator: function () { return new XhrPlugin(); } },
             fetchPluginEnabled && { name: 'FetchPlugin', creator: function () { return new FetchPlugin(); } },

@@ -14,6 +14,24 @@ export interface IErrorInfo {
   userAgent?: string;
   devicePixelRatio?: number;
   extraData?: any;
+  // 新增字段用于更详细的分析
+  platform?: string;           // 平台信息 (web, uniapp, etc.)
+  os?: string;                 // 操作系统
+  browser?: string;            // 浏览器
+  viewportWidth?: number;      // 视口宽度
+  viewportHeight?: number;     // 视口高度
+  screenWidth?: number;        // 屏幕宽度
+  screenHeight?: number;       // 屏幕高度
+  networkType?: string;        // 网络类型
+  pageStayTime?: number;       // 页面停留时间
+  routeFrom?: string;          // 来源路由
+  routeTo?: string;            // 目标路由
+  eventType?: string;          // 事件类型
+  eventTarget?: string;        // 事件目标
+  resourceUrl?: string;        // 资源URL
+  resourceType?: string;       // 资源类型
+  loadTime?: number;           // 加载时间
+  httpStatus?: number;         // HTTP状态码
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -26,8 +44,11 @@ export class ErrorInfoModel {
     const stmt = db.prepare(`
       INSERT INTO error_info (
         level, message, stack, timestamp, date, url, user_id, plugin_name, 
-        fingerprint, user_agent, device_pixel_ratio, extra_data
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        fingerprint, user_agent, device_pixel_ratio, extra_data,
+        platform, os, browser, viewport_width, viewport_height, screen_width,
+        screen_height, network_type, page_stay_time, route_from, route_to,
+        event_type, event_target, resource_url, resource_type, load_time, http_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const info = stmt.run(
@@ -42,7 +63,24 @@ export class ErrorInfoModel {
       errorInfo.fingerprint,
       errorInfo.userAgent,
       errorInfo.devicePixelRatio,
-      errorInfo.extraData ? JSON.stringify(errorInfo.extraData) : null
+      errorInfo.extraData ? JSON.stringify(errorInfo.extraData) : null,
+      errorInfo.platform,
+      errorInfo.os,
+      errorInfo.browser,
+      errorInfo.viewportWidth,
+      errorInfo.viewportHeight,
+      errorInfo.screenWidth,
+      errorInfo.screenHeight,
+      errorInfo.networkType,
+      errorInfo.pageStayTime,
+      errorInfo.routeFrom,
+      errorInfo.routeTo,
+      errorInfo.eventType,
+      errorInfo.eventTarget,
+      errorInfo.resourceUrl,
+      errorInfo.resourceType,
+      errorInfo.loadTime,
+      errorInfo.httpStatus
     );
 
     return {

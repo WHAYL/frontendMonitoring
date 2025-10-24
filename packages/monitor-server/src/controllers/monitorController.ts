@@ -2,7 +2,7 @@ import { Context } from 'koa';
 import 'koa-body';
 import '../types';
 import { ErrorInfoModel, IErrorInfo } from '../database/models/ErrorInfo';
-import { getOverallAnalytics, getPluginAnalytics } from '../services/analyticsService';
+import { getOverallAnalytics, getPluginAnalytics, getDetailedAnalytics, getUserBehaviorFlow } from '../services/analyticsService';
 
 /**
  * 保存监控数据
@@ -97,7 +97,8 @@ export const getAnalyticsData = async (ctx: Context): Promise<void> => {
     const {
       startDate,
       endDate,
-      pluginName
+      pluginName,
+      type
     } = ctx.query;
 
     let result;
@@ -105,6 +106,11 @@ export const getAnalyticsData = async (ctx: Context): Promise<void> => {
     if (pluginName) {
       result = await getPluginAnalytics(
         pluginName as string,
+        startDate ? parseInt(startDate as string) : undefined,
+        endDate ? parseInt(endDate as string) : undefined
+      );
+    } else if (type === 'detailed') {
+      result = await getDetailedAnalytics(
         startDate ? parseInt(startDate as string) : undefined,
         endDate ? parseInt(endDate as string) : undefined
       );
@@ -127,5 +133,55 @@ export const getAnalyticsData = async (ctx: Context): Promise<void> => {
       message: error.message || 'Failed to fetch analytics data'
     };
     console.error('Error fetching analytics data:', error);
+  }
+};
+
+/**
+ * 获取用户行为流程数据
+ * 提供用户的详细操作流程分析，包括：
+ * 1. 用户进入系统的时间和地址
+ * 2. 页面白屏时间等性能统计
+ * 3. 错误统计
+ * 4. 用户操作行为（如点击元素）
+ * 5. 操作引起的副作用
+ * 6. 离开页面的时间和目标页面
+ * @param ctx Koa上下文
+ */
+export const getUserBehaviorFlowData = async (ctx: Context): Promise<void> => {
+  try {
+    const {
+      fingerprint,
+      startDate,
+      endDate
+    } = ctx.query;
+
+    // 检查必要参数
+    if (!fingerprint) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Missing fingerprint parameter'
+      };
+      return;
+    }
+
+    const result = await getUserBehaviorFlow(
+      fingerprint as string,
+      startDate ? parseInt(startDate as string) : undefined,
+      endDate ? parseInt(endDate as string) : undefined
+    );
+
+    ctx.status = 200;
+    ctx.body = {
+      success: true,
+      data: result
+    };
+  } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: error.message || 'Failed to fetch user behavior flow data'
+    };
+    console.error('Error fetching user behavior flow data:', error);
   }
 };

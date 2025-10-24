@@ -5,6 +5,7 @@ import { WhiteScreenPluginConfig } from './plugins/whiteScreen';
 import { ConsolePluginConfig } from './plugins/console';
 import { AnalyticsPluginConfig } from './plugins/analytics';
 export interface BrowserMonitorConfig {
+    monitorConfig: MonitorConfig;
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
         fetchPluginEnabled?: boolean;
@@ -15,7 +16,6 @@ export interface BrowserMonitorConfig {
         consolePluginEnabled?: boolean;
         analyticsPluginEnabled?: boolean;
     };
-    monitorConfig?: MonitorConfig;
     whiteScreenPluginConfig?: WhiteScreenPluginConfig;
     consolePluginConfig?: ConsolePluginConfig;
     domPluginConfig?: DomPluginConfig;
@@ -26,7 +26,7 @@ declare class BrowserMonitor {
     private plugins;
     private handleVisibilityChange;
     private handlePageHide;
-    constructor(config?: BrowserMonitorConfig);
+    constructor(config: BrowserMonitorConfig);
     private init;
     setFingerprint(value: string): void;
     use(plugin: MonitorPlugin): void;

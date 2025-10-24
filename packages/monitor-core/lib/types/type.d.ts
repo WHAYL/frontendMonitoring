@@ -8,6 +8,7 @@ export declare enum ReportLevelEnum {
 }
 export type ReportingLevel = keyof typeof ReportLevelEnum;
 export interface MonitorConfig {
+    platform: string;
     reportLevel: ReportingLevel;
     enabled: boolean;
     uploadHandler: null | ((data: ErrorInfo | ErrorInfo[]) => void);
@@ -20,7 +21,6 @@ export interface ErrorInfo {
     stack?: string;
     timestamp: number;
     url: string;
-    userId?: string;
     pluginName?: string;
     fingerprint?: string;
     userAgent?: string;

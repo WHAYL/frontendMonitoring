@@ -48,12 +48,12 @@ export class PerformancePlugin implements MonitorPlugin {
   }
 
   run(): void {
-    if (this.config.resourceEnabled) {this.setupResourceMonitoring();}
-    if (this.config.navigationEnabled) {this.setupNavigationMonitoring();}
-    if (this.config.webVitalsEnabled) {this.setupWebVitals();}
-    if (this.config.longTaskEnabled) {this.setupLongTaskMonitoring();}
-    if (this.config.memoryEnabled) {this.setupMemoryMonitoring();}
-    if (this.config.fpsEnabled) {this.setupFPSMonitoring();}
+    if (this.config.resourceEnabled) { this.setupResourceMonitoring(); }
+    if (this.config.navigationEnabled) { this.setupNavigationMonitoring(); }
+    if (this.config.webVitalsEnabled) { this.setupWebVitals(); }
+    if (this.config.longTaskEnabled) { this.setupLongTaskMonitoring(); }
+    if (this.config.memoryEnabled) { this.setupMemoryMonitoring(); }
+    if (this.config.fpsEnabled) { this.setupFPSMonitoring(); }
   }
   clearEffects(): void {
     if (this.resourceObserver) {
@@ -86,7 +86,7 @@ export class PerformancePlugin implements MonitorPlugin {
    */
   private setupLongTaskMonitoring(): void {
     try {
-      if (typeof PerformanceObserver === 'undefined' || typeof (window as any).PerformanceLongTaskTiming === 'undefined') {return;}
+      if (typeof PerformanceObserver === 'undefined' || typeof (window as any).PerformanceLongTaskTiming === 'undefined') { return; }
       this.longTaskObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
           if (entry.entryType === 'longtask') {
@@ -99,7 +99,8 @@ export class PerformancePlugin implements MonitorPlugin {
                 startTime: entry.startTime,
                 duration: entry.duration,
                 attribution: (entry as any).attribution || []
-              }
+              },
+              window.location.href
             );
           }
         });
@@ -212,7 +213,8 @@ export class PerformancePlugin implements MonitorPlugin {
                 peaksCount: memoryData.peaks.length,
                 timestamp: Date.now(),
                 isLeakDetected
-              }
+              },
+              window.location.href
             );
           }
 
@@ -239,7 +241,7 @@ export class PerformancePlugin implements MonitorPlugin {
    * @param samples 内存使用样本
    */
   private detectMemoryLeak(samples: Array<{ used: number, total: number, timestamp: number }>): boolean {
-    if (samples.length < 10) {return false;}
+    if (samples.length < 10) { return false; }
 
     // 计算线性回归斜率来判断趋势
     const n = samples.length;
@@ -323,7 +325,8 @@ export class PerformancePlugin implements MonitorPlugin {
             timestamp: now,
             isDuringInteraction,
             timeSinceLastInteraction: now - lastUserInteraction
-          }
+          },
+          window.location.href
         );
       }
 
@@ -355,7 +358,8 @@ export class PerformancePlugin implements MonitorPlugin {
               frameCount,
               timestamp: now,
               duration: now - lastReportTime
-            }
+            },
+            window.location.href
           );
         }
 
@@ -457,7 +461,8 @@ export class PerformancePlugin implements MonitorPlugin {
                 decodedBodySize: resourceEntry.decodedBodySize,
                 initiatorType: initiatorType,
                 cached: fromCache
-              }
+              },
+              window.location.href
             );
           }
         });
@@ -487,8 +492,10 @@ export class PerformancePlugin implements MonitorPlugin {
               {
                 type: 'navigation',
                 ...navEntry.toJSON()
-              }
+              },
+              window.location.href
             );
+
           }
         });
       });
@@ -518,7 +525,8 @@ export class PerformancePlugin implements MonitorPlugin {
             ...(metric.attribution && { attribution: metric.attribution }),
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 2500, 4000) // LCP评级：好(<=2.5s)、需要改进(<=4s)、差(>4s)
-          }
+          },
+          window.location.href
         );
       });
 
@@ -535,7 +543,8 @@ export class PerformancePlugin implements MonitorPlugin {
             ...(metric.attribution && { attribution: metric.attribution }),
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 200, 500) // INP评级：好(<=200ms)、需要改进(<=500ms)、差(>500ms)
-          }
+          },
+          window.location.href
         );
       });
 
@@ -550,7 +559,8 @@ export class PerformancePlugin implements MonitorPlugin {
             value: metric.value,
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 0.1, 0.25) // CLS评级：好(<=0.1)、需要改进(<=0.25)、差(>0.25)
-          }
+          },
+          window.location.href
         );
       });
 
@@ -567,7 +577,8 @@ export class PerformancePlugin implements MonitorPlugin {
             ...(metric.attribution && { attribution: metric.attribution }),
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 1800, 3000) // FCP评级：好(<=1.8s)、需要改进(<=3s)、差(>3s)
-          }
+          },
+          window.location.href
         );
       });
 
@@ -584,7 +595,8 @@ export class PerformancePlugin implements MonitorPlugin {
             ...(metric.attribution && { attribution: metric.attribution }),
             navigationType: metric.navigationType,
             rating: this.getRating(metric.value, 800, 1800) // TTFB评级：好(<=800ms)、需要改进(<=1.8s)、差(>1.8s)
-          }
+          },
+          window.location.href
         );
       });
     } catch (error) {

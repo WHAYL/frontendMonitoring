@@ -164,7 +164,8 @@ export class WhiteScreenPlugin implements MonitorPlugin {
         endTime: this.endTime,
         duration: this.endTime - this.startTime,
         selectors: this.config.keySelectors
-      }
+      },
+      window.location.href
     );
   }
 }

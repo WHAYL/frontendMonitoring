@@ -59,7 +59,8 @@ export class FetchPlugin implements MonitorPlugin {
             startTime,
             endTime,
             duration
-          }
+          },
+          window.location.href
         );
 
         throw error;

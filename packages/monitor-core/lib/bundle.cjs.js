@@ -18,7 +18,8 @@ var FrontendMonitor = (function () {
             reportLevel: IMMEDIATE_REPORT_LEVEL,
             enabled: true,
             maxStorageCount: MYSTORAGE_COUNT,
-            uploadHandler: null
+            uploadHandler: null,
+            platform: ''
         };
         this.storageQueue = [];
         this.removedItems = [];
@@ -66,7 +67,7 @@ var FrontendMonitor = (function () {
         this.oldFingerprint = this.fingerprint;
         this.fingerprint = fingerprint;
     };
-    FrontendMonitor.prototype.log = function (pluginName, level, message, extraData) {
+    FrontendMonitor.prototype.log = function (pluginName, level, message, extraData, url) {
         if (extraData === void 0) { extraData = {}; }
         if (!this.config.enabled) {
             return;
@@ -76,13 +77,12 @@ var FrontendMonitor = (function () {
             message: message,
             timestamp: this.getTimestamp(),
             date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-            url: typeof window !== 'undefined' ? window.location.href : '',
-            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            url: url,
             pluginName: pluginName,
             fingerprint: this.fingerprint,
             oldFingerprint: this.oldFingerprint,
-            devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
-            extraData: extraData
+            extraData: extraData,
+            platform: this.config.platform
         };
         if (exports.ReportLevelEnum[level] <= exports.ReportLevelEnum[this.config.reportLevel]) {
             this.report(errorInfo);
@@ -101,21 +101,21 @@ var FrontendMonitor = (function () {
             }
         }
     };
-    FrontendMonitor.prototype.error = function (pluginName, message, extraData) {
+    FrontendMonitor.prototype.error = function (pluginName, message, extraData, url) {
         if (extraData === void 0) { extraData = {}; }
-        this.log(pluginName, 'ERROR', message, extraData);
+        this.log(pluginName, 'ERROR', message, extraData, url);
     };
-    FrontendMonitor.prototype.warn = function (pluginName, message, extraData) {
+    FrontendMonitor.prototype.warn = function (pluginName, message, extraData, url) {
         if (extraData === void 0) { extraData = {}; }
-        this.log(pluginName, 'WARN', message, extraData);
+        this.log(pluginName, 'WARN', message, extraData, url);
     };
-    FrontendMonitor.prototype.info = function (pluginName, message, extraData) {
+    FrontendMonitor.prototype.info = function (pluginName, message, extraData, url) {
         if (extraData === void 0) { extraData = {}; }
-        this.log(pluginName, 'INFO', message, extraData);
+        this.log(pluginName, 'INFO', message, extraData, url);
     };
-    FrontendMonitor.prototype.debug = function (pluginName, message, extraData) {
+    FrontendMonitor.prototype.debug = function (pluginName, message, extraData, url) {
         if (extraData === void 0) { extraData = {}; }
-        this.log(pluginName, 'DEBUG', message, extraData);
+        this.log(pluginName, 'DEBUG', message, extraData, url);
     };
     FrontendMonitor.prototype.checkAndReportStored = function () {
         var _this = this;

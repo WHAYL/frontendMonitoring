@@ -38,7 +38,7 @@ export class ConsolePlugin implements MonitorPlugin {
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args, stack });
+                        self.monitor && self.monitor.error(self.name, message || 'console.error', { args, stack }, window.location.href);
                     } catch (e) {
                         // 忽略上报自身的错误
                     }
@@ -57,7 +57,7 @@ export class ConsolePlugin implements MonitorPlugin {
                         }).join(' ');
 
                         const stack = (new Error()).stack;
-                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args, stack });
+                        self.monitor && self.monitor.warn(self.name, message || 'console.warn', { args, stack }, window.location.href);
                     } catch (e) {
                         // 忽略
                     }

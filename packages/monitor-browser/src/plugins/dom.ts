@@ -58,7 +58,8 @@ export class DomPlugin implements MonitorPlugin {
           lineno: event.lineno,             // 行号
           colno: event.colno,               // 列号
           error: event.error,               // Error 对象
-        }
+        },
+        window.location.href
       );
     }, { signal });
 
@@ -81,7 +82,8 @@ export class DomPlugin implements MonitorPlugin {
           errorMessage: event.reason?.message,
           errorStack: event.reason?.stack,
           errorName: event.reason?.name,
-        }
+        },
+        window.location.href
       );
     }, { signal });
 
@@ -159,7 +161,8 @@ export class DomPlugin implements MonitorPlugin {
           nodeName: reportEl.nodeName,
           tagName: reportEl.tagName,
           dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
-        }
+        },
+        window.location.href
       );
     };
 
@@ -192,7 +195,8 @@ export class DomPlugin implements MonitorPlugin {
           innerWidth,
           innerHeight,
           devicePixelRatio
-        }
+        },
+        window.location.href
       );
     }, 500, true, true), { signal });
   }
@@ -248,7 +252,7 @@ export class DomPlugin implements MonitorPlugin {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
         url: typeof window !== 'undefined' ? window.location.href : '',
-      });
+      }, window.location.href);
     } catch (e) {
       // ignore
     }

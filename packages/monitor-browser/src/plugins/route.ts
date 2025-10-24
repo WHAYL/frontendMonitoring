@@ -71,7 +71,8 @@ export class RoutePlugin implements MonitorPlugin {
       {
         route: this.lastRoute,
         enterTime: this.routeEnterTime
-      }
+      },
+      window.location.href
     );
   }
 
@@ -109,7 +110,8 @@ export class RoutePlugin implements MonitorPlugin {
       this.monitor!.info(
         this.name,
         `Route Changed (${changeType}): ${currentRoute}`,
-        data
+        data,
+        window.location.href
       );
       monitorRouteChange.emit("monitorRouteChange", data);
     }
@@ -157,7 +159,7 @@ export class RoutePlugin implements MonitorPlugin {
             changeType: 'window.open',
             enterTime: self.monitor!.getTimestamp()
           };
-          self.monitor!.info(self.name, `window.open -> ${url}`, data);
+          self.monitor!.info(self.name, `window.open -> ${url}`, data, window.location.href);
           monitorRouteChange.emit('monitorRouteChange', data);
         } catch (e) {
           // ignore
@@ -176,11 +178,11 @@ export class RoutePlugin implements MonitorPlugin {
     const self = this;
     try {
       const target = ev.target as Element | null;
-      if (!target || !(target instanceof Element)) {return;}
+      if (!target || !(target instanceof Element)) { return; }
       const a = target.closest('a') as HTMLAnchorElement | null;
-      if (!a) {return;}
+      if (!a) { return; }
       const href = a.href;
-      if (!href) {return;}
+      if (!href) { return; }
 
       const data = {
         previousRoute: this.lastRoute,
@@ -190,7 +192,7 @@ export class RoutePlugin implements MonitorPlugin {
         target: a.target
       } as any;
 
-      this.monitor!.info(this.name, `A tag clicked -> ${href}`, data);
+      this.monitor!.info(this.name, `A tag clicked -> ${href}`, data, window.location.href);
       monitorRouteChange.emit('monitorRouteChange', data);
     } catch (e) {
       // ignore
@@ -228,7 +230,8 @@ export class RoutePlugin implements MonitorPlugin {
           enterTime: this.routeEnterTime,
           leaveTime: leaveTime,
           duration: duration
-        }
+        },
+        window.location.href
       );
     }
   }

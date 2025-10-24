@@ -9,7 +9,8 @@ export class FrontendMonitor {
         reportLevel: IMMEDIATE_REPORT_LEVEL,
         enabled: true,
         maxStorageCount: MYSTORAGE_COUNT,
-        uploadHandler: null
+        uploadHandler: null,
+        platform: ''
     };
 
     // 本地存储队列，用于存储未达到上报等级的信息
@@ -66,7 +67,7 @@ export class FrontendMonitor {
      * 初始化监控配置
      * @param config 监控配置
      */
-    init(config: Partial<MonitorConfig>): void {
+    init(config: MonitorConfig): void {
         this.config = Object.assign(this.config, config);
         this.fingerprint = this.config?.fingerprint || "";
 
@@ -92,7 +93,7 @@ export class FrontendMonitor {
      * @param message 日志消息
      * @param extraData 额外数据
      */
-    private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}): void {
+    private log(pluginName: string, level: keyof typeof ReportLevelEnum, message: string, extraData: Record<string, any> = {}, url: string): void {
         // 如果监控未启用，则直接返回
         if (!this.config.enabled) { return; }
 
@@ -102,13 +103,12 @@ export class FrontendMonitor {
             message,
             timestamp: this.getTimestamp(), // 使用高精度时间戳
             date: this.formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS'),
-            url: typeof window !== 'undefined' ? window.location.href : '',
-            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            url,
             pluginName,
             fingerprint: this.fingerprint,
             oldFingerprint: this.oldFingerprint,
-            devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
-            extraData
+            extraData,
+            platform: this.config.platform
         };
 
         // 判断是否需要立即上报
@@ -140,8 +140,8 @@ export class FrontendMonitor {
      * @param message 错误消息
      * @param extraData 额外数据
      */
-    error(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
-        this.log(pluginName, 'ERROR', message, extraData);
+    error(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
+        this.log(pluginName, 'ERROR', message, extraData, url);
     }
 
     /**
@@ -150,8 +150,8 @@ export class FrontendMonitor {
      * @param message 警告消息
      * @param extraData 额外数据
      */
-    warn(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
-        this.log(pluginName, 'WARN', message, extraData);
+    warn(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
+        this.log(pluginName, 'WARN', message, extraData, url);
     }
 
     /**
@@ -160,8 +160,8 @@ export class FrontendMonitor {
      * @param message 信息消息
      * @param extraData 额外数据
      */
-    info(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
-        this.log(pluginName, 'INFO', message, extraData);
+    info(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
+        this.log(pluginName, 'INFO', message, extraData, url);
     }
 
     /**
@@ -170,8 +170,8 @@ export class FrontendMonitor {
      * @param message 调试消息
      * @param extraData 额外数据
      */
-    debug(pluginName: string, message: string, extraData: Record<string, any> = {}): void {
-        this.log(pluginName, 'DEBUG', message, extraData);
+    debug(pluginName: string, message: string, extraData: Record<string, any> = {}, url: string): void {
+        this.log(pluginName, 'DEBUG', message, extraData, url);
     }
 
     /**

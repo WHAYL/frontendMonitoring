@@ -14,6 +14,10 @@ export type ReportingLevel = keyof typeof ReportLevelEnum;
 
 // 监控配置接口
 export interface MonitorConfig {
+
+  // 平台名称，如web, uniapp等
+  platform: string,
+
   // 上报等级阈值，只有等于或高于此等级的信息才会被立即上报
   reportLevel: ReportingLevel;
 
@@ -27,7 +31,7 @@ export interface MonitorConfig {
   maxStorageCount?: number;
 
   // 浏览器指纹
-  fingerprint?:string
+  fingerprint?: string
 
   // 其他可能的配置项...
 }
@@ -49,13 +53,10 @@ export interface ErrorInfo {
   // 页面URL
   url: string;
 
-  // 用户标识
-  userId?: string;
-
   // 插件名称
   pluginName?: string;
 
-  // 浏览器指纹
+  // 唯一指纹
   fingerprint?: string;
 
   // 用户浏览器信息

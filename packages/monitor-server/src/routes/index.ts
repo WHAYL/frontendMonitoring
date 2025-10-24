@@ -1,5 +1,5 @@
 import Router from '@koa/router';
-import { saveMonitorData, getAnalyticsData } from '../controllers/monitorController';
+import { saveMonitorData, getAnalyticsData, getUserBehaviorFlowData } from '../controllers/monitorController';
 
 /**
  * 设置路由
@@ -21,6 +21,12 @@ export const setupRoutes = (router: Router): void => {
   // 获取分析数据
   router.get('/api/monitor/analytics', getAnalyticsData);
 
+  // 获取详细分析数据
+  router.get('/api/monitor/analytics/detailed', getAnalyticsData);
+
+  // 获取用户行为流程数据
+  router.get('/api/monitor/analytics/user-flow', getUserBehaviorFlowData);
+
   // 默认路由
   router.get('/', async (ctx) => {
     ctx.status = 200;
@@ -30,7 +36,9 @@ export const setupRoutes = (router: Router): void => {
       endpoints: {
         health: 'GET /health',
         report: 'POST /api/monitor/report',
-        analytics: 'GET /api/monitor/analytics'
+        analytics: 'GET /api/monitor/analytics',
+        detailedAnalytics: 'GET /api/monitor/analytics/detailed',
+        userFlow: 'GET /api/monitor/analytics/user-flow'
       }
     };
   });

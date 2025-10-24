@@ -116,7 +116,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
                         this.monitor.info(this.name, 'analytics_history_before_cleanup', {
                             reportedAt: this.monitor.getTimestamp(),
                             items: oldRecords,
-                        });
+                        }, window.location.href);
                     }
                 } catch (e) {
                     // ignore reporting errors
@@ -232,7 +232,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             };
 
             // 使用 info 级别上报统计数据
-            this.monitor.info(this.name, 'analytics_report', payload);
+            this.monitor.info(this.name, 'analytics_report', payload, window.location.href);
         } catch (e) {
             // ignore
         }

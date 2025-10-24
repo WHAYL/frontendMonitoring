@@ -78,7 +78,8 @@ export class XhrPlugin implements MonitorPlugin {
               startTime: xhrInfo.startTime,
               endTime,
               duration
-            }
+            },
+            window.location.href
           );
 
           // 清理
@@ -100,7 +101,8 @@ export class XhrPlugin implements MonitorPlugin {
               startTime: xhrInfo.startTime,
               endTime,
               duration
-            }
+            },
+            window.location.href
           );
 
           // 清理

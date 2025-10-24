@@ -10,6 +10,7 @@ import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
+    monitorConfig: MonitorConfig;
     pluginsUse?: {
         xhrPluginEnabled?: boolean;
         fetchPluginEnabled?: boolean;
@@ -20,7 +21,6 @@ export interface BrowserMonitorConfig {
         consolePluginEnabled?: boolean;
         analyticsPluginEnabled?: boolean;
     };
-    monitorConfig?: MonitorConfig;
     whiteScreenPluginConfig?: WhiteScreenPluginConfig;
     consolePluginConfig?: ConsolePluginConfig;
     domPluginConfig?: DomPluginConfig;
@@ -37,7 +37,7 @@ class BrowserMonitor {
     private handleVisibilityChange: () => void;
     private handlePageHide: () => void;
 
-    constructor(config: BrowserMonitorConfig = {}) {
+    constructor(config: BrowserMonitorConfig) {
         // 默认配置都为 true
         const {
             xhrPluginEnabled = true,
@@ -51,7 +51,7 @@ class BrowserMonitor {
         } = config.pluginsUse || {};
 
         // 初始化核心监控
-        monitor.init(config?.monitorConfig || {});
+        monitor.init(config?.monitorConfig);
 
         // 根据配置动态注册插件
         const pluginsToRegister = [
