@@ -156,7 +156,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             const uvSet = safeJSONParse<Record<string, number>>(localStorage.getItem(key), {});
             const id = fp || this.getClientId();
             if (!uvSet[id]) {
-                uvSet[id] = getTimestamp() || Date.now();
+                uvSet[id] = getTimestamp();
                 localStorage.setItem(key, JSON.stringify(uvSet));
             }
         } catch (e) {
@@ -174,7 +174,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
                 const key = this.getTodayKey('vv');
                 const cur = safeJSONParse<number>(localStorage.getItem(key), 0) as number;
                 localStorage.setItem(key, JSON.stringify(cur + 1));
-                sessionStorage.setItem(sessionFlag, String(getTimestamp() || Date.now()));
+                sessionStorage.setItem(sessionFlag, String(getTimestamp()));
             }
         } catch (e) {
             // ignore
@@ -206,7 +206,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
             const key = '__whayl_client_id__';
             let id = localStorage.getItem(key);
             if (!id) {
-                id = `${getTimestamp() || Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+                id = `${getTimestamp()}_${Math.random().toString(36).slice(2, 9)}`;
                 localStorage.setItem(key, id);
             }
             return id;

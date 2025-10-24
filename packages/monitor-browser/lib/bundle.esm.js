@@ -2122,12 +2122,12 @@ var PerformancePlugin = (function () {
                     memoryData.samples.push({
                         used: memory.usedJSHeapSize,
                         total: memory.totalJSHeapSize,
-                        timestamp: Date.now()
+                        timestamp: getTimestamp()
                     });
                     if (memoryData.peaks.length === 0 || memory.usedJSHeapSize > memoryData.peaks[memoryData.peaks.length - 1].used) {
                         memoryData.peaks.push({
                             used: memory.usedJSHeapSize,
-                            timestamp: Date.now()
+                            timestamp: getTimestamp()
                         });
                     }
                     if (memoryData.samples.length > 30) {
@@ -2169,7 +2169,6 @@ var PerformancePlugin = (function () {
                                 trend: trend,
                                 samplesCount: memoryData.samples.length,
                                 peaksCount: memoryData.peaks.length,
-                                timestamp: Date.now(),
                                 isLeakDetected: isLeakDetected
                             },
                             timestamp: getTimestamp(),
@@ -2873,7 +2872,7 @@ var AnalyticsPlugin = (function () {
             var uvSet = safeJSONParse(localStorage.getItem(key), {});
             var id = fp || this.getClientId();
             if (!uvSet[id]) {
-                uvSet[id] = getTimestamp() || Date.now();
+                uvSet[id] = getTimestamp();
                 localStorage.setItem(key, JSON.stringify(uvSet));
             }
         }
@@ -2888,7 +2887,7 @@ var AnalyticsPlugin = (function () {
                 var key = this.getTodayKey('vv');
                 var cur = safeJSONParse(localStorage.getItem(key), 0);
                 localStorage.setItem(key, JSON.stringify(cur + 1));
-                sessionStorage.setItem(sessionFlag, String(getTimestamp() || Date.now()));
+                sessionStorage.setItem(sessionFlag, String(getTimestamp()));
             }
         }
         catch (e) {
@@ -2931,7 +2930,7 @@ var AnalyticsPlugin = (function () {
             var key = '__whayl_client_id__';
             var id = localStorage.getItem(key);
             if (!id) {
-                id = "".concat(getTimestamp() || Date.now(), "_").concat(Math.random().toString(36).slice(2, 9));
+                id = "".concat(getTimestamp(), "_").concat(Math.random().toString(36).slice(2, 9));
                 localStorage.setItem(key, id);
             }
             return id;

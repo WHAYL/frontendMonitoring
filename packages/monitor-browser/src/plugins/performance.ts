@@ -154,14 +154,14 @@ export class PerformancePlugin implements MonitorPlugin {
           memoryData.samples.push({
             used: memory.usedJSHeapSize,
             total: memory.totalJSHeapSize,
-            timestamp: Date.now()
+            timestamp: getTimestamp()
           });
 
           // 记录内存使用峰值
           if (memoryData.peaks.length === 0 || memory.usedJSHeapSize > memoryData.peaks[memoryData.peaks.length - 1].used) {
             memoryData.peaks.push({
               used: memory.usedJSHeapSize,
-              timestamp: Date.now()
+              timestamp: getTimestamp()
             });
           }
 
@@ -215,7 +215,6 @@ export class PerformancePlugin implements MonitorPlugin {
                 trend,
                 samplesCount: memoryData.samples.length,
                 peaksCount: memoryData.peaks.length,
-                timestamp: Date.now(),
                 isLeakDetected
               },
               timestamp: getTimestamp(),
