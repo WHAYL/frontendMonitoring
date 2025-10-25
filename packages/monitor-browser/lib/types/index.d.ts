@@ -30,6 +30,7 @@ declare class BrowserMonitor implements MonitorInstance {
     private cacheLog;
     constructor(config: BrowserMonitorConfig);
     private init;
+    reportAllLog(): void;
     private reportCacheLog;
     private setupNetworkListener;
     setFingerprint(value: string): void;

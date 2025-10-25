@@ -85,7 +85,7 @@ class BrowserMonitor implements MonitorInstance {
         if (typeof document !== 'undefined' && 'hidden' in document) {
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
-                    this.monitor.reportRestInfo();
+                    this.reportAllLog();
                 }
             }, {
                 signal: this.abortController.signal
@@ -93,7 +93,7 @@ class BrowserMonitor implements MonitorInstance {
         } else if (typeof window !== 'undefined' && 'pagehide' in window) {
             // pagehide事件在现代浏览器中得到良好支持
             window.addEventListener('pagehide', () => {
-                this.monitor.reportRestInfo();
+                this.reportAllLog();
             }, {
                 signal: this.abortController.signal
             });
@@ -101,11 +101,14 @@ class BrowserMonitor implements MonitorInstance {
 
         // 添加beforeunload事件监听器，确保在页面刷新前上报缓存日志
         window.addEventListener('beforeunload', () => {
-            this.reportCacheLog();
-            this.monitor.reportRestInfo();
+            this.reportAllLog();
         }, {
             signal: this.abortController.signal
         });
+    }
+    reportAllLog(): void {
+        this.reportCacheLog();
+        this.monitor.reportRestInfo();
     }
     private reportCacheLog(): void {
         if (this.cacheLog.length) {
@@ -119,7 +122,7 @@ class BrowserMonitor implements MonitorInstance {
         window.addEventListener('online', () => {
             this.isOnline = true;
             this.reportCacheLog();
-            this.monitor.reportInfo('INFO', {
+            this.monitor.reportInfo('OFF', {
                 pluginName: 'monitor-browser',
                 url: window.location.href,
                 extraData: {},
@@ -202,7 +205,7 @@ class BrowserMonitor implements MonitorInstance {
 
         // 销毁所有插件
         this.plugins.forEach(plugin => {
-            if (plugin.destroy) {
+            if (typeof plugin.destroy === 'function') {
                 plugin.destroy();
             }
         });

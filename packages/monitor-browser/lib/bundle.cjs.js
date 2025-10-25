@@ -3028,7 +3028,7 @@ var BrowserMonitor = (function () {
         if (typeof document !== 'undefined' && 'hidden' in document) {
             document.addEventListener('visibilitychange', function () {
                 if (document.visibilityState === 'hidden') {
-                    _this.monitor.reportRestInfo();
+                    _this.reportAllLog();
                 }
             }, {
                 signal: this.abortController.signal
@@ -3036,17 +3036,20 @@ var BrowserMonitor = (function () {
         }
         else if (typeof window !== 'undefined' && 'pagehide' in window) {
             window.addEventListener('pagehide', function () {
-                _this.monitor.reportRestInfo();
+                _this.reportAllLog();
             }, {
                 signal: this.abortController.signal
             });
         }
         window.addEventListener('beforeunload', function () {
-            _this.reportCacheLog();
-            _this.monitor.reportRestInfo();
+            _this.reportAllLog();
         }, {
             signal: this.abortController.signal
         });
+    };
+    BrowserMonitor.prototype.reportAllLog = function () {
+        this.reportCacheLog();
+        this.monitor.reportRestInfo();
     };
     BrowserMonitor.prototype.reportCacheLog = function () {
         var _this = this;
@@ -3063,7 +3066,7 @@ var BrowserMonitor = (function () {
         window.addEventListener('online', function () {
             _this.isOnline = true;
             _this.reportCacheLog();
-            _this.monitor.reportInfo('INFO', {
+            _this.monitor.reportInfo('OFF', {
                 pluginName: 'monitor-browser',
                 url: window.location.href,
                 extraData: {},
@@ -3125,7 +3128,7 @@ var BrowserMonitor = (function () {
             this.abortController = null;
         }
         this.plugins.forEach(function (plugin) {
-            if (plugin.destroy) {
+            if (typeof plugin.destroy === 'function') {
                 plugin.destroy();
             }
         });
