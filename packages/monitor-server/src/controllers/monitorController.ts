@@ -28,84 +28,191 @@ import {
  * 保存监控数据
  * @param ctx Koa上下文
  */
-export const saveMonitorData = async (ctx): Promise<void> => {
-  try {
-    let rawData = ctx.request.body;
 
-    // 检查数据是否存在
-    if (!rawData) {
-      ctx.status = 400;
-      ctx.body = {
-        success: false,
-        message: 'Missing data in request body'
-      };
-      return;
-    }
-
-    // 处理 navigator.sendBeacon 发送的文本数据
-    if (typeof rawData === 'string') {
-      try {
-        rawData = JSON.parse(rawData);
-      } catch (parseError) {
-        ctx.status = 400;
-        ctx.body = {
-          success: false,
-          message: 'Invalid JSON data'
-        };
-        return;
-      }
-    }
-
-    let monitorData: any[] = [];
-
-    // 处理单条或批量数据
-    if (Array.isArray(rawData)) {
-      monitorData = rawData;
-    } else {
-      monitorData = [rawData];
-    }
-
-    // 保存数据到数据库
-    let savedCount = 0;
-    for (const data of monitorData) {
-      try {
-        const errorInfo: IErrorInfo = {
-          level: data.level,
-          message: data.message,
-          stack: data.stack,
-          timestamp: data.timestamp,
-          date: data.date,
-          url: data.url,
-          userId: data.userId,
-          pluginName: data.pluginName,
-          fingerprint: data.fingerprint,
-          userAgent: data.userAgent,
-          devicePixelRatio: data.devicePixelRatio,
-          extraData: data.extraData
-        };
-
-        await ErrorInfoModel.create(errorInfo);
-        savedCount++;
-      } catch (saveError) {
-        console.error('Error saving individual record:', saveError);
-        // 继续处理其他记录
-      }
-    }
-
-    ctx.status = 200;
-    ctx.body = {
-      success: true,
-      message: `Successfully saved ${savedCount} records`,
-      data: savedCount
-    };
-  } catch (error: any) {
-    ctx.status = 500;
-    ctx.body = {
-      success: false,
-      message: error.message || 'Failed to save monitor data'
-    };
-    console.error('Error saving monitor data:', error);
+/**
+ * 根据数据特征确定数据类型
+ */
+function determineDataType(data: any): string {
+  // 检查是否是用户会话数据
+  if (data.sessionId && data.startTime && !data.level) {
+    return 'userSession';
   }
+
+  // 检查是否是页面访问数据
+  if (data.url && data.visitTime && data.fingerprint) {
+    return 'pageVisit';
+  }
+
+  // 检查是否是性能指标数据
+  if (data.metricName && data.metricValue !== undefined) {
+    return 'performanceMetric';
+  }
+
+  // 检查是否是用户行为数据
+  if (data.behaviorType && data.timestamp && data.fingerprint) {
+    return 'userBehavior';
+  }
+
+  // 检查是否是网络请求数据
+  if (data.url && data.method && data.timestamp) {
+    return 'networkRequest';
+  }
+
+  // 默认认为是错误信息数据
+  return 'errorInfo';
+}
+
+/**
+ * 保存错误信息数据
+ */
+async function saveErrorInfoData(data: any): Promise<void> {
+  const errorInfo: IErrorInfo = {
+    level: data.level,
+    message: data.message,
+    stack: data.stack,
+    timestamp: data.timestamp,
+    date: data.date,
+    url: data.url,
+    userId: data.userId,
+    pluginName: data.pluginName,
+    fingerprint: data.fingerprint,
+    userAgent: data.userAgent,
+    devicePixelRatio: data.devicePixelRatio,
+    extraData: data.extraData,
+    // 填充扩展字段
+    platform: data.platform || data.extraData?.platform,
+    os: data.os || data.extraData?.os,
+    browser: data.browser || data.extraData?.browser,
+    viewportWidth: data.viewportWidth || data.extraData?.viewportWidth,
+    viewportHeight: data.viewportHeight || data.extraData?.viewportHeight,
+    screenWidth: data.screenWidth || data.extraData?.screenWidth,
+    screenHeight: data.screenHeight || data.extraData?.screenHeight,
+    networkType: data.networkType || data.extraData?.networkType,
+    pageStayTime: data.pageStayTime || data.extraData?.pageStayTime,
+    routeFrom: data.routeFrom || data.extraData?.routeFrom,
+    routeTo: data.routeTo || data.extraData?.routeTo,
+    eventType: data.eventType || data.extraData?.eventType,
+    eventTarget: data.eventTarget || data.extraData?.eventTarget,
+    resourceUrl: data.resourceUrl || data.extraData?.resourceUrl,
+    resourceType: data.resourceType || data.extraData?.resourceType,
+    loadTime: data.loadTime || data.extraData?.loadTime,
+    httpStatus: data.httpStatus || data.extraData?.httpStatus
+  };
+
+  await ErrorInfoModel.create(errorInfo);
+}
+
+/**
+ * 保存用户会话数据（内部使用）
+ */
+async function saveUserSessionData(data: any): Promise<void> {
+  const session: IUserSession = {
+    sessionId: data.sessionId,
+    fingerprint: data.fingerprint,
+    userId: data.userId,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    duration: data.duration,
+    pageViews: data.pageViews || 0,
+    eventsCount: data.eventsCount || 0,
+    errorsCount: data.errorsCount || 0,
+    platform: data.platform || data.extraData?.platform,
+    os: data.os || data.extraData?.os,
+    browser: data.browser || data.extraData?.browser,
+    deviceType: data.deviceType || data.extraData?.deviceType,
+    screenResolution: data.screenResolution || data.extraData?.screenResolution,
+    networkType: data.networkType || data.extraData?.networkType,
+    referrer: data.referrer || data.extraData?.referrer,
+    entryUrl: data.entryUrl || data.extraData?.entryUrl,
+    exitUrl: data.exitUrl || data.extraData?.exitUrl
+  };
+
+  await UserSessionModel.create(session);
+}
+
+/**
+ * 保存页面访问数据（内部使用）
+ */
+async function savePageVisitData(data: any): Promise<void> {
+  const pageVisit: IPageVisit = {
+    sessionId: data.sessionId,
+    fingerprint: data.fingerprint,
+    url: data.url,
+    title: data.title || data.extraData?.title,
+    referrer: data.referrer || data.extraData?.referrer,
+    visitTime: data.visitTime || data.timestamp,
+    stayTime: data.stayTime || data.extraData?.stayTime,
+    loadTime: data.loadTime || data.extraData?.loadTime,
+    domReadyTime: data.domReadyTime || data.extraData?.domReadyTime,
+    firstPaintTime: data.firstPaintTime || data.extraData?.firstPaintTime,
+    firstContentfulPaintTime: data.firstContentfulPaintTime || data.extraData?.firstContentfulPaintTime,
+    largestContentfulPaintTime: data.largestContentfulPaintTime || data.extraData?.largestContentfulPaintTime,
+    firstInputDelay: data.firstInputDelay || data.extraData?.firstInputDelay,
+    cumulativeLayoutShift: data.cumulativeLayoutShift || data.extraData?.cumulativeLayoutShift,
+    bounceRate: data.bounceRate || data.extraData?.bounceRate,
+    exitRate: data.exitRate || data.extraData?.exitRate
+  };
+
+  await PageVisitModel.create(pageVisit);
+}
+
+/**
+ * 保存性能指标数据（内部使用）
+ */
+async function savePerformanceMetricData(data: any): Promise<void> {
+  const performanceMetric: IPerformanceMetric = {
+    sessionId: data.sessionId,
+    fingerprint: data.fingerprint,
+    url: data.url,
+    metricName: data.metricName,
+    metricValue: data.metricValue,
+    metricUnit: data.metricUnit || data.extraData?.metricUnit,
+    timestamp: data.timestamp
+  };
+
+  await PerformanceMetricModel.create(performanceMetric);
+}
+
+/**
+ * 保存用户行为数据（内部使用）
+ */
+async function saveUserBehaviorData(data: any): Promise<void> {
+  const userBehavior: IUserBehavior = {
+    sessionId: data.sessionId,
+    fingerprint: data.fingerprint,
+    behaviorType: data.behaviorType,
+    targetElement: data.targetElement || data.extraData?.targetElement,
+    targetSelector: data.targetSelector || data.extraData?.targetSelector,
+    coordinatesX: data.coordinatesX || data.extraData?.coordinatesX,
+    coordinatesY: data.coordinatesY || data.extraData?.coordinatesY,
+    scrollPosition: data.scrollPosition || data.extraData?.scrollPosition,
+    viewportSize: data.viewportSize || data.extraData?.viewportSize,
+    timestamp: data.timestamp,
+    extraData: data.extraData
+  };
+
+  await UserBehaviorModel.create(userBehavior);
+}
+
+/**
+ * 保存网络请求数据（内部使用）
+ */
+async function saveNetworkRequestData(data: any): Promise<void> {
+  const networkRequest: INetworkRequest = {
+    sessionId: data.sessionId,
+    fingerprint: data.fingerprint,
+    url: data.url,
+    method: data.method,
+    statusCode: data.statusCode || data.extraData?.statusCode,
+    responseTime: data.responseTime || data.extraData?.responseTime,
+    requestSize: data.requestSize || data.extraData?.requestSize,
+    responseSize: data.responseSize || data.extraData?.responseSize,
+    contentType: data.contentType || data.extraData?.contentType,
+    cacheStatus: data.cacheStatus || data.extraData?.cacheStatus,
+    timestamp: data.timestamp
+  };
+
+  await NetworkRequestModel.create(networkRequest);
 };
 
 /**
@@ -791,5 +898,125 @@ export const resolveAlert = async (ctx: Context): Promise<void> => {
       message: error.message || 'Failed to resolve alert'
     };
     console.error('Error resolving alert:', error);
+  }
+};
+
+export const saveMonitorData = async (ctx): Promise<void> => {
+  try {
+    let rawData = ctx.request.body;
+
+    // 检查数据是否存在
+    if (!rawData) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Missing data in request body'
+      };
+      return;
+    }
+
+    // 处理 navigator.sendBeacon 发送的文本数据
+    if (typeof rawData === 'string') {
+      try {
+        rawData = JSON.parse(rawData);
+      } catch (parseError) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          message: 'Invalid JSON data'
+        };
+        return;
+      }
+    }
+
+    let monitorData: any[] = [];
+
+    // 处理单条或批量数据
+    if (Array.isArray(rawData)) {
+      monitorData = rawData;
+    } else {
+      monitorData = [rawData];
+    }
+
+    // 统计数据保存情况
+    const stats = {
+      total: monitorData.length,
+      saved: 0,
+      errorInfo: 0,
+      userSession: 0,
+      pageVisit: 0,
+      performanceMetric: 0,
+      userBehavior: 0,
+      networkRequest: 0,
+      failed: 0
+    };
+
+    // 保存数据到数据库
+    for (const data of monitorData) {
+      try {
+        // 根据数据类型进行分类存储
+        const dataType = determineDataType(data);
+
+        switch (dataType) {
+          case 'userSession':
+            await saveUserSessionData(data);
+            stats.userSession++;
+            break;
+          case 'pageVisit':
+            await savePageVisitData(data);
+            stats.pageVisit++;
+            break;
+          case 'performanceMetric':
+            await savePerformanceMetricData(data);
+            stats.performanceMetric++;
+            break;
+          case 'userBehavior':
+            await saveUserBehaviorData(data);
+            stats.userBehavior++;
+            break;
+          case 'networkRequest':
+            await saveNetworkRequestData(data);
+            stats.networkRequest++;
+            break;
+          case 'errorInfo':
+          default:
+            await saveErrorInfoData(data);
+            stats.errorInfo++;
+            break;
+        }
+
+        stats.saved++;
+      } catch (saveError) {
+        console.error('Error saving individual record:', saveError);
+        stats.failed++;
+        // 继续处理其他记录
+      }
+    }
+
+    ctx.status = 200;
+    ctx.body = {
+      success: true,
+      message: `Successfully processed ${stats.total} records`,
+      data: {
+        total: stats.total,
+        saved: stats.saved,
+        failed: stats.failed,
+        breakdown: {
+          errorInfo: stats.errorInfo,
+          userSession: stats.userSession,
+          pageVisit: stats.pageVisit,
+          performanceMetric: stats.performanceMetric,
+          userBehavior: stats.userBehavior,
+          networkRequest: stats.networkRequest
+        }
+      }
+    };
+  } catch (error: any) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: error.message || 'Failed to save monitor data'
+    };
+    console.error('Error saving monitor data:', error);
   }
 };
