@@ -15,7 +15,7 @@ export class AlertService {
       const rules = await AlertRuleModel.findActive();
 
       for (const rule of rules) {
-        await this.checkRule(rule);
+        await AlertService.checkRule(rule);
       }
     } catch (error) {
       console.error('检查告警规则失败:', error);
@@ -25,7 +25,7 @@ export class AlertService {
   /**
    * 检查单个规则
    */
-  private static async checkRule(rule: any): Promise<void> {
+  static async checkRule(rule: any): Promise<void> {
     try {
       let shouldAlert = false;
       let alertValue = 0;
@@ -58,7 +58,7 @@ export class AlertService {
       }
 
       if (shouldAlert) {
-        await this.createAlert(rule, alertValue);
+        await AlertService.createAlert(rule, alertValue);
       }
     } catch (error) {
       console.error(`检查规则 ${rule.id} 失败:`, error);
@@ -68,7 +68,7 @@ export class AlertService {
   /**
    * 创建告警记录
    */
-  private static async createAlert(rule: any, value: number): Promise<void> {
+  static async createAlert(rule: any, value: number): Promise<void> {
     try {
       // 检查是否已经存在未解决的相同告警
       const existingAlerts = await AlertRecordModel.findByRuleId(rule.id);
@@ -103,7 +103,7 @@ export class AlertService {
    */
   static startAlertChecker(intervalMs: number = 60000): void {
     setInterval(async () => {
-      await this.checkAlertRules();
+      await AlertService.checkAlertRules();
     }, intervalMs);
   }
 }
