@@ -1,5 +1,12 @@
 import { db } from '../database';
 import { IErrorInfo } from '../database/models/ErrorInfo';
+import { UserSessionModel, IUserSession } from '../database/models/UserSession';
+import { PageVisitModel, IPageVisit } from '../database/models/PageVisit';
+import { PerformanceMetricModel, IPerformanceMetric } from '../database/models/PerformanceMetric';
+import { UserBehaviorModel, IUserBehavior } from '../database/models/UserBehavior';
+import { NetworkRequestModel, INetworkRequest } from '../database/models/NetworkRequest';
+import { AlertRuleModel, IAlertRule } from '../database/models/AlertRule';
+import { AlertRecordModel, IAlertRecord } from '../database/models/AlertRecord';
 
 interface AnalyticsResult {
   totalErrors: number;
@@ -874,3 +881,425 @@ export const getPlatformAnalytics = async (
     analytics: detailedAnalytics
   };
 };
+
+/**
+ * 获取实时分析数据
+ */
+export const getRealtimeAnalytics = async (): Promise<any> => {
+  const now = Date.now();
+  const oneHourAgo = now - 60 * 60 * 1000;
+  const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+  // 获取最近1小时的活跃会话
+  const activeSessions = await UserSessionModel.getActiveSessions();
+
+  // 获取最近1小时的错误统计
+  const recentErrors = await getOverallAnalytics(oneHourAgo, now);
+
+  // 获取最近1小时的性能数据
+  const performanceStats = await PageVisitModel.getPerformanceAnalysis(oneHourAgo, now);
+
+  // 获取最近1小时的网络请求统计
+  const networkStats = await NetworkRequestModel.getNetworkStats(oneHourAgo, now);
+
+  // 获取最近1小时的用户行为统计
+  const behaviorStats = await UserBehaviorModel.getBehaviorStats(oneHourAgo, now);
+
+  return {
+    timestamp: now,
+    activeSessions: activeSessions.length,
+    recentErrors,
+    performance: performanceStats,
+    network: networkStats,
+    behaviors: behaviorStats,
+    timeRange: {
+      start: oneHourAgo,
+      end: now
+    }
+  };
+};
+
+/**
+ * 获取用户分析数据
+ */
+export const getUserAnalytics = async (
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  // 获取用户会话统计
+  const sessionStats = await UserSessionModel.getSessionStats(startDate, endDate);
+
+  // 获取页面访问统计
+  const pageStats = await PageVisitModel.getPageStats(startDate, endDate);
+
+  // 获取用户行为统计
+  const behaviorStats = await UserBehaviorModel.getBehaviorStats(startDate, endDate);
+
+  // 获取热门交互元素
+  const topElements = await UserBehaviorModel.getTopInteractiveElements(10, startDate, endDate);
+
+  // 获取用户行为热力图数据
+  const heatmapData = await UserBehaviorModel.getHeatmapData(startDate, endDate);
+
+  return {
+    sessions: sessionStats,
+    pages: pageStats,
+    behaviors: behaviorStats,
+    topElements,
+    heatmapData
+  };
+};
+
+/**
+ * 获取性能分析数据
+ */
+export const getPerformanceAnalytics = async (
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  // 获取页面性能分析
+  const pagePerformance = await PageVisitModel.getPerformanceAnalysis(startDate, endDate);
+
+  // 获取热门页面
+  const topPages = await PageVisitModel.getTopPages(10, startDate, endDate);
+
+  // 获取性能指标概览
+  const metricsOverview = await PerformanceMetricModel.getMetricsOverview(startDate, endDate);
+
+  // 获取网络请求统计
+  const networkStats = await NetworkRequestModel.getNetworkStats(startDate, endDate);
+
+  // 获取慢请求分析
+  const slowRequests = await NetworkRequestModel.getSlowRequests(3000, startDate, endDate);
+
+  // 获取错误请求分析
+  const errorRequests = await NetworkRequestModel.getErrorRequests(startDate, endDate);
+
+  return {
+    pagePerformance,
+    topPages,
+    metrics: metricsOverview,
+    network: networkStats,
+    slowRequests,
+    errorRequests
+  };
+};
+
+/**
+ * 获取设备分析数据
+ */
+export const getDeviceAnalytics = async (
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  let whereClause = '';
+  const params: any[] = [];
+
+  if (startDate || endDate) {
+    const conditions: string[] = [];
+    if (startDate) {
+      conditions.push('start_time >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      conditions.push('start_time <= ?');
+      params.push(endDate);
+    }
+    whereClause = ` WHERE ${conditions.join(' AND ')}`;
+  }
+
+  // 浏览器分析
+  const browserQuery = `
+    SELECT 
+      browser, 
+      COUNT(*) as count,
+      COUNT(DISTINCT fingerprint) as unique_users,
+      AVG(duration) as avg_duration
+    FROM user_sessions${whereClause}
+    WHERE browser IS NOT NULL
+    GROUP BY browser
+    ORDER BY count DESC
+  `;
+  const browserStmt = db.prepare(browserQuery);
+  const browsers = browserStmt.all(...params);
+
+  // 操作系统分析
+  const osQuery = `
+    SELECT 
+      os, 
+      COUNT(*) as count,
+      COUNT(DISTINCT fingerprint) as unique_users,
+      AVG(duration) as avg_duration
+    FROM user_sessions${whereClause}
+    WHERE os IS NOT NULL
+    GROUP BY os
+    ORDER BY count DESC
+  `;
+  const osStmt = db.prepare(osQuery);
+  const osList = osStmt.all(...params);
+
+  // 平台分析
+  const platformQuery = `
+    SELECT 
+      platform, 
+      COUNT(*) as count,
+      COUNT(DISTINCT fingerprint) as unique_users,
+      AVG(duration) as avg_duration
+    FROM user_sessions${whereClause}
+    WHERE platform IS NOT NULL
+    GROUP BY platform
+    ORDER BY count DESC
+  `;
+  const platformStmt = db.prepare(platformQuery);
+  const platforms = platformStmt.all(...params);
+
+  // 设备类型分析
+  const deviceQuery = `
+    SELECT 
+      device_type, 
+      COUNT(*) as count,
+      COUNT(DISTINCT fingerprint) as unique_users,
+      AVG(duration) as avg_duration
+    FROM user_sessions${whereClause}
+    WHERE device_type IS NOT NULL
+    GROUP BY device_type
+    ORDER BY count DESC
+  `;
+  const deviceStmt = db.prepare(deviceQuery);
+  const devices = deviceStmt.all(...params);
+
+  // 屏幕分辨率分析
+  const resolutionQuery = `
+    SELECT 
+      screen_resolution, 
+      COUNT(*) as count,
+      COUNT(DISTINCT fingerprint) as unique_users
+    FROM user_sessions${whereClause}
+    WHERE screen_resolution IS NOT NULL
+    GROUP BY screen_resolution
+    ORDER BY count DESC
+    LIMIT 20
+  `;
+  const resolutionStmt = db.prepare(resolutionQuery);
+  const resolutions = resolutionStmt.all(...params);
+
+  return {
+    browsers,
+    os: osList,
+    platforms,
+    devices,
+    resolutions
+  };
+};
+
+/**
+ * 获取告警分析数据
+ */
+export const getAlertAnalytics = async (
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  // 获取告警统计
+  const alertStats = await AlertRecordModel.getAlertStats(startDate, endDate);
+
+  // 获取告警趋势
+  const alertTrend = await AlertRecordModel.getAlertTrend('hour', startDate, endDate);
+
+  // 获取未解决的告警
+  const unresolvedAlerts = await AlertRecordModel.findUnresolved();
+
+  // 获取告警规则统计
+  const ruleStats = await AlertRuleModel.getRuleStats();
+
+  return {
+    stats: alertStats,
+    trend: alertTrend,
+    unresolved: unresolvedAlerts,
+    rules: ruleStats
+  };
+};
+
+/**
+ * 获取漏斗分析数据
+ */
+export const getFunnelAnalytics = async (
+  funnelSteps: string[],
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  let whereClause = '';
+  const params: any[] = [];
+
+  if (startDate || endDate) {
+    const conditions: string[] = [];
+    if (startDate) {
+      conditions.push('timestamp >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      conditions.push('timestamp <= ?');
+      params.push(endDate);
+    }
+    whereClause = ` WHERE ${conditions.join(' AND ')}`;
+  }
+
+  const funnelData: Array<{
+    step: string;
+    users: number;
+    events: number;
+    conversionRate: number;
+  }> = [];
+
+  for (let i = 0; i < funnelSteps.length; i++) {
+    const step = funnelSteps[i];
+    const stepQuery = `
+      SELECT 
+        COUNT(DISTINCT fingerprint) as users,
+        COUNT(*) as events
+      FROM user_behaviors${whereClause}
+      WHERE behavior_type = ?
+    `;
+    const stepStmt = db.prepare(stepQuery);
+    const stepResult = stepStmt.get(...params, step) as any;
+
+    funnelData.push({
+      step,
+      users: stepResult?.users || 0,
+      events: stepResult?.events || 0,
+      conversionRate: i === 0 ? 100 : 0 // 将在后续计算中更新
+    });
+  }
+
+  // 计算转化率
+  const firstStepUsers = funnelData[0]?.users || 1;
+  funnelData.forEach((step, index) => {
+    step.conversionRate = Math.round((step.users / firstStepUsers) * 100 * 100) / 100;
+  });
+
+  return {
+    steps: funnelData,
+    totalSteps: funnelSteps.length,
+    overallConversion: funnelData[funnelData.length - 1]?.conversionRate || 0
+  };
+};
+
+/**
+ * 获取留存分析数据
+ */
+export const getRetentionAnalytics = async (
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  let whereClause = '';
+  const params: any[] = [];
+
+  if (startDate || endDate) {
+    const conditions: string[] = [];
+    if (startDate) {
+      conditions.push('start_time >= ?');
+      params.push(startDate);
+    }
+    if (endDate) {
+      conditions.push('start_time <= ?');
+      params.push(endDate);
+    }
+    whereClause = ` WHERE ${conditions.join(' AND ')}`;
+  }
+
+  // 获取每日新增用户
+  const dailyNewUsersQuery = `
+    SELECT 
+      DATE(datetime(start_time/1000, 'unixepoch')) as date,
+      COUNT(DISTINCT fingerprint) as new_users
+    FROM user_sessions${whereClause}
+    GROUP BY DATE(datetime(start_time/1000, 'unixepoch'))
+    ORDER BY date ASC
+  `;
+  const dailyNewUsersStmt = db.prepare(dailyNewUsersQuery);
+  const dailyNewUsers = dailyNewUsersStmt.all(...params);
+
+  // 获取留存率数据（简化版本）
+  const retentionQuery = `
+    SELECT 
+      DATE(datetime(start_time/1000, 'unixepoch')) as cohort_date,
+      COUNT(DISTINCT fingerprint) as cohort_size,
+      COUNT(DISTINCT CASE WHEN DATE(datetime(start_time/1000, 'unixepoch')) = DATE(datetime(start_time/1000, 'unixepoch')) THEN fingerprint END) as day_0_retained,
+      COUNT(DISTINCT CASE WHEN DATE(datetime(start_time/1000, 'unixepoch')) = DATE(datetime(start_time/1000, 'unixepoch'), '+1 day') THEN fingerprint END) as day_1_retained,
+      COUNT(DISTINCT CASE WHEN DATE(datetime(start_time/1000, 'unixepoch')) = DATE(datetime(start_time/1000, 'unixepoch'), '+7 days') THEN fingerprint END) as day_7_retained,
+      COUNT(DISTINCT CASE WHEN DATE(datetime(start_time/1000, 'unixepoch')) = DATE(datetime(start_time/1000, 'unixepoch'), '+30 days') THEN fingerprint END) as day_30_retained
+    FROM user_sessions${whereClause}
+    GROUP BY DATE(datetime(start_time/1000, 'unixepoch'))
+    ORDER BY cohort_date ASC
+  `;
+  const retentionStmt = db.prepare(retentionQuery);
+  const retentionData = retentionStmt.all(...params);
+
+  return {
+    dailyNewUsers,
+    retention: retentionData
+  };
+};
+/**
+ * 将数据转换为CSV格式
+ */
+const convertToCSV = (data: any): string => {
+  if (Array.isArray(data)) {
+    if (data.length === 0) {return '';}
+
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => row[header] || '').join(','))
+    ].join('\n');
+
+    return csvContent;
+  }
+
+  return JSON.stringify(data);
+};
+
+/**
+ * 获取数据导出
+ */
+export const exportAnalyticsData = async (
+  dataType: string,
+  format: string = 'json',
+  startDate?: number,
+  endDate?: number
+): Promise<any> => {
+  let data: any = {};
+
+  switch (dataType) {
+    case 'errors':
+      data = await getOverallAnalytics(startDate, endDate);
+      break;
+    case 'sessions':
+      data = await UserSessionModel.getSessionStats(startDate, endDate);
+      break;
+    case 'pages':
+      data = await PageVisitModel.getPageStats(startDate, endDate);
+      break;
+    case 'behaviors':
+      data = await UserBehaviorModel.getBehaviorStats(startDate, endDate);
+      break;
+    case 'network':
+      data = await NetworkRequestModel.getNetworkStats(startDate, endDate);
+      break;
+    case 'performance':
+      data = await getPerformanceAnalytics(startDate, endDate);
+      break;
+    case 'alerts':
+      data = await getAlertAnalytics(startDate, endDate);
+      break;
+    default:
+      throw new Error(`Unsupported data type: ${dataType}`);
+  }
+
+  if (format === 'csv') {
+    // 这里可以实现CSV格式转换
+    return convertToCSV(data);
+  }
+
+  return data;
+};
+

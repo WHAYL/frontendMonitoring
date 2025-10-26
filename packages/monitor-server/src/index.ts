@@ -4,6 +4,8 @@ import cors from 'koa2-cors';
 import { koaBody } from 'koa-body';
 
 import { setupRoutes } from './routes';
+import { connectDatabase } from './database';
+import { startAlertChecker } from './services';
 
 const app = new Koa();
 const router = new Router();
@@ -38,6 +40,7 @@ app.use(async (ctx, next) => {
 });
 
 // 连接数据库
+connectDatabase();
 
 // 设置路由
 setupRoutes(router);
@@ -46,10 +49,15 @@ setupRoutes(router);
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-const PORT = process.env.PORT || 3001;
+// 启动告警检查器
+startAlertChecker(60000); // 每分钟检查一次
+
+const PORT = process.env.PORT || 3009;
 
 app.listen(PORT, () => {
   console.log(`Monitor server is running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`API documentation: http://localhost:${PORT}/`);
 });
 
 export default app;
