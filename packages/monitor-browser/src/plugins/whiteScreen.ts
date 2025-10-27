@@ -2,6 +2,8 @@ import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { WhiteScreenExtraData } from '../type';
+
 export interface WhiteScreenPluginConfig {
   keySelectors?: string[]; // 关键渲染元素选择器
   checkInterval?: number; // 检测间隔ms
@@ -155,18 +157,20 @@ export class WhiteScreenPlugin implements MonitorPlugin {
 
   private report(status: 'success' | 'timeout') {
     if (!this.monitor) { return; }
+    const extraData: WhiteScreenExtraData = {
+      status,
+      page: window.location.href,
+      startTime: this.startTime,
+      endTime: this.endTime,
+      duration: this.endTime - this.startTime,
+      selectors: this.config.keySelectors
+    };
+
     this.monitor.reportInfo('INFO', {
       pluginName: this.name,
       message: `WhiteScreen check ${status}`,
       url: window.location.href,
-      extraData: {
-        status,
-        page: window.location.href,
-        startTime: this.startTime,
-        endTime: this.endTime,
-        duration: this.endTime - this.startTime,
-        selectors: this.config.keySelectors
-      },
+      extraData,
       timestamp: getTimestamp(),
       date: formatTimestamp()
     });

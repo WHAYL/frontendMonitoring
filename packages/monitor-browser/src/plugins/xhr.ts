@@ -1,6 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { XhrExtraData } from '../type';
 
 interface XhrInfo {
   method: string;
@@ -71,21 +72,23 @@ export class XhrPlugin implements MonitorPlugin {
           const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
+          const extraData: XhrExtraData = {
+            type: 'xhr',
+            url: xhrInfo.url,
+            method: xhrInfo.method,
+            error: 'Network Error',
+            startTime: xhrInfo.startTime,
+            endTime,
+            duration
+          };
+
           self.monitor!.reportInfo('INFO', {
             pluginName: self.name,
             message: `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData: {
-              type: 'xhr',
-              url: xhrInfo.url,
-              method: xhrInfo.method,
-              error: 'Network Error',
-              startTime: xhrInfo.startTime,
-              endTime,
-              duration
-            }
+            extraData
           });
 
           // 清理
@@ -98,21 +101,23 @@ export class XhrPlugin implements MonitorPlugin {
           const endTime = getTimestamp();
           const duration = endTime - xhrInfo.startTime;
 
+          const extraData: XhrExtraData = {
+            type: 'xhr',
+            url: xhrInfo.url,
+            method: xhrInfo.method,
+            error: 'Timeout',
+            startTime: xhrInfo.startTime,
+            endTime,
+            duration
+          };
+
           self.monitor!.reportInfo('INFO', {
             pluginName: self.name,
             message: `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData: {
-              type: 'xhr',
-              url: xhrInfo.url,
-              method: xhrInfo.method,
-              error: 'Timeout',
-              startTime: xhrInfo.startTime,
-              endTime,
-              duration
-            }
+            extraData
           });
 
           // 清理

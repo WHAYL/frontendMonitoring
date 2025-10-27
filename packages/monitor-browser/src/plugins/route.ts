@@ -2,14 +2,16 @@ import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { RouteExtraData } from '../type';
+
 export class RoutePlugin implements MonitorPlugin {
   name = 'route';
-  private monitor: MonitorPluginInitArg | null = null;
-  private lastRoute: string | null = null;
+  private monitor: MonitorPluginInitArg;
+  private lastRoute: string;
   private routeEnterTime: number = 0;
-  private originalPushState: typeof history.pushState | null = null;
-  private originalReplaceState: typeof history.replaceState | null = null;
-  private originalWindowOpen: typeof window.open | null = null;
+  private originalPushState: typeof history.pushState;
+  private originalReplaceState: typeof history.replaceState;
+  private originalWindowOpen: typeof window.open;
   private abortController: AbortController | null = null;
 
   init(monitor: MonitorPluginInitArg): void {
@@ -70,14 +72,16 @@ export class RoutePlugin implements MonitorPlugin {
     // 记录初始路由进入时间
     this.recordRouteEnter();
 
+    const extraData: RouteExtraData = {
+      route: this.lastRoute,
+      enterTime: this.routeEnterTime
+    };
+
     // 记录初始路由
     this.monitor!.reportInfo('INFO', {
       pluginName: this.name,
       message: `Initial Route: ${this.lastRoute}`,
-      extraData: {
-        route: this.lastRoute,
-        enterTime: this.routeEnterTime
-      },
+      extraData,
       url: window.location.href,
       timestamp: getTimestamp(),
       date: formatTimestamp()
@@ -100,22 +104,24 @@ export class RoutePlugin implements MonitorPlugin {
 
       // 记录新路由的进入时间
       this.recordRouteEnter();
-      const data = {
+
+      const extraData: RouteExtraData = {
         previousRoute: previous,
         currentRoute: currentRoute,
         changeType: changeType,
         enterTime: this.routeEnterTime
       };
+
       // 记录路由变更
       this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `Route Changed (${changeType}): ${currentRoute}`,
-        extraData: data,
+        extraData,
         url: window.location.href,
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
-      monitorRouteChange.emit("monitorRouteChange", data);
+      monitorRouteChange.emit("monitorRouteChange", extraData);
     }
   }
 
@@ -155,7 +161,7 @@ export class RoutePlugin implements MonitorPlugin {
       window.open = function (...args) {
         try {
           const url = args[0];
-          const data = {
+          const extraData: RouteExtraData = {
             previousRoute: self.lastRoute,
             currentRoute: url,
             changeType: 'window.open',
@@ -165,11 +171,11 @@ export class RoutePlugin implements MonitorPlugin {
             pluginName: self.name,
             message: `window.open -> ${url}`,
             url: window.location.href,
-            extraData: data,
+            extraData,
             timestamp: getTimestamp(),
             date: formatTimestamp()
           });
-          monitorRouteChange.emit('monitorRouteChange', data);
+          monitorRouteChange.emit('monitorRouteChange', extraData);
         } catch (e) {
           // ignore
         }
@@ -192,23 +198,23 @@ export class RoutePlugin implements MonitorPlugin {
       const href = a.href;
       if (!href) { return; }
 
-      const data = {
+      const extraData: RouteExtraData = {
         previousRoute: this.lastRoute,
         currentRoute: href,
         changeType: 'a.click',
         enterTime: getTimestamp(),
         target: a.target
-      } as any;
+      };
 
       this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `A tag clicked -> ${href}`,
         url: window.location.href,
-        extraData: data,
+        extraData,
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
-      monitorRouteChange.emit('monitorRouteChange', data);
+      monitorRouteChange.emit('monitorRouteChange', extraData);
     } catch (e) {
       // ignore
     }
@@ -237,15 +243,17 @@ export class RoutePlugin implements MonitorPlugin {
       const leaveTime = getTimestamp();
       const duration = leaveTime - this.routeEnterTime;
 
+      const extraData: RouteExtraData = {
+        route: this.lastRoute,
+        enterTime: this.routeEnterTime,
+        leaveTime: leaveTime,
+        duration: duration
+      };
+
       this.monitor!.reportInfo('INFO', {
         pluginName: this.name,
         message: `Route Left: ${this.lastRoute}`,
-        extraData: {
-          route: this.lastRoute,
-          enterTime: this.routeEnterTime,
-          leaveTime: leaveTime,
-          duration: duration
-        },
+        extraData,
         url: window.location.href,
         timestamp: getTimestamp(),
         date: formatTimestamp()

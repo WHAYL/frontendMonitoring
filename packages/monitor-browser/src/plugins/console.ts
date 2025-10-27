@@ -1,6 +1,8 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { ConsoleExtraData } from '../type';
+
 export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
@@ -39,11 +41,12 @@ export class ConsolePlugin implements MonitorPlugin {
                             try { return JSON.stringify(a); } catch { return String(a); }
                         }).join(' ');
                         const stack = (new Error()).stack;
+                        const extraData: ConsoleExtraData = { args, stack };
                         self.monitor && self.monitor.reportInfo('ERROR', {
                             pluginName: self.name,
                             message: message || 'console.error',
                             url: window.location.href,
-                            extraData: { args, stack },
+                            extraData,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
                         });
@@ -65,11 +68,12 @@ export class ConsolePlugin implements MonitorPlugin {
                         }).join(' ');
 
                         const stack = (new Error()).stack;
+                        const extraData: ConsoleExtraData = { args, stack };
                         self.monitor && self.monitor.reportInfo('WARN', {
                             pluginName: self.name,
                             message: message || 'console.warn',
                             url: window.location.href,
-                            extraData: { args, stack },
+                            extraData,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
                         });

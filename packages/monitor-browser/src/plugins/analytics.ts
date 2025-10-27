@@ -1,5 +1,6 @@
 import type { MonitorPluginInitArg, MonitorPlugin } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { AnalyticsExtraData, AnalyticsHistoryExtraData } from '../type';
 
 export interface AnalyticsPluginConfig {
     // 可选获取公网 IP 的异步函数（例如调用第三方服务），返回 IP 字符串
@@ -113,7 +114,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
                             pluginName: this.name,
                             message: 'analytics_history_before_cleanup',
                             extraData: {
-                                reportedAt: getTimestamp(),
+                                timestamp: getTimestamp(),
                                 items: oldRecords,
                             },
                             url: window.location.href,
@@ -226,7 +227,7 @@ export class AnalyticsPlugin implements MonitorPlugin {
 
             const uv = Object.keys(uvObj).length;
 
-            const payload = {
+            const payload: AnalyticsExtraData = {
                 pv,
                 uv,
                 vv,

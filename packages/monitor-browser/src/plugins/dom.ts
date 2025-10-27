@@ -2,6 +2,14 @@ import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type {
+  DomErrorExtraData,
+  DomUnhandledRejectionExtraData,
+  DomMouseEventExtraData,
+  DomClickPathExtraData,
+  DomResizeExtraData
+} from '../type';
+
 type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
 export interface DomPluginConfig {
   error?: boolean;
@@ -50,17 +58,18 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听未捕获的错误
     this.config.error && window.addEventListener('error', (event: ErrorEvent) => {
+      const extraData: DomErrorExtraData = {
+        message: event.message,           // 错误信息
+        filename: event.filename,         // 发生错误的文件
+        lineno: event.lineno,             // 行号
+        colno: event.colno,               // 列号
+        error: event.error,               // Error 对象
+      };
       this.monitor!.reportInfo('ERROR', {
         pluginName: this.name,
         message: `JavaScript Error: ${event.message}`,
         url: window.location.href,
-        extraData: {
-          message: event.message,           // 错误信息
-          filename: event.filename,         // 发生错误的文件
-          lineno: event.lineno,             // 行号
-          colno: event.colno,               // 列号
-          error: event.error,               // Error 对象
-        },
+        extraData,
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
@@ -68,25 +77,26 @@ export class DomPlugin implements MonitorPlugin {
 
     // 监听未处理的Promise拒绝
     this.config.unhandledrejection && window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+      const extraData: DomUnhandledRejectionExtraData = {
+        type: event.type,
+        // Promise 相关信息
+        promise: event.promise,              // 被拒绝的 Promise 对象
+        reason: event.reason,                // 拒绝原因
+
+        // 拒绝原因的详细解析
+        reasonType: typeof event.reason,
+        isError: event.reason instanceof Error,
+
+        // 如果是 Error 对象
+        errorMessage: event.reason?.message,
+        errorStack: event.reason?.stack,
+        errorName: event.reason?.name,
+      };
       this.monitor!.reportInfo('ERROR', {
         pluginName: this.name,
         message: `Unhandled Promise Rejection: ${event.reason}`,
         url: window.location.href,
-        extraData: {
-          type: event.type,
-          // Promise 相关信息
-          promise: event.promise,              // 被拒绝的 Promise 对象
-          reason: event.reason,                // 拒绝原因
-
-          // 拒绝原因的详细解析
-          reasonType: typeof event.reason,
-          isError: event.reason instanceof Error,
-
-          // 如果是 Error 对象
-          errorMessage: event.reason?.message,
-          errorStack: event.reason?.stack,
-          errorName: event.reason?.name,
-        },
+        extraData,
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
@@ -154,19 +164,20 @@ export class DomPlugin implements MonitorPlugin {
 
       if (!reportEl) { return; }
 
+      const extraData: DomMouseEventExtraData = {
+        localName: reportEl.localName,
+        // textContent: reportEl.textContent,
+        classList: Array.from(reportEl.classList).join(','),
+        className: reportEl.className,
+        id: reportEl.id,
+        nodeName: reportEl.nodeName,
+        tagName: reportEl.tagName,
+        dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
+      };
       this.monitor!.reportInfo('DEBUG', {
         pluginName: this.name,
         message: `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
-        extraData: {
-          localName: reportEl.localName,
-          // textContent: reportEl.textContent,
-          classList: Array.from(reportEl.classList).join(','),
-          className: reportEl.className,
-          id: reportEl.id,
-          nodeName: reportEl.nodeName,
-          tagName: reportEl.tagName,
-          dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
-        },
+        extraData,
         url: window.location.href,
         timestamp: getTimestamp(),
         date: formatTimestamp()
@@ -195,15 +206,17 @@ export class DomPlugin implements MonitorPlugin {
     // 监听窗口大小变化
     this.config.resize && window.addEventListener('resize', debounce(() => {
       const { innerWidth, innerHeight } = window;
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const extraData: DomResizeExtraData = {
+        innerWidth,
+        innerHeight,
+        devicePixelRatio
+      };
       this.monitor?.reportInfo('DEBUG', {
         pluginName: this.name,
         message: `Window Resize: ${innerWidth}x${innerHeight}`,
         url: window.location.href,
-        extraData: {
-          innerWidth,
-          innerHeight,
-          devicePixelRatio
-        },
+        extraData,
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
@@ -249,22 +262,23 @@ export class DomPlugin implements MonitorPlugin {
     try {
       if (!this.monitor) { return; }
       const path = this.buildPathFromEvent(event);
+      const extraData: DomClickPathExtraData = {
+        timestamp: getTimestamp(),
+        path,
+        // 位置信息
+        x: event.clientX,
+        y: event.clientY,
+        // 页面状态
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+      };
       this.monitor.reportInfo('INFO', {
         pluginName: this.name,
         message: 'click_path',
-        extraData: {
-          timestamp: getTimestamp(),
-          path,
-          // 位置信息
-          x: event.clientX,
-          y: event.clientY,
-          // 页面状态
-          scrollX: window.scrollX,
-          scrollY: window.scrollY,
-          innerWidth: window.innerWidth,
-          innerHeight: window.innerHeight,
-          url: typeof window !== 'undefined' ? window.location.href : '',
-        },
+        extraData,
         url: window.location.href,
         timestamp: getTimestamp(),
         date: formatTimestamp()

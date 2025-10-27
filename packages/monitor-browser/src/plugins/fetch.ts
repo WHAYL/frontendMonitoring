@@ -1,6 +1,8 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
 import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
+import type { FetchExtraData } from '../type';
+
 export class FetchPlugin implements MonitorPlugin {
   name = 'fetch';
   private monitor: MonitorPluginInitArg | null = null;
@@ -47,20 +49,22 @@ export class FetchPlugin implements MonitorPlugin {
         const endTime = getTimestamp();
         const duration = endTime - startTime;
 
+        const extraData: FetchExtraData = {
+          type: 'fetch',
+          url,
+          method,
+          error: error.message,
+          stack: error.stack,
+          startTime,
+          endTime,
+          duration
+        };
+
         self.monitor!.reportInfo('ERROR', {
           pluginName: self.name,
           message: `Fetch Error: ${method} ${url} - ${error.message}`,
           url: window.location.href,
-          extraData: {
-            type: 'fetch',
-            url,
-            method,
-            error: error.message,
-            stack: error.stack,
-            startTime,
-            endTime,
-            duration
-          },
+          extraData,
           timestamp: getTimestamp(),
           date: formatTimestamp()
         });

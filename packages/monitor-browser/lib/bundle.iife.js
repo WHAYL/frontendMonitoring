@@ -227,21 +227,22 @@ var AiyMonitorBrowser = (function () {
                   this.addEventListener('error', function () {
                       var endTime = getTimestamp();
                       var duration = endTime - xhrInfo.startTime;
+                      var extraData = {
+                          type: 'xhr',
+                          url: xhrInfo.url,
+                          method: xhrInfo.method,
+                          error: 'Network Error',
+                          startTime: xhrInfo.startTime,
+                          endTime: endTime,
+                          duration: duration
+                      };
                       self.monitor.reportInfo('INFO', {
                           pluginName: self.name,
                           message: "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                           url: window.location.href,
                           timestamp: getTimestamp(),
                           date: formatTimestamp(),
-                          extraData: {
-                              type: 'xhr',
-                              url: xhrInfo.url,
-                              method: xhrInfo.method,
-                              error: 'Network Error',
-                              startTime: xhrInfo.startTime,
-                              endTime: endTime,
-                              duration: duration
-                          }
+                          extraData: extraData
                       });
                       self.xhrMap.delete(this);
                   }, {
@@ -250,21 +251,22 @@ var AiyMonitorBrowser = (function () {
                   this.addEventListener('timeout', function () {
                       var endTime = getTimestamp();
                       var duration = endTime - xhrInfo.startTime;
+                      var extraData = {
+                          type: 'xhr',
+                          url: xhrInfo.url,
+                          method: xhrInfo.method,
+                          error: 'Timeout',
+                          startTime: xhrInfo.startTime,
+                          endTime: endTime,
+                          duration: duration
+                      };
                       self.monitor.reportInfo('INFO', {
                           pluginName: self.name,
                           message: "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                           url: window.location.href,
                           timestamp: getTimestamp(),
                           date: formatTimestamp(),
-                          extraData: {
-                              type: 'xhr',
-                              url: xhrInfo.url,
-                              method: xhrInfo.method,
-                              error: 'Timeout',
-                              startTime: xhrInfo.startTime,
-                              endTime: endTime,
-                              duration: duration
-                          }
+                          extraData: extraData
                       });
                       self.xhrMap.delete(this);
                   }, {
@@ -314,20 +316,21 @@ var AiyMonitorBrowser = (function () {
               }).catch(function (error) {
                   var endTime = getTimestamp();
                   var duration = endTime - startTime;
+                  var extraData = {
+                      type: 'fetch',
+                      url: url,
+                      method: method,
+                      error: error.message,
+                      stack: error.stack,
+                      startTime: startTime,
+                      endTime: endTime,
+                      duration: duration
+                  };
                   self.monitor.reportInfo('ERROR', {
                       pluginName: self.name,
                       message: "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message),
                       url: window.location.href,
-                      extraData: {
-                          type: 'fetch',
-                          url: url,
-                          method: method,
-                          error: error.message,
-                          stack: error.stack,
-                          startTime: startTime,
-                          endTime: endTime,
-                          duration: duration
-                      },
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
@@ -1278,37 +1281,39 @@ var AiyMonitorBrowser = (function () {
           this.abortController = new AbortController();
           var signal = this.abortController.signal;
           this.config.error && window.addEventListener('error', function (event) {
+              var extraData = {
+                  message: event.message,
+                  filename: event.filename,
+                  lineno: event.lineno,
+                  colno: event.colno,
+                  error: event.error,
+              };
               _this.monitor.reportInfo('ERROR', {
                   pluginName: _this.name,
                   message: "JavaScript Error: ".concat(event.message),
                   url: window.location.href,
-                  extraData: {
-                      message: event.message,
-                      filename: event.filename,
-                      lineno: event.lineno,
-                      colno: event.colno,
-                      error: event.error,
-                  },
+                  extraData: extraData,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
               });
           }, { signal: signal });
           this.config.unhandledrejection && window.addEventListener('unhandledrejection', function (event) {
               var _a, _b, _c;
+              var extraData = {
+                  type: event.type,
+                  promise: event.promise,
+                  reason: event.reason,
+                  reasonType: typeof event.reason,
+                  isError: event.reason instanceof Error,
+                  errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
+                  errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
+                  errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
+              };
               _this.monitor.reportInfo('ERROR', {
                   pluginName: _this.name,
                   message: "Unhandled Promise Rejection: ".concat(event.reason),
                   url: window.location.href,
-                  extraData: {
-                      type: event.type,
-                      promise: event.promise,
-                      reason: event.reason,
-                      reasonType: typeof event.reason,
-                      isError: event.reason instanceof Error,
-                      errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
-                      errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
-                      errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
-                  },
+                  extraData: extraData,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
               });
@@ -1377,21 +1382,22 @@ var AiyMonitorBrowser = (function () {
               if (!reportEl) {
                   return;
               }
+              var extraData = {
+                  localName: reportEl.localName,
+                  classList: Array.from(reportEl.classList).join(','),
+                  className: reportEl.className,
+                  id: reportEl.id,
+                  nodeName: reportEl.nodeName,
+                  tagName: reportEl.tagName,
+                  dataSet: Object.entries(reportEl.dataset).map(function (_a) {
+                      var key = _a[0], value = _a[1];
+                      return "".concat(key, ":").concat(value);
+                  }).join(','),
+              };
               _this.monitor.reportInfo('DEBUG', {
                   pluginName: _this.name,
                   message: "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''),
-                  extraData: {
-                      localName: reportEl.localName,
-                      classList: Array.from(reportEl.classList).join(','),
-                      className: reportEl.className,
-                      id: reportEl.id,
-                      nodeName: reportEl.nodeName,
-                      tagName: reportEl.tagName,
-                      dataSet: Object.entries(reportEl.dataset).map(function (_a) {
-                          var key = _a[0], value = _a[1];
-                          return "".concat(key, ":").concat(value);
-                      }).join(','),
-                  },
+                  extraData: extraData,
                   url: window.location.href,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
@@ -1415,15 +1421,17 @@ var AiyMonitorBrowser = (function () {
           this.config.resize && window.addEventListener('resize', g$1(function () {
               var _a;
               var innerWidth = window.innerWidth, innerHeight = window.innerHeight;
+              var devicePixelRatio = window.devicePixelRatio || 1;
+              var extraData = {
+                  innerWidth: innerWidth,
+                  innerHeight: innerHeight,
+                  devicePixelRatio: devicePixelRatio
+              };
               (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('DEBUG', {
                   pluginName: _this.name,
                   message: "Window Resize: ".concat(innerWidth, "x").concat(innerHeight),
                   url: window.location.href,
-                  extraData: {
-                      innerWidth: innerWidth,
-                      innerHeight: innerHeight,
-                      devicePixelRatio: devicePixelRatio
-                  },
+                  extraData: extraData,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
               });
@@ -1476,20 +1484,21 @@ var AiyMonitorBrowser = (function () {
                   return;
               }
               var path = this.buildPathFromEvent(event);
+              var extraData = {
+                  timestamp: getTimestamp(),
+                  path: path,
+                  x: event.clientX,
+                  y: event.clientY,
+                  scrollX: window.scrollX,
+                  scrollY: window.scrollY,
+                  innerWidth: window.innerWidth,
+                  innerHeight: window.innerHeight,
+                  url: typeof window !== 'undefined' ? window.location.href : '',
+              };
               this.monitor.reportInfo('INFO', {
                   pluginName: this.name,
                   message: 'click_path',
-                  extraData: {
-                      timestamp: getTimestamp(),
-                      path: path,
-                      x: event.clientX,
-                      y: event.clientY,
-                      scrollX: window.scrollX,
-                      scrollY: window.scrollY,
-                      innerWidth: window.innerWidth,
-                      innerHeight: window.innerHeight,
-                      url: typeof window !== 'undefined' ? window.location.href : '',
-                  },
+                  extraData: extraData,
                   url: window.location.href,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
@@ -1508,12 +1517,7 @@ var AiyMonitorBrowser = (function () {
       function RoutePlugin() {
           var _this = this;
           this.name = 'route';
-          this.monitor = null;
-          this.lastRoute = null;
           this.routeEnterTime = 0;
-          this.originalPushState = null;
-          this.originalReplaceState = null;
-          this.originalWindowOpen = null;
           this.abortController = null;
           this.handleDocumentClick = function (ev) {
               try {
@@ -1529,7 +1533,7 @@ var AiyMonitorBrowser = (function () {
                   if (!href) {
                       return;
                   }
-                  var data = {
+                  var extraData = {
                       previousRoute: _this.lastRoute,
                       currentRoute: href,
                       changeType: 'a.click',
@@ -1540,11 +1544,11 @@ var AiyMonitorBrowser = (function () {
                       pluginName: _this.name,
                       message: "A tag clicked -> ".concat(href),
                       url: window.location.href,
-                      extraData: data,
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
-                  monitorRouteChange.emit('monitorRouteChange', data);
+                  monitorRouteChange.emit('monitorRouteChange', extraData);
               }
               catch (e) {
               }
@@ -1602,13 +1606,14 @@ var AiyMonitorBrowser = (function () {
           this.wrapWindowOpen();
           window.addEventListener('beforeunload', this.handleBeforeUnload, { signal: (_d = this.abortController) === null || _d === void 0 ? void 0 : _d.signal });
           this.recordRouteEnter();
+          var extraData = {
+              route: this.lastRoute,
+              enterTime: this.routeEnterTime
+          };
           this.monitor.reportInfo('INFO', {
               pluginName: this.name,
               message: "Initial Route: ".concat(this.lastRoute),
-              extraData: {
-                  route: this.lastRoute,
-                  enterTime: this.routeEnterTime
-              },
+              extraData: extraData,
               url: window.location.href,
               timestamp: getTimestamp(),
               date: formatTimestamp()
@@ -1621,7 +1626,7 @@ var AiyMonitorBrowser = (function () {
               this.recordRouteLeave();
               this.lastRoute = currentRoute;
               this.recordRouteEnter();
-              var data = {
+              var extraData = {
                   previousRoute: previous,
                   currentRoute: currentRoute,
                   changeType: changeType,
@@ -1630,12 +1635,12 @@ var AiyMonitorBrowser = (function () {
               this.monitor.reportInfo('INFO', {
                   pluginName: this.name,
                   message: "Route Changed (".concat(changeType, "): ").concat(currentRoute),
-                  extraData: data,
+                  extraData: extraData,
                   url: window.location.href,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
               });
-              monitorRouteChange.emit("monitorRouteChange", data);
+              monitorRouteChange.emit("monitorRouteChange", extraData);
           }
       };
       RoutePlugin.prototype.getCurrentRoute = function () {
@@ -1675,7 +1680,7 @@ var AiyMonitorBrowser = (function () {
                   }
                   try {
                       var url = args[0];
-                      var data = {
+                      var extraData = {
                           previousRoute: self.lastRoute,
                           currentRoute: url,
                           changeType: 'window.open',
@@ -1685,11 +1690,11 @@ var AiyMonitorBrowser = (function () {
                           pluginName: self.name,
                           message: "window.open -> ".concat(url),
                           url: window.location.href,
-                          extraData: data,
+                          extraData: extraData,
                           timestamp: getTimestamp(),
                           date: formatTimestamp()
                       });
-                      monitorRouteChange.emit('monitorRouteChange', data);
+                      monitorRouteChange.emit('monitorRouteChange', extraData);
                   }
                   catch (e) {
                   }
@@ -1706,15 +1711,16 @@ var AiyMonitorBrowser = (function () {
           if (this.lastRoute && this.routeEnterTime) {
               var leaveTime = getTimestamp();
               var duration = leaveTime - this.routeEnterTime;
+              var extraData = {
+                  route: this.lastRoute,
+                  enterTime: this.routeEnterTime,
+                  leaveTime: leaveTime,
+                  duration: duration
+              };
               this.monitor.reportInfo('INFO', {
                   pluginName: this.name,
                   message: "Route Left: ".concat(this.lastRoute),
-                  extraData: {
-                      route: this.lastRoute,
-                      enterTime: this.routeEnterTime,
-                      leaveTime: leaveTime,
-                      duration: duration
-                  },
+                  extraData: extraData,
                   url: window.location.href,
                   timestamp: getTimestamp(),
                   date: formatTimestamp()
@@ -2085,17 +2091,18 @@ var AiyMonitorBrowser = (function () {
                   list.getEntries().forEach(function (entry) {
                       var _a;
                       if (entry.entryType === 'longtask') {
+                          var extraData = {
+                              type: 'longtask',
+                              name: entry.name,
+                              startTime: entry.startTime,
+                              duration: entry.duration,
+                              attribution: entry.attribution || []
+                          };
                           (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                               pluginName: _this.name,
                               message: 'Long Task Detected',
                               url: window.location.href,
-                              extraData: {
-                                  type: 'longtask',
-                                  name: entry.name,
-                                  startTime: entry.startTime,
-                                  duration: entry.duration,
-                                  attribution: entry.attribution || []
-                              },
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2167,23 +2174,18 @@ var AiyMonitorBrowser = (function () {
                           totalDiff > 5 * 1024 * 1024 ||
                           percent > 0.9 ||
                           isLeakDetected) {
+                          var extraData = {
+                              type: 'memory',
+                              usedJSHeapSize: memory.usedJSHeapSize,
+                              totalJSHeapSize: memory.totalJSHeapSize,
+                              jsHeapSizeLimit: memory.jsHeapSizeLimit,
+                              trend: trend
+                          };
                           (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                               pluginName: _this.name,
                               message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
                               url: window.location.href,
-                              extraData: {
-                                  type: 'memory',
-                                  jsHeapSizeLimit: memory.jsHeapSizeLimit,
-                                  totalJSHeapSize: memory.totalJSHeapSize,
-                                  usedJSHeapSize: memory.usedJSHeapSize,
-                                  percent: +(percent * 100).toFixed(2),
-                                  usedDiff: usedDiff,
-                                  totalDiff: totalDiff,
-                                  trend: trend,
-                                  samplesCount: memoryData.samples.length,
-                                  peaksCount: memoryData.peaks.length,
-                                  isLeakDetected: isLeakDetected
-                              },
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2248,18 +2250,19 @@ var AiyMonitorBrowser = (function () {
               var frameTime = now - lastFrameTime;
               if (frameTime > 33) {
                   var isDuringInteraction = userInteracting || (now - lastUserInteraction < 1000);
+                  var extraData = {
+                      type: 'frame_drop',
+                      frameTime: Math.round(frameTime * 100) / 100,
+                      expectedFrameTime: 16.67,
+                      timestamp: now,
+                      isDuringInteraction: isDuringInteraction,
+                      timeSinceLastInteraction: now - lastUserInteraction
+                  };
                   (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'Frame Drop Detected',
                       url: window.location.href,
-                      extraData: {
-                          type: 'frame_drop',
-                          frameTime: Math.round(frameTime * 100) / 100,
-                          expectedFrameTime: 16.67,
-                          timestamp: now,
-                          isDuringInteraction: isDuringInteraction,
-                          timeSinceLastInteraction: now - lastUserInteraction
-                      },
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
@@ -2275,20 +2278,21 @@ var AiyMonitorBrowser = (function () {
                       avgFps = Math.round(fpsList.reduce(function (a, b) { return a + b; }, 0) / fpsList.length);
                   }
                   if (fps < 45 || (fpsList.length > 1 && Math.abs(fps - (fpsList[fpsList.length - 2] || 0)) > 10)) {
+                      var extraData = {
+                          type: 'fps',
+                          fps: fps,
+                          minFps: Math.round(minFps),
+                          maxFps: Math.round(maxFps),
+                          avgFps: avgFps,
+                          frameCount: frameCount,
+                          timestamp: now,
+                          duration: now - lastReportTime
+                      };
                       (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.reportInfo('INFO', {
                           pluginName: _this.name,
                           message: 'FPS Report',
                           url: window.location.href,
-                          extraData: {
-                              type: 'fps',
-                              fps: fps,
-                              minFps: Math.round(minFps),
-                              maxFps: Math.round(maxFps),
-                              avgFps: avgFps,
-                              frameCount: frameCount,
-                              timestamp: now,
-                              duration: now - lastReportTime
-                          },
+                          extraData: extraData,
                           timestamp: getTimestamp(),
                           date: formatTimestamp()
                       });
@@ -2356,21 +2360,37 @@ var AiyMonitorBrowser = (function () {
                           var encodedBodySize = typeof resourceEntry.encodedBodySize === 'number' ? resourceEntry.encodedBodySize : 0;
                           var decodedBodySize = typeof resourceEntry.decodedBodySize === 'number' ? resourceEntry.decodedBodySize : 0;
                           var fromCache = transferSize === 0 && (encodedBodySize > 0 || decodedBodySize > 0);
+                          var extraData = {
+                              type: 'resource',
+                              name: resourceEntry.name,
+                              entryType: resourceEntry.entryType,
+                              startTime: resourceEntry.startTime,
+                              duration: resourceEntry.duration,
+                              initiatorType: initiatorType,
+                              nextHopProtocol: resourceEntry.nextHopProtocol,
+                              workerStart: resourceEntry.workerStart,
+                              redirectStart: resourceEntry.redirectStart,
+                              redirectEnd: resourceEntry.redirectEnd,
+                              fetchStart: resourceEntry.fetchStart,
+                              domainLookupStart: resourceEntry.domainLookupStart,
+                              domainLookupEnd: resourceEntry.domainLookupEnd,
+                              connectStart: resourceEntry.connectStart,
+                              connectEnd: resourceEntry.connectEnd,
+                              secureConnectionStart: resourceEntry.secureConnectionStart,
+                              requestStart: resourceEntry.requestStart,
+                              responseStart: resourceEntry.responseStart,
+                              responseEnd: resourceEntry.responseEnd,
+                              transferSize: resourceEntry.transferSize,
+                              encodedBodySize: resourceEntry.encodedBodySize,
+                              decodedBodySize: resourceEntry.decodedBodySize,
+                              serverTiming: resourceEntry.serverTiming || [],
+                              cached: fromCache
+                          };
                           _this.monitor.reportInfo('INFO', {
                               pluginName: _this.name,
                               message: "Resource loaded: ".concat(resourceEntry.name),
                               url: window.location.href,
-                              extraData: {
-                                  type: 'resource',
-                                  name: resourceEntry.name,
-                                  duration: resourceEntry.duration,
-                                  startTime: resourceEntry.startTime,
-                                  transferSize: resourceEntry.transferSize,
-                                  encodedBodySize: resourceEntry.encodedBodySize,
-                                  decodedBodySize: resourceEntry.decodedBodySize,
-                                  initiatorType: initiatorType,
-                                  cached: fromCache
-                              },
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2390,11 +2410,39 @@ var AiyMonitorBrowser = (function () {
                   list.getEntries().forEach(function (entry) {
                       if (entry.entryType === 'navigation') {
                           var navEntry = entry;
+                          var extraData = {
+                              name: navEntry.name,
+                              entryType: navEntry.entryType,
+                              startTime: navEntry.startTime,
+                              duration: navEntry.duration,
+                              activationStart: navEntry.activationStart,
+                              unloadEventStart: navEntry.unloadEventStart,
+                              unloadEventEnd: navEntry.unloadEventEnd,
+                              redirectStart: navEntry.redirectStart,
+                              redirectEnd: navEntry.redirectEnd,
+                              fetchStart: navEntry.fetchStart,
+                              domainLookupStart: navEntry.domainLookupStart,
+                              domainLookupEnd: navEntry.domainLookupEnd,
+                              connectStart: navEntry.connectStart,
+                              connectEnd: navEntry.connectEnd,
+                              secureConnectionStart: navEntry.secureConnectionStart,
+                              requestStart: navEntry.requestStart,
+                              responseStart: navEntry.responseStart,
+                              responseEnd: navEntry.responseEnd,
+                              domInteractive: navEntry.domInteractive,
+                              domContentLoadedEventStart: navEntry.domContentLoadedEventStart,
+                              domContentLoadedEventEnd: navEntry.domContentLoadedEventEnd,
+                              domComplete: navEntry.domComplete,
+                              loadEventStart: navEntry.loadEventStart,
+                              loadEventEnd: navEntry.loadEventEnd,
+                              type: navEntry.type,
+                              redirectCount: navEntry.redirectCount
+                          };
                           _this.monitor.reportInfo('INFO', {
                               pluginName: _this.name,
                               message: 'Page navigation performance',
                               url: window.location.href,
-                              extraData: __assign({ type: 'navigation' }, navEntry.toJSON()),
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2411,57 +2459,62 @@ var AiyMonitorBrowser = (function () {
           var _this = this;
           try {
               x(function (metric) {
+                  var extraData = __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) });
                   _this.monitor.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'Largest Contentful Paint (LCP)',
                       url: window.location.href,
-                      extraData: __assign(__assign({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) }),
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
               });
               S(function (metric) {
+                  var extraData = __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) });
                   _this.monitor.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'Interaction to Next Paint (INP)',
                       url: window.location.href,
-                      extraData: __assign(__assign({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) }),
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
               });
               L(function (metric) {
+                  var extraData = {
+                      type: 'web_vitals',
+                      metric: 'CLS',
+                      value: metric.value,
+                      navigationType: metric.navigationType,
+                      rating: _this.getRating(metric.value, 0.1, 0.25)
+                  };
                   _this.monitor.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'Cumulative Layout Shift (CLS)',
                       url: window.location.href,
-                      extraData: {
-                          type: 'web_vitals',
-                          metric: 'CLS',
-                          value: metric.value,
-                          navigationType: metric.navigationType,
-                          rating: _this.getRating(metric.value, 0.1, 0.25)
-                      },
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
               });
               E(function (metric) {
+                  var extraData = __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) });
                   _this.monitor.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'First Contentful Paint (FCP)',
                       url: window.location.href,
-                      extraData: __assign(__assign({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) }),
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
               });
               $(function (metric) {
+                  var extraData = __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) });
                   _this.monitor.reportInfo('INFO', {
                       pluginName: _this.name,
                       message: 'Time to First Byte (TTFB)',
                       url: window.location.href,
-                      extraData: __assign(__assign({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) }),
+                      extraData: extraData,
                       timestamp: getTimestamp(),
                       date: formatTimestamp()
                   });
@@ -2637,18 +2690,19 @@ var AiyMonitorBrowser = (function () {
           if (!this.monitor) {
               return;
           }
+          var extraData = {
+              status: status,
+              page: window.location.href,
+              startTime: this.startTime,
+              endTime: this.endTime,
+              duration: this.endTime - this.startTime,
+              selectors: this.config.keySelectors
+          };
           this.monitor.reportInfo('INFO', {
               pluginName: this.name,
               message: "WhiteScreen check ".concat(status),
               url: window.location.href,
-              extraData: {
-                  status: status,
-                  page: window.location.href,
-                  startTime: this.startTime,
-                  endTime: this.endTime,
-                  duration: this.endTime - this.startTime,
-                  selectors: this.config.keySelectors
-              },
+              extraData: extraData,
               timestamp: getTimestamp(),
               date: formatTimestamp()
           });
@@ -2699,11 +2753,12 @@ var AiyMonitorBrowser = (function () {
                               }
                           }).join(' ');
                           var stack = (new Error()).stack;
+                          var extraData = { args: args, stack: stack };
                           self.monitor && self.monitor.reportInfo('ERROR', {
                               pluginName: self.name,
                               message: message || 'console.error',
                               url: window.location.href,
-                              extraData: { args: args, stack: stack },
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2733,11 +2788,12 @@ var AiyMonitorBrowser = (function () {
                               }
                           }).join(' ');
                           var stack = (new Error()).stack;
+                          var extraData = { args: args, stack: stack };
                           self.monitor && self.monitor.reportInfo('WARN', {
                               pluginName: self.name,
                               message: message || 'console.warn',
                               url: window.location.href,
-                              extraData: { args: args, stack: stack },
+                              extraData: extraData,
                               timestamp: getTimestamp(),
                               date: formatTimestamp()
                           });
@@ -2854,7 +2910,7 @@ var AiyMonitorBrowser = (function () {
                               pluginName: this.name,
                               message: 'analytics_history_before_cleanup',
                               extraData: {
-                                  reportedAt: getTimestamp(),
+                                  timestamp: getTimestamp(),
                                   items: oldRecords_1,
                               },
                               url: window.location.href,
