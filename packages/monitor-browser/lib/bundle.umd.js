@@ -3125,20 +3125,20 @@
             var _a, _b;
             window.addEventListener('online', function () {
                 _this.isOnline = true;
-                _this.reportCacheLog();
-                _this.monitor.reportInfo('OFF', {
-                    pluginName: 'monitor-browser',
-                    url: window.location.href,
-                    extraData: {},
-                    deviceInfo: {
-                        width: window.innerWidth,
-                        height: window.innerHeight,
-                        pixelRatio: window.devicePixelRatio
-                    },
-                    timestamp: getTimestamp(),
-                    date: formatTimestamp(),
-                    message: '设备恢复在线'
+                _this.cacheLog.push({
+                    type: 'OFF',
+                    data: {
+                        pluginName: 'monitor-browser',
+                        url: window.location.href,
+                        extraData: {},
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        message: '设备恢复在线',
+                        deviceInfo: _this.getDeviceInfoData(),
+                        navigator: _this.getNavigatorData()
+                    }
                 });
+                _this.reportCacheLog();
             }, { signal: (_a = this.abortController) === null || _a === void 0 ? void 0 : _a.signal });
             window.addEventListener('offline', function () {
                 _this.isOnline = false;
@@ -3151,18 +3151,8 @@
                         timestamp: getTimestamp(),
                         date: formatTimestamp(),
                         message: '设备离线',
-                        deviceInfo: {
-                            width: window.innerWidth,
-                            height: window.innerHeight,
-                            pixelRatio: window.devicePixelRatio
-                        },
-                        navigator: {
-                            userAgent: navigator.userAgent,
-                            platform: navigator.platform,
-                            language: navigator.language,
-                            onLine: navigator.onLine,
-                            cookieEnabled: navigator.cookieEnabled
-                        }
+                        deviceInfo: _this.getDeviceInfoData(),
+                        navigator: _this.getNavigatorData()
                     }
                 });
             }, {

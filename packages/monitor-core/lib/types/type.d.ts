@@ -30,7 +30,7 @@ export interface DeviceInfo {
     height: number;
     pixelRatio: number;
 }
-export type LogData = {
+export interface LogData {
     pluginName: string;
     message: string;
     url: string;
@@ -38,4 +38,4 @@ export type LogData = {
     timestamp: number;
     date: string;
     deviceInfo: DeviceInfo;
-};
+}

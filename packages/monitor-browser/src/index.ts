@@ -115,7 +115,7 @@ class BrowserMonitor implements BrowserMonitorBase {
     private reportCacheLog(): void {
         if (this.cacheLog.length) {
             this.cacheLog.forEach(item => {
-                this.monitor.reportInfo(item.type, item.data as LogData);
+                this.monitor.reportInfo(item.type, item.data);
             });
             this.cacheLog = [];
         }
@@ -123,20 +123,20 @@ class BrowserMonitor implements BrowserMonitorBase {
     private setupNetworkListener(): void {
         window.addEventListener('online', () => {
             this.isOnline = true;
-            this.reportCacheLog();
-            this.monitor.reportInfo('OFF', {
-                pluginName: 'monitor-browser',
-                url: window.location.href,
-                extraData: {},
-                deviceInfo: {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    pixelRatio: window.devicePixelRatio
-                },
-                timestamp: getTimestamp(),
-                date: formatTimestamp(),
-                message: '设备恢复在线'
+            this.cacheLog.push({
+                type: 'OFF',
+                data: {
+                    pluginName: 'monitor-browser',
+                    url: window.location.href,
+                    extraData: {},
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp(),
+                    message: '设备恢复在线',
+                    deviceInfo: this.getDeviceInfoData(),
+                    navigator: this.getNavigatorData()
+                }
             });
+            this.reportCacheLog();
         }, { signal: this.abortController?.signal });
 
         window.addEventListener('offline', () => {
@@ -150,18 +150,8 @@ class BrowserMonitor implements BrowserMonitorBase {
                     timestamp: getTimestamp(),
                     date: formatTimestamp(),
                     message: '设备离线',
-                    deviceInfo: {
-                        width: window.innerWidth,
-                        height: window.innerHeight,
-                        pixelRatio: window.devicePixelRatio
-                    },
-                    navigator: {
-                        userAgent: navigator.userAgent,
-                        platform: navigator.platform,
-                        language: navigator.language,
-                        onLine: navigator.onLine,
-                        cookieEnabled: navigator.cookieEnabled
-                    }
+                    deviceInfo: this.getDeviceInfoData(),
+                    navigator: this.getNavigatorData()
                 }
             });
         }, {
