@@ -87,8 +87,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData,
-            navigator: undefined
+            extraData
           });
 
           // 清理
@@ -117,8 +116,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData,
-            navigator: undefined
+            extraData
           });
 
           // 清理

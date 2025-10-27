@@ -74,9 +74,7 @@ export class ConsolePlugin implements BrowserMonitorPlugin {
                             url: window.location.href,
                             extraData,
                             timestamp: getTimestamp(),
-                            date: formatTimestamp(),
-                            navigator: undefined,
-                            deviceInfo: undefined
+                            date: formatTimestamp()
                         });
                     } catch (e) {
                         // 忽略

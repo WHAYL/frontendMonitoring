@@ -9,6 +9,7 @@ import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
 import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin } from './type';
+import { SetRequired } from 'aiy-utils';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -29,7 +30,18 @@ export interface BrowserMonitorConfig {
     performancePluginConfig?: PerformancePluginConfig;
     analyticsPluginConfig?: AnalyticsPluginConfig;
 }
-
+const navigatorData = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    onLine: navigator.onLine,
+    cookieEnabled: navigator.cookieEnabled,
+};
+const deviceInfoData = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    pixelRatio: window.devicePixelRatio,
+};
 /**
  * 浏览器监控类
  */
@@ -39,7 +51,7 @@ class BrowserMonitor implements BrowserMonitorBase {
     private abortController: AbortController | null = null;
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
     private isOnline: boolean = navigator.onLine;
-    private cacheLog: { type: ReportingLevel, data: BrowserLogData }[] = [];
+    private cacheLog: { type: ReportingLevel, data: SetRequired<BrowserLogData, 'deviceInfo' | 'navigator'> }[] = [];
 
     constructor(config: BrowserMonitorConfig) {
         // 默认配置都为 true
@@ -174,24 +186,13 @@ class BrowserMonitor implements BrowserMonitorBase {
         return this.monitor.getFingerprint();
     }
     reportInfo(type: ReportingLevel, data: BrowserLogData) {
-        data.navigator = {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            onLine: navigator.onLine,
-            cookieEnabled: navigator.cookieEnabled,
-        };
-        data.deviceInfo = {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            pixelRatio: window.devicePixelRatio,
-        };
+        data.navigator = navigatorData;
         if (!this.isOnline) {
             // 如果当前处于离线状态，则缓存日志
-            this.cacheLog.push({ type, data });
+            this.cacheLog.push({ type, data: { ...data, deviceInfo: deviceInfoData, navigator: navigatorData } });
             return;
         }
-        this.monitor.reportInfo(type, { ...data, deviceInfo: data.deviceInfo });
+        this.monitor.reportInfo(type, { ...data, deviceInfo: deviceInfoData });
     }
 
     /**

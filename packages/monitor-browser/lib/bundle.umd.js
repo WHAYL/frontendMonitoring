@@ -387,8 +387,7 @@
                             url: window.location.href,
                             timestamp: getTimestamp(),
                             date: formatTimestamp(),
-                            extraData: extraData,
-                            navigator: undefined
+                            extraData: extraData
                         });
                         self.xhrMap.delete(this);
                     }, {
@@ -412,8 +411,7 @@
                             url: window.location.href,
                             timestamp: getTimestamp(),
                             date: formatTimestamp(),
-                            extraData: extraData,
-                            navigator: undefined
+                            extraData: extraData
                         });
                         self.xhrMap.delete(this);
                     }, {
@@ -2800,9 +2798,7 @@
                                 url: window.location.href,
                                 extraData: extraData,
                                 timestamp: getTimestamp(),
-                                date: formatTimestamp(),
-                                navigator: undefined,
-                                deviceInfo: undefined
+                                date: formatTimestamp()
                             });
                         }
                         catch (e) {
@@ -3060,6 +3056,18 @@
         return AnalyticsPlugin;
     }());
 
+    var navigatorData = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        onLine: navigator.onLine,
+        cookieEnabled: navigator.cookieEnabled,
+    };
+    var deviceInfoData = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        pixelRatio: window.devicePixelRatio,
+    };
     var BrowserMonitor = (function () {
         function BrowserMonitor(config) {
             var _this = this;
@@ -3180,23 +3188,12 @@
             return this.monitor.getFingerprint();
         };
         BrowserMonitor.prototype.reportInfo = function (type, data) {
-            data.navigator = {
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                onLine: navigator.onLine,
-                cookieEnabled: navigator.cookieEnabled,
-            };
-            data.deviceInfo = {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                pixelRatio: window.devicePixelRatio,
-            };
+            data.navigator = navigatorData;
             if (!this.isOnline) {
-                this.cacheLog.push({ type: type, data: data });
+                this.cacheLog.push({ type: type, data: __assign$1(__assign$1({}, data), { deviceInfo: deviceInfoData, navigator: navigatorData }) });
                 return;
             }
-            this.monitor.reportInfo(type, __assign$1(__assign$1({}, data), { deviceInfo: data.deviceInfo }));
+            this.monitor.reportInfo(type, __assign$1(__assign$1({}, data), { deviceInfo: deviceInfoData }));
         };
         BrowserMonitor.prototype.use = function (plugin) {
             if (!plugin.name) {
