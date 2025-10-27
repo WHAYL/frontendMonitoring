@@ -1,4 +1,4 @@
-import { FrontendMonitor, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
+import { DeviceInfo, FrontendMonitor, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin, DomPluginConfig } from './plugins/dom';
@@ -8,7 +8,7 @@ import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScree
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
-import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin } from './type';
+import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
 
 // 定义浏览器监控插件配置接口
@@ -30,14 +30,14 @@ export interface BrowserMonitorConfig {
     performancePluginConfig?: PerformancePluginConfig;
     analyticsPluginConfig?: AnalyticsPluginConfig;
 }
-const navigatorData = {
+const navigatorData: PartialNavigator = {
     userAgent: navigator.userAgent,
     platform: navigator.platform,
     language: navigator.language,
     onLine: navigator.onLine,
     cookieEnabled: navigator.cookieEnabled,
 };
-const deviceInfoData = {
+const deviceInfoData: DeviceInfo = {
     width: window.innerWidth,
     height: window.innerHeight,
     pixelRatio: window.devicePixelRatio,
