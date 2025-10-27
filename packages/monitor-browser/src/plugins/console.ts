@@ -1,13 +1,13 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPluginInitArg, ConsoleExtraData } from '../type';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, ConsoleExtraData } from '../type';
 
 export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
 }
 
-export class ConsolePlugin implements MonitorPlugin {
+export class ConsolePlugin implements BrowserMonitorPlugin {
     name = 'console';
     private monitor: BrowserMonitorPluginInitArg | null = null;
     private originalError: typeof console.error | null = null;

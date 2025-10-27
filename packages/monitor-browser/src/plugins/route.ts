@@ -1,9 +1,9 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPluginInitArg, RouteExtraData } from '../type';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, RouteExtraData } from '../type';
 
-export class RoutePlugin implements MonitorPlugin {
+export class RoutePlugin implements BrowserMonitorPlugin {
   name = 'route';
   private monitor: BrowserMonitorPluginInitArg;
   private lastRoute: string;

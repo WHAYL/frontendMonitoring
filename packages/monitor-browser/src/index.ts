@@ -1,4 +1,4 @@
-import { FrontendMonitor, LogData, MonitorConfig, MonitorInstance, MonitorPlugin, ReportingLevel } from '@whayl/monitor-core';
+import { FrontendMonitor, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin, DomPluginConfig } from './plugins/dom';
@@ -8,7 +8,7 @@ import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScree
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
-import { BrowserLogData } from './type';
+import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin } from './type';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -33,8 +33,8 @@ export interface BrowserMonitorConfig {
 /**
  * 浏览器监控类
  */
-class BrowserMonitor implements MonitorInstance {
-    private plugins: MonitorPlugin[] = [];
+class BrowserMonitor implements BrowserMonitorBase {
+    private plugins: BrowserMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
     private abortController: AbortController | null = null;
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
@@ -198,7 +198,7 @@ class BrowserMonitor implements MonitorInstance {
      * 添加插件
      * @param plugin 监控插件
      */
-    use(plugin: MonitorPlugin): void {
+    use(plugin: BrowserMonitorPlugin): void {
         // 检查插件是否包含必需的name属性
         if (!plugin.name) {
             console.error('Plugin must have a name property');

@@ -1,6 +1,5 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
-import type { BrowserMonitorPluginInitArg } from '../type';
-export declare class XhrPlugin implements MonitorPlugin {
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
+export declare class XhrPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
     private xhrMap;

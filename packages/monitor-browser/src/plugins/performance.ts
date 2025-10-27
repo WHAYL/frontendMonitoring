@@ -1,4 +1,4 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
@@ -10,7 +10,8 @@ import type {
   PerformanceResourceExtraData,
   PerformanceNavigationExtraData,
   PerformanceWebVitalsExtraData,
-  BrowserMonitorPluginInitArg
+  BrowserMonitorPluginInitArg,
+  BrowserMonitorPlugin
 } from '../type';
 
 export interface PerformancePluginConfig {
@@ -22,7 +23,7 @@ export interface PerformancePluginConfig {
   webVitalsEnabled?: boolean;
 }
 
-export class PerformancePlugin implements MonitorPlugin {
+export class PerformancePlugin implements BrowserMonitorPlugin {
   name = 'performance';
   private monitor: BrowserMonitorPluginInitArg | null = null;
   private resourceObserver: PerformanceObserver | null = null;

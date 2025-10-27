@@ -1,7 +1,7 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPluginInitArg, WhiteScreenExtraData } from '../type';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenExtraData } from '../type';
 
 export interface WhiteScreenPluginConfig {
   keySelectors?: string[]; // 关键渲染元素选择器
@@ -9,7 +9,7 @@ export interface WhiteScreenPluginConfig {
   timeout?: number; // 超时时间ms
 }
 
-export class WhiteScreenPlugin implements MonitorPlugin {
+export class WhiteScreenPlugin implements BrowserMonitorPlugin {
   name = 'whiteScreen';
   private monitor: BrowserMonitorPluginInitArg | null = null;
   private config: WhiteScreenPluginConfig;

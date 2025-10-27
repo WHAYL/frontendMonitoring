@@ -25,16 +25,6 @@ export interface ErrorInfo {
     userAgent?: string;
     [key: string]: any;
 }
-export type ReportInfo = (level: ReportingLevel, data: LogData) => void;
-export type MonitorPluginInitArg = {
-    reportInfo: ReportInfo;
-    getFingerprint: () => string;
-};
-export interface MonitorPlugin {
-    name: string;
-    init: (data: MonitorPluginInitArg) => void;
-    destroy?: () => void;
-}
 export interface DeviceInfo {
     width: number;
     height: number;
@@ -48,11 +38,4 @@ export interface LogData {
     timestamp: number;
     date: string;
     deviceInfo: DeviceInfo;
-}
-export interface MonitorInstance {
-    reportInfo: ReportInfo;
-    setFingerprint: (value: string) => void;
-    getFingerprint: () => string;
-    use: (plugin: MonitorPlugin) => void;
-    destroy: () => void;
 }

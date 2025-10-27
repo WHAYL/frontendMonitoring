@@ -1,6 +1,5 @@
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { AnalyticsExtraData, AnalyticsHistoryExtraData, BrowserMonitorPluginInitArg } from '../type';
-import { MonitorPlugin } from '@whayl/monitor-core';
+import type { AnalyticsExtraData, AnalyticsHistoryExtraData, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
 
 export interface AnalyticsPluginConfig {
     // 可选获取公网 IP 的异步函数（例如调用第三方服务），返回 IP 字符串
@@ -18,7 +17,7 @@ function safeJSONParse<T = any>(s: string | null, fallback: T): T {
     }
 }
 
-export class AnalyticsPlugin implements MonitorPlugin {
+export class AnalyticsPlugin implements BrowserMonitorPlugin {
     name = 'analytics';
     private monitor: BrowserMonitorPluginInitArg | null = null;
     private abortController: AbortController | null = null;

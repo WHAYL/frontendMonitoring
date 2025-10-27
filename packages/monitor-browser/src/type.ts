@@ -1,5 +1,5 @@
 
-import { type DeviceInfo, ReportingLevel, type LogData, type MonitorPluginInitArg } from '@whayl/monitor-core';
+import { type DeviceInfo, ReportingLevel, type LogData } from '@whayl/monitor-core';
 import { type SetOptional } from 'aiy-utils';
 // 定义需要的 Navigator 字段子集
 export interface PartialNavigator {
@@ -12,9 +12,28 @@ export interface PartialNavigator {
 export interface BrowserLogData extends SetOptional<LogData, 'deviceInfo'> {
     navigator?: PartialNavigator;
 }
+export type ReportInfo = (level: ReportingLevel, data: BrowserLogData) => void;
+export interface BrowserMonitorPluginInitArg {
+    reportInfo: ReportInfo;
+    getFingerprint: () => string;
+}
+// 插件接口
+export interface BrowserMonitorPlugin {
+    // 插件名称
+    name: string;
 
-export interface BrowserMonitorPluginInitArg extends MonitorPluginInitArg {
-    reportInfo: (type: ReportingLevel, data: BrowserLogData) => void;
+    // 插件初始化方法
+    init: (data: BrowserMonitorPluginInitArg) => void;
+
+    // 插件销毁方法
+    destroy?: () => void;
+}
+export interface BrowserMonitorBase {
+    reportInfo: ReportInfo;
+    setFingerprint: (value: string) => void;
+    getFingerprint: () => string;
+    use: (plugin: BrowserMonitorPlugin) => void
+    destroy: () => void
 }
 
 /**

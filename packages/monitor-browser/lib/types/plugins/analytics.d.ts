@@ -1,9 +1,8 @@
-import type { BrowserMonitorPluginInitArg } from '../type';
-import { MonitorPlugin } from '@whayl/monitor-core';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
 export interface AnalyticsPluginConfig {
     ipProvider?: () => Promise<string | null>;
 }
-export declare class AnalyticsPlugin implements MonitorPlugin {
+export declare class AnalyticsPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
     private abortController;

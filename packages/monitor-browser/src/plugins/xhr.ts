@@ -1,6 +1,6 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPluginInitArg, XhrExtraData } from '../type';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, XhrExtraData } from '../type';
 
 interface XhrInfo {
   method: string;
@@ -8,7 +8,7 @@ interface XhrInfo {
   startTime: number;
 }
 
-export class XhrPlugin implements MonitorPlugin {
+export class XhrPlugin implements BrowserMonitorPlugin {
   name = 'xhr';
   private monitor: BrowserMonitorPluginInitArg | null = null;
   private xhrMap: Map<XMLHttpRequest, XhrInfo> = new Map();

@@ -1,6 +1,5 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
-import type { BrowserMonitorPluginInitArg } from '../type';
-export declare class RoutePlugin implements MonitorPlugin {
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
+export declare class RoutePlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
     private lastRoute;

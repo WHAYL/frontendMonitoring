@@ -1,4 +1,4 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
+
 import { debounce } from 'aiy-utils';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type {
@@ -7,7 +7,8 @@ import type {
   DomMouseEventExtraData,
   DomClickPathExtraData,
   DomResizeExtraData,
-  BrowserMonitorPluginInitArg
+  BrowserMonitorPluginInitArg,
+  BrowserMonitorPlugin
 } from '../type';
 
 type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
@@ -20,7 +21,7 @@ export interface DomPluginConfig {
   resize?: boolean;
   clickPath?: boolean;
 }
-export class DomPlugin implements MonitorPlugin {
+export class DomPlugin implements BrowserMonitorPlugin {
   name = 'dom';
   private monitor: BrowserMonitorPluginInitArg | null = null;
   private abortController: AbortController | null = null;

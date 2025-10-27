@@ -1,5 +1,4 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
-import type { BrowserMonitorPluginInitArg } from '../type';
+import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin } from '../type';
 type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
 export interface DomPluginConfig {
     error?: boolean;
@@ -10,7 +9,7 @@ export interface DomPluginConfig {
     resize?: boolean;
     clickPath?: boolean;
 }
-export declare class DomPlugin implements MonitorPlugin {
+export declare class DomPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
     private abortController;

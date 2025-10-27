@@ -1,5 +1,4 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
-import type { BrowserMonitorPluginInitArg } from '../type';
+import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin } from '../type';
 export interface PerformancePluginConfig {
     longTaskEnabled?: boolean;
     memoryEnabled?: boolean;
@@ -8,7 +7,7 @@ export interface PerformancePluginConfig {
     navigationEnabled?: boolean;
     webVitalsEnabled?: boolean;
 }
-export declare class PerformancePlugin implements MonitorPlugin {
+export declare class PerformancePlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
     private resourceObserver;

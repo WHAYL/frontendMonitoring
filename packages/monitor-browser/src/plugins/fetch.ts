@@ -1,8 +1,8 @@
-import { MonitorPlugin } from '@whayl/monitor-core';
-import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPluginInitArg, FetchExtraData } from '../type';
 
-export class FetchPlugin implements MonitorPlugin {
+import { getTimestamp, formatTimestamp } from '../utils';
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, FetchExtraData } from '../type';
+
+export class FetchPlugin implements BrowserMonitorPlugin {
   name = 'fetch';
   private monitor: BrowserMonitorPluginInitArg | null = null;
 
