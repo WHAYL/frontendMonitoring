@@ -3052,18 +3052,6 @@ var AnalyticsPlugin = (function () {
     return AnalyticsPlugin;
 }());
 
-var navigatorData = {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    onLine: navigator.onLine,
-    cookieEnabled: navigator.cookieEnabled,
-};
-var deviceInfoData = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    pixelRatio: window.devicePixelRatio,
-};
 var BrowserMonitor = (function () {
     function BrowserMonitor(config) {
         var _this = this;
@@ -3184,6 +3172,18 @@ var BrowserMonitor = (function () {
         return this.monitor.getFingerprint();
     };
     BrowserMonitor.prototype.reportInfo = function (type, data) {
+        var navigatorData = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            onLine: navigator.onLine,
+            cookieEnabled: navigator.cookieEnabled,
+        };
+        var deviceInfoData = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            pixelRatio: window.devicePixelRatio,
+        };
         data.navigator = navigatorData;
         if (!this.isOnline) {
             this.cacheLog.push({ type: type, data: __assign$1(__assign$1({}, data), { deviceInfo: deviceInfoData, navigator: navigatorData }) });

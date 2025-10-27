@@ -30,18 +30,7 @@ export interface BrowserMonitorConfig {
     performancePluginConfig?: PerformancePluginConfig;
     analyticsPluginConfig?: AnalyticsPluginConfig;
 }
-const navigatorData: PartialNavigator = {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    onLine: navigator.onLine,
-    cookieEnabled: navigator.cookieEnabled,
-};
-const deviceInfoData: DeviceInfo = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    pixelRatio: window.devicePixelRatio,
-};
+
 /**
  * 浏览器监控类
  */
@@ -186,6 +175,18 @@ class BrowserMonitor implements BrowserMonitorBase {
         return this.monitor.getFingerprint();
     }
     reportInfo(type: ReportingLevel, data: BrowserLogData) {
+        const navigatorData: PartialNavigator = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            onLine: navigator.onLine,
+            cookieEnabled: navigator.cookieEnabled,
+        };
+        const deviceInfoData: DeviceInfo = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            pixelRatio: window.devicePixelRatio,
+        };
         data.navigator = navigatorData;
         if (!this.isOnline) {
             // 如果当前处于离线状态，则缓存日志
