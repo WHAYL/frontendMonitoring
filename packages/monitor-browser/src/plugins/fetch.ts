@@ -1,13 +1,12 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { FetchExtraData } from '../type';
+import type { BrowserMonitorPluginInitArg, FetchExtraData } from '../type';
 
 export class FetchPlugin implements MonitorPlugin {
   name = 'fetch';
-  private monitor: MonitorPluginInitArg | null = null;
+  private monitor: BrowserMonitorPluginInitArg | null = null;
 
-  init(monitor: MonitorPluginInitArg): void {
+  init(monitor: BrowserMonitorPluginInitArg): void {
     this.monitor = monitor;
     this.setupFetchMonitoring();
   }

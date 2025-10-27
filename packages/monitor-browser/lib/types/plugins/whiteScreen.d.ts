@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
+import type { BrowserMonitorPluginInitArg } from '../type';
 export interface WhiteScreenPluginConfig {
     keySelectors?: string[];
     checkInterval?: number;
@@ -15,7 +15,7 @@ export declare class WhiteScreenPlugin implements MonitorPlugin {
     private resolved;
     private boundHandleRouteChange;
     constructor(config?: WhiteScreenPluginConfig);
-    init(monitor: MonitorPluginInitArg): void;
+    init(monitor: BrowserMonitorPluginInitArg): void;
     run(): void;
     clearEffects(): void;
     destroy(): void;

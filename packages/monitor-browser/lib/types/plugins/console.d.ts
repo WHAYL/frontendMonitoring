@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
+import type { BrowserMonitorPluginInitArg } from '../type';
 export interface ConsolePluginConfig {
     error?: boolean;
     warn?: boolean;
@@ -11,7 +11,7 @@ export declare class ConsolePlugin implements MonitorPlugin {
     private originalWarn;
     private config;
     constructor(config?: ConsolePluginConfig);
-    init(monitor: MonitorPluginInitArg): void;
+    init(monitor: BrowserMonitorPluginInitArg): void;
     private setupConsoleCapture;
     destroy(): void;
 }

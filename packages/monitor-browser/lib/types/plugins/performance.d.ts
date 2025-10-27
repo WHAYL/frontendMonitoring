@@ -1,5 +1,5 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
+import type { BrowserMonitorPluginInitArg } from '../type';
 export interface PerformancePluginConfig {
     longTaskEnabled?: boolean;
     memoryEnabled?: boolean;
@@ -21,7 +21,7 @@ export declare class PerformancePlugin implements MonitorPlugin {
     private abortController;
     private boundHandleRouteChange;
     constructor(config?: PerformancePluginConfig);
-    init(monitor: MonitorPluginInitArg): void;
+    init(monitor: BrowserMonitorPluginInitArg): void;
     run(): void;
     clearEffects(): void;
     private setupLongTaskMonitoring;

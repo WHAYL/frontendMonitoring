@@ -1,9 +1,10 @@
-import { LogData, MonitorConfig, MonitorInstance, MonitorPlugin, ReportingLevel } from '@whayl/monitor-core';
+import { MonitorConfig, MonitorInstance, MonitorPlugin, ReportingLevel } from '@whayl/monitor-core';
 import { DomPluginConfig } from './plugins/dom';
 import { PerformancePluginConfig } from './plugins/performance';
 import { WhiteScreenPluginConfig } from './plugins/whiteScreen';
 import { ConsolePluginConfig } from './plugins/console';
 import { AnalyticsPluginConfig } from './plugins/analytics';
+import { BrowserLogData } from './type';
 export interface BrowserMonitorConfig {
     monitorConfig: MonitorConfig;
     pluginsUse?: {
@@ -35,7 +36,7 @@ declare class BrowserMonitor implements MonitorInstance {
     private setupNetworkListener;
     setFingerprint(value: string): void;
     getFingerprint(): string;
-    reportInfo(type: ReportingLevel, data: LogData): void;
+    reportInfo(type: ReportingLevel, data: BrowserLogData): void;
     use(plugin: MonitorPlugin): void;
     destroy(): void;
 }

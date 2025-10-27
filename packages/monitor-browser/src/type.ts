@@ -1,3 +1,22 @@
+
+import { type DeviceInfo, ReportingLevel, type LogData, type MonitorPluginInitArg } from '@whayl/monitor-core';
+import { type SetOptional } from 'aiy-utils';
+// 定义需要的 Navigator 字段子集
+export interface PartialNavigator {
+    userAgent: string;
+    platform: string;
+    language: string;
+    onLine: boolean;
+    cookieEnabled: boolean;
+}
+export interface BrowserLogData extends SetOptional<LogData, 'deviceInfo'> {
+    navigator?: PartialNavigator;
+}
+
+export interface BrowserMonitorPluginInitArg extends MonitorPluginInitArg {
+    reportInfo: (type: ReportingLevel, data: BrowserLogData) => void;
+}
+
 /**
  * 定义每个插件上报数据中的 ExtraData 字段类型
  */

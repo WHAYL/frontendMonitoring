@@ -1,7 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { XhrExtraData } from '../type';
+import type { BrowserMonitorPluginInitArg, XhrExtraData } from '../type';
 
 interface XhrInfo {
   method: string;
@@ -11,11 +10,11 @@ interface XhrInfo {
 
 export class XhrPlugin implements MonitorPlugin {
   name = 'xhr';
-  private monitor: MonitorPluginInitArg | null = null;
+  private monitor: BrowserMonitorPluginInitArg | null = null;
   private xhrMap: Map<XMLHttpRequest, XhrInfo> = new Map();
   private abortController: AbortController | null = null;
 
-  init(monitor: MonitorPluginInitArg): void {
+  init(monitor: BrowserMonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();
@@ -88,7 +87,8 @@ export class XhrPlugin implements MonitorPlugin {
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData
+            extraData,
+            navigator: undefined
           });
 
           // 清理
@@ -117,7 +117,8 @@ export class XhrPlugin implements MonitorPlugin {
             url: window.location.href,
             timestamp: getTimestamp(),
             date: formatTimestamp(),
-            extraData
+            extraData,
+            navigator: undefined
           });
 
           // 清理

@@ -1,12 +1,11 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { RouteExtraData } from '../type';
+import type { BrowserMonitorPluginInitArg, RouteExtraData } from '../type';
 
 export class RoutePlugin implements MonitorPlugin {
   name = 'route';
-  private monitor: MonitorPluginInitArg;
+  private monitor: BrowserMonitorPluginInitArg;
   private lastRoute: string;
   private routeEnterTime: number = 0;
   private originalPushState: typeof history.pushState;
@@ -14,7 +13,7 @@ export class RoutePlugin implements MonitorPlugin {
   private originalWindowOpen: typeof window.open;
   private abortController: AbortController | null = null;
 
-  init(monitor: MonitorPluginInitArg): void {
+  init(monitor: BrowserMonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();

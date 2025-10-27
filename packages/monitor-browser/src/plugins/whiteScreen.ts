@@ -1,8 +1,7 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { WhiteScreenExtraData } from '../type';
+import type { BrowserMonitorPluginInitArg, WhiteScreenExtraData } from '../type';
 
 export interface WhiteScreenPluginConfig {
   keySelectors?: string[]; // 关键渲染元素选择器
@@ -12,7 +11,7 @@ export interface WhiteScreenPluginConfig {
 
 export class WhiteScreenPlugin implements MonitorPlugin {
   name = 'whiteScreen';
-  private monitor: MonitorPluginInitArg | null = null;
+  private monitor: BrowserMonitorPluginInitArg | null = null;
   private config: WhiteScreenPluginConfig;
   private timer: number | null = null;
   private startTime: number = 0;
@@ -29,7 +28,7 @@ export class WhiteScreenPlugin implements MonitorPlugin {
     };
   }
 
-  init(monitor: MonitorPluginInitArg): void {
+  init(monitor: BrowserMonitorPluginInitArg): void {
     this.monitor = monitor;
     this.run();
     this.boundHandleRouteChange = this.handleRouteChange.bind(this);

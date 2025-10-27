@@ -1,4 +1,5 @@
-import type { MonitorPluginInitArg, MonitorPlugin } from '@whayl/monitor-core';
+import type { BrowserMonitorPluginInitArg } from '../type';
+import { MonitorPlugin } from '@whayl/monitor-core';
 export interface AnalyticsPluginConfig {
     ipProvider?: () => Promise<string | null>;
 }
@@ -9,7 +10,7 @@ export declare class AnalyticsPlugin implements MonitorPlugin {
     private config;
     private ipCached;
     constructor(config?: AnalyticsPluginConfig);
-    init(monitor: MonitorPluginInitArg): void;
+    init(monitor: BrowserMonitorPluginInitArg): void;
     private getTodayDate;
     private getTodayKey;
     private clearOldRecords;

@@ -8,6 +8,7 @@ import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScree
 import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
 import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
+import { BrowserLogData } from './type';
 
 // 定义浏览器监控插件配置接口
 export interface BrowserMonitorConfig {
@@ -38,7 +39,7 @@ class BrowserMonitor implements MonitorInstance {
     private abortController: AbortController | null = null;
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
     private isOnline: boolean = navigator.onLine;
-    private cacheLog: { type: ReportingLevel, data: LogData }[] = [];
+    private cacheLog: { type: ReportingLevel, data: BrowserLogData }[] = [];
 
     constructor(config: BrowserMonitorConfig) {
         // 默认配置都为 true
@@ -113,7 +114,7 @@ class BrowserMonitor implements MonitorInstance {
     private reportCacheLog(): void {
         if (this.cacheLog.length) {
             this.cacheLog.forEach(item => {
-                this.monitor.reportInfo(item.type, item.data);
+                this.monitor.reportInfo(item.type, item.data as LogData);
             });
             this.cacheLog = [];
         }
@@ -126,6 +127,11 @@ class BrowserMonitor implements MonitorInstance {
                 pluginName: 'monitor-browser',
                 url: window.location.href,
                 extraData: {},
+                deviceInfo: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    pixelRatio: window.devicePixelRatio
+                },
                 timestamp: getTimestamp(),
                 date: formatTimestamp(),
                 message: '设备恢复在线'
@@ -142,7 +148,19 @@ class BrowserMonitor implements MonitorInstance {
                     extraData: {},
                     timestamp: getTimestamp(),
                     date: formatTimestamp(),
-                    message: '设备离线'
+                    message: '设备离线',
+                    deviceInfo: {
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                        pixelRatio: window.devicePixelRatio
+                    },
+                    navigator: {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        onLine: navigator.onLine,
+                        cookieEnabled: navigator.cookieEnabled
+                    }
                 }
             });
         }, {
@@ -155,13 +173,25 @@ class BrowserMonitor implements MonitorInstance {
     getFingerprint(): string {
         return this.monitor.getFingerprint();
     }
-    reportInfo(type: ReportingLevel, data: LogData) {
+    reportInfo(type: ReportingLevel, data: BrowserLogData) {
+        data.navigator = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            onLine: navigator.onLine,
+            cookieEnabled: navigator.cookieEnabled,
+        };
+        data.deviceInfo = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            pixelRatio: window.devicePixelRatio,
+        };
         if (!this.isOnline) {
             // 如果当前处于离线状态，则缓存日志
             this.cacheLog.push({ type, data });
             return;
         }
-        this.monitor.reportInfo(type, data);
+        this.monitor.reportInfo(type, { ...data, deviceInfo: data.deviceInfo });
     }
 
     /**

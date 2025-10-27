@@ -1,7 +1,6 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { ConsoleExtraData } from '../type';
+import type { BrowserMonitorPluginInitArg, ConsoleExtraData } from '../type';
 
 export interface ConsolePluginConfig {
     error?: boolean;
@@ -10,7 +9,7 @@ export interface ConsolePluginConfig {
 
 export class ConsolePlugin implements MonitorPlugin {
     name = 'console';
-    private monitor: MonitorPluginInitArg | null = null;
+    private monitor: BrowserMonitorPluginInitArg | null = null;
     private originalError: typeof console.error | null = null;
     private originalWarn: typeof console.warn | null = null;
     private config: ConsolePluginConfig;
@@ -18,7 +17,7 @@ export class ConsolePlugin implements MonitorPlugin {
         this.name = 'console';
         this.config = { error: true, warn: true, ...config };
     }
-    init(monitor: MonitorPluginInitArg): void {
+    init(monitor: BrowserMonitorPluginInitArg): void {
         this.monitor = monitor;
         this.setupConsoleCapture();
     }
@@ -75,7 +74,9 @@ export class ConsolePlugin implements MonitorPlugin {
                             url: window.location.href,
                             extraData,
                             timestamp: getTimestamp(),
-                            date: formatTimestamp()
+                            date: formatTimestamp(),
+                            navigator: undefined,
+                            deviceInfo: undefined
                         });
                     } catch (e) {
                         // 忽略

@@ -83,7 +83,11 @@ export interface MonitorPlugin {
   // 插件销毁方法
   destroy?: () => void;
 }
-
+export interface DeviceInfo {
+  width: number;
+  height: number;
+  pixelRatio: number;
+}
 export interface LogData {
   pluginName: string;
   message: string;
@@ -91,6 +95,7 @@ export interface LogData {
   extraData: Record<string, any>;
   timestamp: number;
   date: string;
+  deviceInfo: DeviceInfo
 }
 
 export interface MonitorInstance {

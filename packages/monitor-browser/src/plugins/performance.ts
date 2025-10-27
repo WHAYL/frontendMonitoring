@@ -1,5 +1,4 @@
 import { MonitorPlugin } from '@whayl/monitor-core';
-import type { MonitorPluginInitArg } from '@whayl/monitor-core';
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
@@ -10,7 +9,8 @@ import type {
   PerformanceFPSExtraData,
   PerformanceResourceExtraData,
   PerformanceNavigationExtraData,
-  PerformanceWebVitalsExtraData
+  PerformanceWebVitalsExtraData,
+  BrowserMonitorPluginInitArg
 } from '../type';
 
 export interface PerformancePluginConfig {
@@ -24,7 +24,7 @@ export interface PerformancePluginConfig {
 
 export class PerformancePlugin implements MonitorPlugin {
   name = 'performance';
-  private monitor: MonitorPluginInitArg | null = null;
+  private monitor: BrowserMonitorPluginInitArg | null = null;
   private resourceObserver: PerformanceObserver | null = null;
   private navigationObserver: PerformanceObserver | null = null;
   private paintObserver: PerformanceObserver | null = null;
@@ -47,7 +47,7 @@ export class PerformancePlugin implements MonitorPlugin {
     };
   }
 
-  init(monitor: MonitorPluginInitArg): void {
+  init(monitor: BrowserMonitorPluginInitArg): void {
     this.monitor = monitor;
     // 创建AbortController来管理所有事件监听器
     this.abortController = new AbortController();

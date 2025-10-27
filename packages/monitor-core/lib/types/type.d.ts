@@ -35,6 +35,11 @@ export interface MonitorPlugin {
     init: (data: MonitorPluginInitArg) => void;
     destroy?: () => void;
 }
+export interface DeviceInfo {
+    width: number;
+    height: number;
+    pixelRatio: number;
+}
 export interface LogData {
     pluginName: string;
     message: string;
@@ -42,6 +47,7 @@ export interface LogData {
     extraData: Record<string, any>;
     timestamp: number;
     date: string;
+    deviceInfo: DeviceInfo;
 }
 export interface MonitorInstance {
     reportInfo: ReportInfo;
