@@ -174,26 +174,30 @@ class BrowserMonitor implements BrowserMonitorBase {
     getFingerprint(): string {
         return this.monitor.getFingerprint();
     }
-    reportInfo(type: ReportingLevel, data: BrowserLogData) {
-        const navigatorData: PartialNavigator = {
+    private getNavigatorData(): PartialNavigator {
+        return {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
             language: navigator.language,
             onLine: navigator.onLine,
             cookieEnabled: navigator.cookieEnabled,
         };
-        const deviceInfoData: DeviceInfo = {
+    }
+    private getDeviceInfoData(): DeviceInfo {
+        return {
             width: window.innerWidth,
             height: window.innerHeight,
             pixelRatio: window.devicePixelRatio,
         };
-        data.navigator = navigatorData;
+    }
+    reportInfo(type: ReportingLevel, data: BrowserLogData) {
+        data.navigator = this.getNavigatorData();
         if (!this.isOnline) {
             // 如果当前处于离线状态，则缓存日志
-            this.cacheLog.push({ type, data: { ...data, deviceInfo: deviceInfoData, navigator: navigatorData } });
+            this.cacheLog.push({ type, data: { ...data, deviceInfo: this.getDeviceInfoData(), navigator: this.getNavigatorData() } });
             return;
         }
-        this.monitor.reportInfo(type, { ...data, deviceInfo: deviceInfoData });
+        this.monitor.reportInfo(type, { ...data, deviceInfo: this.getDeviceInfoData() });
     }
 
     /**

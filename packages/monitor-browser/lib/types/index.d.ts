@@ -36,6 +36,8 @@ declare class BrowserMonitor implements BrowserMonitorBase {
     private setupNetworkListener;
     setFingerprint(value: string): void;
     getFingerprint(): string;
+    private getNavigatorData;
+    private getDeviceInfoData;
     reportInfo(type: ReportingLevel, data: BrowserLogData): void;
     use(plugin: BrowserMonitorPlugin): void;
     destroy(): void;

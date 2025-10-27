@@ -3171,25 +3171,29 @@ var BrowserMonitor = (function () {
     BrowserMonitor.prototype.getFingerprint = function () {
         return this.monitor.getFingerprint();
     };
-    BrowserMonitor.prototype.reportInfo = function (type, data) {
-        var navigatorData = {
+    BrowserMonitor.prototype.getNavigatorData = function () {
+        return {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
             language: navigator.language,
             onLine: navigator.onLine,
             cookieEnabled: navigator.cookieEnabled,
         };
-        var deviceInfoData = {
+    };
+    BrowserMonitor.prototype.getDeviceInfoData = function () {
+        return {
             width: window.innerWidth,
             height: window.innerHeight,
             pixelRatio: window.devicePixelRatio,
         };
-        data.navigator = navigatorData;
+    };
+    BrowserMonitor.prototype.reportInfo = function (type, data) {
+        data.navigator = this.getNavigatorData();
         if (!this.isOnline) {
-            this.cacheLog.push({ type: type, data: __assign$1(__assign$1({}, data), { deviceInfo: deviceInfoData, navigator: navigatorData }) });
+            this.cacheLog.push({ type: type, data: __assign$1(__assign$1({}, data), { deviceInfo: this.getDeviceInfoData(), navigator: this.getNavigatorData() }) });
             return;
         }
-        this.monitor.reportInfo(type, __assign$1(__assign$1({}, data), { deviceInfo: deviceInfoData }));
+        this.monitor.reportInfo(type, __assign$1(__assign$1({}, data), { deviceInfo: this.getDeviceInfoData() }));
     };
     BrowserMonitor.prototype.use = function (plugin) {
         if (!plugin.name) {
