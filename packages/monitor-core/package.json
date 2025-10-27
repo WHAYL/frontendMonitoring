@@ -13,6 +13,12 @@
       "require": "./lib/bundle.cjs.js",
       "browser": "./lib/bundle.umd.js",
       "default": "./lib/bundle.umd.js"
+    },
+    "./types": {
+      "types": "./lib/types/type.d.ts",
+      "import": "./lib/types/type.d.ts",
+      "require": "./lib/types/type.d.ts",
+      "default": "./lib/types/type.d.ts"
     }
   },
   "directories": {
