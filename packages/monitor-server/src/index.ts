@@ -5,7 +5,6 @@ import { koaBody } from 'koa-body';
 
 import { setupRoutes } from './routes';
 import { connectDatabase } from './database';
-import { startAlertChecker } from './services';
 
 const app = new Koa();
 const router = new Router();
@@ -48,9 +47,6 @@ setupRoutes(router);
 // 使用路由
 app.use(router.routes());
 app.use(router.allowedMethods());
-
-// 启动告警检查器
-startAlertChecker(60000); // 每分钟检查一次
 
 const PORT = process.env.PORT || 3009;
 
