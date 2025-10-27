@@ -1,5 +1,5 @@
 import { db } from '../database';
-import { IErrorInfo } from '../database/models/ErrorInfo';
+import { IErrorInfo } from '../database/models/ReportInfo';
 import { UserSessionModel, IUserSession } from '../database/models/UserSession';
 import { PageVisitModel, IPageVisit } from '../database/models/PageVisit';
 import { PerformanceMetricModel, IPerformanceMetric } from '../database/models/PerformanceMetric';
@@ -1244,7 +1244,7 @@ export const getRetentionAnalytics = async (
  */
 const convertToCSV = (data: any): string => {
   if (Array.isArray(data)) {
-    if (data.length === 0) {return '';}
+    if (data.length === 0) { return ''; }
 
     const headers = Object.keys(data[0]);
     const csvContent = [

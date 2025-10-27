@@ -1,0 +1,217 @@
+import { ReportingLevel, type LogData } from '@whayl/monitor-core';
+import { type SetOptional } from 'aiy-utils';
+export interface PartialNavigator {
+    userAgent: string;
+    platform: string;
+    language: string;
+    onLine: boolean;
+    cookieEnabled: boolean;
+}
+export interface BrowserLogData extends SetOptional<LogData, 'deviceInfo'> {
+    navigator?: PartialNavigator;
+}
+export type ReportInfo = (level: ReportingLevel, data: BrowserLogData) => void;
+export interface BrowserMonitorPluginInitArg {
+    reportInfo: ReportInfo;
+    getFingerprint: () => string;
+}
+export interface BrowserMonitorPlugin {
+    name: string;
+    init: (data: BrowserMonitorPluginInitArg) => void;
+    destroy?: () => void;
+}
+export interface BrowserMonitorBase {
+    reportInfo: ReportInfo;
+    setFingerprint: (value: string) => void;
+    getFingerprint: () => string;
+    use: (plugin: BrowserMonitorPlugin) => void;
+    destroy: () => void;
+}
+export interface XhrExtraData {
+    type: 'xhr';
+    url: string;
+    method: string;
+    error?: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+}
+export interface FetchExtraData {
+    type: 'fetch';
+    url: string;
+    method: string;
+    error: string;
+    stack?: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+}
+export interface RouteExtraData {
+    route?: string;
+    previousRoute?: string;
+    currentRoute?: string;
+    changeType?: string;
+    enterTime?: number;
+    leaveTime?: number;
+    duration?: number;
+    target?: string;
+}
+export interface DomErrorExtraData {
+    message: string;
+    filename: string;
+    lineno: number;
+    colno: number;
+    error: any;
+}
+export interface DomUnhandledRejectionExtraData {
+    type: string;
+    promise: Promise<any>;
+    reason: any;
+    reasonType: string;
+    isError: boolean;
+    errorMessage?: string;
+    errorStack?: string;
+    errorName?: string;
+}
+export interface DomMouseEventExtraData {
+    localName: string;
+    classList: string;
+    className: string;
+    id: string;
+    nodeName: string;
+    tagName: string;
+    dataSet: string;
+}
+export interface DomClickPathExtraData {
+    timestamp: number;
+    path: Array<Record<string, any>>;
+    x: number;
+    y: number;
+    scrollX: number;
+    scrollY: number;
+    innerWidth: number;
+    innerHeight: number;
+    url: string;
+}
+export interface DomResizeExtraData {
+    innerWidth: number;
+    innerHeight: number;
+    devicePixelRatio: number;
+}
+export interface PerformanceLongTaskExtraData {
+    type: 'longtask';
+    name: string;
+    startTime: number;
+    duration: number;
+    attribution: any[];
+}
+export interface PerformanceMemoryExtraData {
+    type: 'memory';
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+    trend: string;
+}
+export interface PerformanceFrameDropExtraData {
+    type: 'frame_drop';
+    frameTime: number;
+    expectedFrameTime: number;
+    timestamp: number;
+    isDuringInteraction: boolean;
+    timeSinceLastInteraction: number;
+}
+export interface PerformanceFPSExtraData {
+    type: 'fps';
+    fps: number;
+    minFps: number;
+    maxFps: number;
+    avgFps: number;
+    frameCount: number;
+    timestamp: number;
+    duration: number;
+}
+export interface PerformanceResourceExtraData {
+    type: 'resource';
+    name: string;
+    cached: boolean;
+    entryType: string;
+    startTime: number;
+    duration: number;
+    initiatorType: string;
+    nextHopProtocol: string;
+    workerStart: number;
+    redirectStart: number;
+    redirectEnd: number;
+    fetchStart: number;
+    domainLookupStart: number;
+    domainLookupEnd: number;
+    connectStart: number;
+    connectEnd: number;
+    secureConnectionStart: number;
+    requestStart: number;
+    responseStart: number;
+    responseEnd: number;
+    transferSize: number;
+    encodedBodySize: number;
+    decodedBodySize: number;
+    serverTiming: any[];
+}
+export interface PerformanceNavigationExtraData {
+    name: string;
+    entryType: string;
+    startTime: number;
+    duration: number;
+    activationStart?: number;
+    unloadEventStart: number;
+    unloadEventEnd: number;
+    redirectStart: number;
+    redirectEnd: number;
+    fetchStart: number;
+    domainLookupStart: number;
+    domainLookupEnd: number;
+    connectStart: number;
+    connectEnd: number;
+    secureConnectionStart: number;
+    requestStart: number;
+    responseStart: number;
+    responseEnd: number;
+    domInteractive: number;
+    domContentLoadedEventStart: number;
+    domContentLoadedEventEnd: number;
+    domComplete: number;
+    loadEventStart: number;
+    loadEventEnd: number;
+    type: string;
+    redirectCount: number;
+}
+export interface PerformanceWebVitalsExtraData {
+    type: 'web_vitals';
+    metric: string;
+    value: number;
+    attribution?: any;
+    navigationType: string;
+    rating: string;
+}
+export interface ConsoleExtraData {
+    args: any[];
+    stack: string | undefined;
+}
+export interface WhiteScreenExtraData {
+    status: 'success' | 'timeout';
+    page: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+    selectors: string[] | undefined;
+}
+export interface AnalyticsExtraData {
+    pv: number;
+    uv: number;
+    vv: number;
+    ip: string | null;
+    timestamp: number;
+}
+export interface AnalyticsHistoryExtraData {
+    timestamp: number;
+    items: Record<string, any>;
+}

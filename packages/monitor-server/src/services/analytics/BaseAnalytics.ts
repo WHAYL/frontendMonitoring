@@ -1,5 +1,5 @@
 import { db } from '../../database';
-import { IErrorInfo } from '../../database/models/ErrorInfo';
+import { IErrorInfo } from '../../database/models/ReportInfo';
 
 interface AnalyticsResult {
   totalErrors: number;
