@@ -1,13 +1,7 @@
 
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenExtraData } from '../type';
-
-export interface WhiteScreenPluginConfig {
-  keySelectors?: string[]; // 关键渲染元素选择器
-  checkInterval?: number; // 检测间隔ms
-  timeout?: number; // 超时时间ms
-}
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenExtraData, WhiteScreenPluginConfig } from '../type';
 
 export class WhiteScreenPlugin implements BrowserMonitorPlugin {
   name = 'whiteScreen';

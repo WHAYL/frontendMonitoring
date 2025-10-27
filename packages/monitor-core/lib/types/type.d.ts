@@ -14,17 +14,6 @@ export interface MonitorConfig {
     maxStorageCount?: number;
     fingerprint?: string;
 }
-export interface ErrorInfo {
-    level: ReportingLevel;
-    message: string;
-    stack?: string;
-    timestamp: number;
-    url: string;
-    pluginName?: string;
-    fingerprint?: string;
-    userAgent?: string;
-    [key: string]: any;
-}
 export interface DeviceInfo {
     width: number;
     height: number;
@@ -38,4 +27,13 @@ export interface LogData {
     timestamp: number;
     date: string;
     deviceInfo: DeviceInfo;
+}
+export interface ErrorInfo extends LogData {
+    level: ReportingLevel;
+    message: string;
+    stack?: string;
+    fingerprint: string;
+    oldFingerprint: string;
+    platform: string;
+    [key: string]: any;
 }

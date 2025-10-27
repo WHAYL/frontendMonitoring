@@ -1,8 +1,4 @@
-import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
-export interface ConsolePluginConfig {
-    error?: boolean;
-    warn?: boolean;
-}
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, ConsolePluginConfig } from '../type';
 export declare class ConsolePlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;

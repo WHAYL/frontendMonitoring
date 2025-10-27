@@ -1,12 +1,4 @@
-import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin } from '../type';
-export interface PerformancePluginConfig {
-    longTaskEnabled?: boolean;
-    memoryEnabled?: boolean;
-    fpsEnabled?: boolean;
-    resourceEnabled?: boolean;
-    navigationEnabled?: boolean;
-    webVitalsEnabled?: boolean;
-}
+import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin, PerformancePluginConfig } from '../type';
 export declare class PerformancePlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;

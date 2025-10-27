@@ -1,6 +1,58 @@
 
-import { type DeviceInfo, ReportingLevel, type LogData } from '@whayl/monitor-core';
+import { type DeviceInfo, ReportingLevel, type LogData, MonitorConfig } from '@whayl/monitor-core';
 import { type SetOptional } from 'aiy-utils';
+export interface AnalyticsPluginConfig {
+    // 可选获取公网 IP 的异步函数（例如调用第三方服务），返回 IP 字符串
+    ipProvider?: () => Promise<string | null>;
+}
+export interface ConsolePluginConfig {
+    error?: boolean;
+    warn?: boolean;
+}
+type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
+export interface DomPluginConfig {
+    error?: boolean;
+    unhandledrejection?: boolean;
+    mouseEvents?: {
+        [K in MouseEventNames]?: string[] | boolean;
+    }
+    resize?: boolean;
+    clickPath?: boolean;
+}
+export interface PerformancePluginConfig {
+    longTaskEnabled?: boolean;
+    memoryEnabled?: boolean;
+    fpsEnabled?: boolean;
+    resourceEnabled?: boolean;
+    navigationEnabled?: boolean;
+    webVitalsEnabled?: boolean;
+}
+
+export interface WhiteScreenPluginConfig {
+    keySelectors?: string[]; // 关键渲染元素选择器
+    checkInterval?: number; // 检测间隔ms
+    timeout?: number; // 超时时间ms
+}
+// 定义浏览器监控插件配置接口
+export interface BrowserMonitorConfig {
+    monitorConfig: MonitorConfig;
+    pluginsUse?: {
+        xhrPluginEnabled?: boolean;
+        fetchPluginEnabled?: boolean;
+        domPluginEnabled?: boolean;
+        routePluginEnabled?: boolean;
+        performancePluginEnabled?: boolean;
+        whiteScreenPluginEnabled?: boolean;
+        consolePluginEnabled?: boolean;
+        analyticsPluginEnabled?: boolean;
+    };
+    whiteScreenPluginConfig?: WhiteScreenPluginConfig;
+    consolePluginConfig?: ConsolePluginConfig;
+    domPluginConfig?: DomPluginConfig;
+    performancePluginConfig?: PerformancePluginConfig;
+    analyticsPluginConfig?: AnalyticsPluginConfig;
+}
+
 // 定义需要的 Navigator 字段子集
 export interface PartialNavigator {
     userAgent: string;

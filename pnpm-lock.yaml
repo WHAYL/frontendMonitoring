@@ -128,6 +128,9 @@ importers:
       '@koa/router':
         specifier: ^14.0.0
         version: 14.0.0
+      '@whayl/monitor-core':
+        specifier: workspace:*
+        version: link:../monitor-core
       better-sqlite3:
         specifier: ^12.4.1
         version: 12.4.1

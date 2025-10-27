@@ -37,34 +37,6 @@ export interface MonitorConfig {
 }
 
 // 错误信息接口
-export interface ErrorInfo {
-  // 错误等级
-  level: ReportingLevel;
-
-  // 错误消息
-  message: string;
-
-  // 错误堆栈
-  stack?: string;
-
-  // 发生时间
-  timestamp: number;
-
-  // 页面URL
-  url: string;
-
-  // 插件名称
-  pluginName?: string;
-
-  // 唯一指纹
-  fingerprint?: string;
-
-  // 用户浏览器信息
-  userAgent?: string;
-
-  // 其他附加信息
-  [key: string]: any;
-}
 
 export interface DeviceInfo {
   width: number;
@@ -81,3 +53,23 @@ export interface LogData {
   deviceInfo: DeviceInfo;
 }
 
+export interface ErrorInfo extends LogData {
+  // 错误等级
+  level: ReportingLevel;
+
+  // 错误消息
+  message: string;
+
+  // 错误堆栈
+  stack?: string;
+
+  // 唯一指纹
+  fingerprint: string;
+
+  oldFingerprint: string;
+
+  platform: string;
+
+  // 其他附加信息
+  [key: string]: any;
+}

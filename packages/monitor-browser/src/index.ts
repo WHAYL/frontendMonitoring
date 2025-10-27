@@ -1,35 +1,15 @@
 import { DeviceInfo, FrontendMonitor, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
-import { DomPlugin, DomPluginConfig } from './plugins/dom';
+import { DomPlugin } from './plugins/dom';
 import { RoutePlugin } from './plugins/route';
-import { PerformancePlugin, PerformancePluginConfig } from './plugins/performance';
-import { WhiteScreenPluginConfig, WhiteScreenPlugin } from './plugins/whiteScreen';
-import { ConsolePluginConfig, ConsolePlugin } from './plugins/console';
-import { AnalyticsPlugin, AnalyticsPluginConfig } from './plugins/analytics';
+import { PerformancePlugin } from './plugins/performance';
+import { WhiteScreenPlugin } from './plugins/whiteScreen';
+import { ConsolePlugin } from './plugins/console';
+import { AnalyticsPlugin } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
-import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin, PartialNavigator } from './type';
+import { BrowserLogData, BrowserMonitorBase, BrowserMonitorConfig, BrowserMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-
-// 定义浏览器监控插件配置接口
-export interface BrowserMonitorConfig {
-    monitorConfig: MonitorConfig;
-    pluginsUse?: {
-        xhrPluginEnabled?: boolean;
-        fetchPluginEnabled?: boolean;
-        domPluginEnabled?: boolean;
-        routePluginEnabled?: boolean;
-        performancePluginEnabled?: boolean;
-        whiteScreenPluginEnabled?: boolean;
-        consolePluginEnabled?: boolean;
-        analyticsPluginEnabled?: boolean;
-    };
-    whiteScreenPluginConfig?: WhiteScreenPluginConfig;
-    consolePluginConfig?: ConsolePluginConfig;
-    domPluginConfig?: DomPluginConfig;
-    performancePluginConfig?: PerformancePluginConfig;
-    analyticsPluginConfig?: AnalyticsPluginConfig;
-}
 
 /**
  * 浏览器监控类

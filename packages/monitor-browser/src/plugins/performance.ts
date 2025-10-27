@@ -11,17 +11,9 @@ import type {
   PerformanceNavigationExtraData,
   PerformanceWebVitalsExtraData,
   BrowserMonitorPluginInitArg,
-  BrowserMonitorPlugin
+  BrowserMonitorPlugin,
+  PerformancePluginConfig
 } from '../type';
-
-export interface PerformancePluginConfig {
-  longTaskEnabled?: boolean;
-  memoryEnabled?: boolean;
-  fpsEnabled?: boolean;
-  resourceEnabled?: boolean;
-  navigationEnabled?: boolean;
-  webVitalsEnabled?: boolean;
-}
 
 export class PerformancePlugin implements BrowserMonitorPlugin {
   name = 'performance';

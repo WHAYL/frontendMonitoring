@@ -1,11 +1,6 @@
 
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, ConsoleExtraData } from '../type';
-
-export interface ConsolePluginConfig {
-    error?: boolean;
-    warn?: boolean;
-}
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, ConsoleExtraData, ConsolePluginConfig } from '../type';
 
 export class ConsolePlugin implements BrowserMonitorPlugin {
     name = 'console';

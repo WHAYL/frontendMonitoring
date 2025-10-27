@@ -1,9 +1,4 @@
-import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
-export interface WhiteScreenPluginConfig {
-    keySelectors?: string[];
-    checkInterval?: number;
-    timeout?: number;
-}
+import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenPluginConfig } from '../type';
 export declare class WhiteScreenPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;

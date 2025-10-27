@@ -1,10 +1,5 @@
 import { getTimestamp, formatTimestamp } from '../utils';
-import type { AnalyticsExtraData, AnalyticsHistoryExtraData, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
-
-export interface AnalyticsPluginConfig {
-    // 可选获取公网 IP 的异步函数（例如调用第三方服务），返回 IP 字符串
-    ipProvider?: () => Promise<string | null>;
-}
+import type { AnalyticsExtraData, AnalyticsHistoryExtraData, AnalyticsPluginConfig, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
 
 const DAILY_KEY_PREFIX = '__whayl_analytics_';
 

@@ -1,7 +1,4 @@
-import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
-export interface AnalyticsPluginConfig {
-    ipProvider?: () => Promise<string | null>;
-}
+import type { AnalyticsPluginConfig, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
 export declare class AnalyticsPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;

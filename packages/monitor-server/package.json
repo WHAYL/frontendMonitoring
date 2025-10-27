@@ -23,7 +23,8 @@
     "koa": "^3.0.3",
     "koa-body": "^6.0.1",
     "koa2-cors": "^2.0.6",
-    "sequelize": "^6.37.5"
+    "sequelize": "^6.37.5",
+    "@whayl/monitor-core": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

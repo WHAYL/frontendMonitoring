@@ -1,14 +1,4 @@
-import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin } from '../type';
-type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
-export interface DomPluginConfig {
-    error?: boolean;
-    unhandledrejection?: boolean;
-    mouseEvents?: {
-        [K in MouseEventNames]?: string[] | boolean;
-    };
-    resize?: boolean;
-    clickPath?: boolean;
-}
+import type { BrowserMonitorPluginInitArg, BrowserMonitorPlugin, DomPluginConfig } from '../type';
 export declare class DomPlugin implements BrowserMonitorPlugin {
     name: string;
     private monitor;
@@ -22,4 +12,3 @@ export declare class DomPlugin implements BrowserMonitorPlugin {
     private buildPathFromEvent;
     private handleClickPath;
 }
-export {};

@@ -1,5 +1,53 @@
-import { ReportingLevel, type LogData } from '@whayl/monitor-core';
+import { ReportingLevel, type LogData, MonitorConfig } from '@whayl/monitor-core';
 import { type SetOptional } from 'aiy-utils';
+export interface AnalyticsPluginConfig {
+    ipProvider?: () => Promise<string | null>;
+}
+export interface ConsolePluginConfig {
+    error?: boolean;
+    warn?: boolean;
+}
+type MouseEventNames = 'click' | 'dblclick' | 'mousemove' | 'wheel' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout' | 'mouseenter' | 'contextmenu';
+export interface DomPluginConfig {
+    error?: boolean;
+    unhandledrejection?: boolean;
+    mouseEvents?: {
+        [K in MouseEventNames]?: string[] | boolean;
+    };
+    resize?: boolean;
+    clickPath?: boolean;
+}
+export interface PerformancePluginConfig {
+    longTaskEnabled?: boolean;
+    memoryEnabled?: boolean;
+    fpsEnabled?: boolean;
+    resourceEnabled?: boolean;
+    navigationEnabled?: boolean;
+    webVitalsEnabled?: boolean;
+}
+export interface WhiteScreenPluginConfig {
+    keySelectors?: string[];
+    checkInterval?: number;
+    timeout?: number;
+}
+export interface BrowserMonitorConfig {
+    monitorConfig: MonitorConfig;
+    pluginsUse?: {
+        xhrPluginEnabled?: boolean;
+        fetchPluginEnabled?: boolean;
+        domPluginEnabled?: boolean;
+        routePluginEnabled?: boolean;
+        performancePluginEnabled?: boolean;
+        whiteScreenPluginEnabled?: boolean;
+        consolePluginEnabled?: boolean;
+        analyticsPluginEnabled?: boolean;
+    };
+    whiteScreenPluginConfig?: WhiteScreenPluginConfig;
+    consolePluginConfig?: ConsolePluginConfig;
+    domPluginConfig?: DomPluginConfig;
+    performancePluginConfig?: PerformancePluginConfig;
+    analyticsPluginConfig?: AnalyticsPluginConfig;
+}
 export interface PartialNavigator {
     userAgent: string;
     platform: string;
@@ -215,3 +263,4 @@ export interface AnalyticsHistoryExtraData {
     timestamp: number;
     items: Record<string, any>;
 }
+export {};

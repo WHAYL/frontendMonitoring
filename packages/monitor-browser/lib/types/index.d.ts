@@ -1,28 +1,5 @@
-import { MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
-import { DomPluginConfig } from './plugins/dom';
-import { PerformancePluginConfig } from './plugins/performance';
-import { WhiteScreenPluginConfig } from './plugins/whiteScreen';
-import { ConsolePluginConfig } from './plugins/console';
-import { AnalyticsPluginConfig } from './plugins/analytics';
-import { BrowserLogData, BrowserMonitorBase, BrowserMonitorPlugin } from './type';
-export interface BrowserMonitorConfig {
-    monitorConfig: MonitorConfig;
-    pluginsUse?: {
-        xhrPluginEnabled?: boolean;
-        fetchPluginEnabled?: boolean;
-        domPluginEnabled?: boolean;
-        routePluginEnabled?: boolean;
-        performancePluginEnabled?: boolean;
-        whiteScreenPluginEnabled?: boolean;
-        consolePluginEnabled?: boolean;
-        analyticsPluginEnabled?: boolean;
-    };
-    whiteScreenPluginConfig?: WhiteScreenPluginConfig;
-    consolePluginConfig?: ConsolePluginConfig;
-    domPluginConfig?: DomPluginConfig;
-    performancePluginConfig?: PerformancePluginConfig;
-    analyticsPluginConfig?: AnalyticsPluginConfig;
-}
+import { ReportingLevel } from '@whayl/monitor-core';
+import { BrowserLogData, BrowserMonitorBase, BrowserMonitorConfig, BrowserMonitorPlugin } from './type';
 declare class BrowserMonitor implements BrowserMonitorBase {
     private plugins;
     private monitor;
