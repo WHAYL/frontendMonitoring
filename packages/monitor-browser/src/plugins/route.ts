@@ -5,7 +5,7 @@ import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, RouteExtraData 
 
 export class RoutePlugin implements BrowserMonitorPlugin {
   name = 'route';
-  private monitor: BrowserMonitorPluginInitArg;
+  private monitor: BrowserMonitorPluginInitArg | null;
   private lastRoute: string;
   private routeEnterTime: number = 0;
   private originalPushState: typeof history.pushState;
@@ -40,6 +40,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
     if (this.originalReplaceState) {
       try { history.replaceState = this.originalReplaceState; } catch (e) { /* ignore */ }
     }
+    this.monitor = null;
   }
 
   private setupRouteMonitoring(): void {

@@ -1590,6 +1590,7 @@ var AiyMonitorBrowser = (function () {
                 }
                 catch (e) { }
             }
+            this.monitor = null;
         };
         RoutePlugin.prototype.setupRouteMonitoring = function () {
             var _this = this;

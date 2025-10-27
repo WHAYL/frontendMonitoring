@@ -1589,6 +1589,7 @@ define((function () { 'use strict';
                 }
                 catch (e) { }
             }
+            this.monitor = null;
         };
         RoutePlugin.prototype.setupRouteMonitoring = function () {
             var _this = this;
