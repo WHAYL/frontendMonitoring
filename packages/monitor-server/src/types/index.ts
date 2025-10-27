@@ -5,25 +5,21 @@ declare module 'koa' {
   }
 }
 
-export interface MonitorData {
-  level: string;
+export interface IReportInfo {
+  id?: number;
+  platform: string;
+  plugin_name: string;
   message: string;
-  stack?: string;
+  url: string;
   timestamp: number;
   date: string;
-  url: string;
-  userId?: string;
-  pluginName?: string;
-  fingerprint?: string;
-  userAgent?: string;
-  devicePixelRatio?: number;
-  extraData?: Record<string, any>;
-}
-
-export interface AnalyticsQuery {
-  startDate?: number;
-  endDate?: number;
-  pluginName?: string;
-  level?: string;
-  limit?: number;
+  level: string;
+  device_width: number;
+  device_height: number;
+  device_pixel_ratio: number;
+  fingerprint: string;
+  old_fingerprint: string;
+  ip: string;
+  created_at: Date;
+  updated_at: Date;
 }

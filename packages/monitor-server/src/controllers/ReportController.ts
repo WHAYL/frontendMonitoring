@@ -1,6 +1,7 @@
 import { Context } from 'koa';
-import { ReportInfoModel, IReportInfo } from '../database/models/ReportInfo';
+import { ReportInfoModel } from '../database/models/ReportInfo';
 import { ErrorInfo } from '@whayl/monitor-core/types';
+import { IReportInfo } from '../types';
 
 /**
  * 将驼峰命名转换为下划线命名
