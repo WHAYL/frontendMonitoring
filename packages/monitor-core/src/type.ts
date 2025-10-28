@@ -1,5 +1,17 @@
 import type { FrontendMonitor } from "./monitor";
-
+import { type EnumValuesForKey, createEnumFromArray } from 'aiy-utils';
+const LogCategory = [
+  { label: '其他', key: 'oth', value: 0 },
+  { label: '页面生命周期', key: 'pageLifecycle', value: 1 },
+  { label: 'js错误，未处理的Promise，console.error', key: 'error', value: 2 },
+  { label: 'xhr,fetch请求信息', key: 'xhrFetch', value: 3 },
+  { label: '页面性能相关数据', key: 'pagePerformance', value: 4 },
+  { label: '系统相关访问数据', key: 'osView', value: 5 },
+  { label: '资源加载信息', key: 'resource', value: 6 },
+  { label: '用户行为', key: 'userBehavior', value: 7 },
+] as const;
+export type LogCategoryValue = EnumValuesForKey<typeof LogCategory, 'value'>
+export const LogCategoryKeyValue = createEnumFromArray(LogCategory, 'key', 'value');
 // 上报等级枚举，数值越大等级越低
 export enum ReportLevelEnum {
   ERROR = 0,
@@ -44,6 +56,7 @@ export interface DeviceInfo {
   pixelRatio: number;
 }
 export interface LogData {
+  logCategory: LogCategoryValue;
   pluginName: string;
   message: string;
   url: string;

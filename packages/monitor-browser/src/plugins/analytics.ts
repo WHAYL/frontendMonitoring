@@ -1,5 +1,6 @@
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { AnalyticsExtraData, AnalyticsHistoryExtraData, AnalyticsPluginConfig, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 const DAILY_KEY_PREFIX = '__whayl_analytics_';
 
@@ -105,6 +106,7 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
                 try {
                     if (this.monitor) {
                         this.monitor.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.osView,
                             pluginName: this.name,
                             message: 'analytics_history_before_cleanup',
                             extraData: {
@@ -231,6 +233,7 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
 
             // 使用 info 级别上报统计数据
             this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.osView,
                 pluginName: this.name,
                 message: 'analytics_report',
                 url: window.location.href,

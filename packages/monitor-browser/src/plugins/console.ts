@@ -1,6 +1,7 @@
 
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, ConsoleExtraData, ConsolePluginConfig } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class ConsolePlugin implements BrowserMonitorPlugin {
     name = 'console';
@@ -37,6 +38,7 @@ export class ConsolePlugin implements BrowserMonitorPlugin {
                         const stack = (new Error()).stack;
                         const extraData: ConsoleExtraData = { args, stack };
                         self.monitor && self.monitor.reportInfo('ERROR', {
+                            logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.error',
                             url: window.location.href,
@@ -64,6 +66,7 @@ export class ConsolePlugin implements BrowserMonitorPlugin {
                         const stack = (new Error()).stack;
                         const extraData: ConsoleExtraData = { args, stack };
                         self.monitor && self.monitor.reportInfo('WARN', {
+                            logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.warn',
                             url: window.location.href,

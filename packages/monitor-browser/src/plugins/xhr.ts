@@ -1,6 +1,7 @@
 
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, XhrExtraData } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 interface XhrInfo {
   method: string;
@@ -82,6 +83,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
           };
 
           self.monitor!.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.xhrFetch,
             pluginName: self.name,
             message: `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,
@@ -111,6 +113,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
           };
 
           self.monitor!.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.xhrFetch,
             pluginName: self.name,
             message: `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,
             url: window.location.href,

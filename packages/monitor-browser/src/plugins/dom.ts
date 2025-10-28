@@ -11,6 +11,7 @@ import type {
   BrowserMonitorPlugin,
   DomPluginConfig
 } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class DomPlugin implements BrowserMonitorPlugin {
   name = 'dom';
@@ -58,6 +59,7 @@ export class DomPlugin implements BrowserMonitorPlugin {
         error: event.error,               // Error 对象
       };
       this.monitor!.reportInfo('ERROR', {
+        logCategory: LogCategoryKeyValue.error,
         pluginName: this.name,
         message: `JavaScript Error: ${event.message}`,
         url: window.location.href,
@@ -85,6 +87,7 @@ export class DomPlugin implements BrowserMonitorPlugin {
         errorName: event.reason?.name,
       };
       this.monitor!.reportInfo('ERROR', {
+        logCategory: LogCategoryKeyValue.error,
         pluginName: this.name,
         message: `Unhandled Promise Rejection: ${event.reason}`,
         url: window.location.href,
@@ -167,6 +170,7 @@ export class DomPlugin implements BrowserMonitorPlugin {
         dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
       };
       this.monitor!.reportInfo('DEBUG', {
+        logCategory: LogCategoryKeyValue.userBehavior,
         pluginName: this.name,
         message: `User Mouse Event (${eventType}): ${reportEl.tagName}${reportEl.id ? '#' + reportEl.id : ''}${reportEl.className ? '.' + reportEl.className : ''}`,
         extraData,
@@ -205,6 +209,7 @@ export class DomPlugin implements BrowserMonitorPlugin {
         devicePixelRatio
       };
       this.monitor?.reportInfo('DEBUG', {
+        logCategory: LogCategoryKeyValue.userBehavior,
         pluginName: this.name,
         message: `Window Resize: ${innerWidth}x${innerHeight}`,
         url: window.location.href,
@@ -268,6 +273,7 @@ export class DomPlugin implements BrowserMonitorPlugin {
         url: typeof window !== 'undefined' ? window.location.href : '',
       };
       this.monitor.reportInfo('INFO', {
+        logCategory: LogCategoryKeyValue.userBehavior,
         pluginName: this.name,
         message: 'click_path',
         extraData,

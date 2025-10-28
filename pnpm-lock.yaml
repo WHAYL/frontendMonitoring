@@ -121,7 +121,11 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
 
-  packages/monitor-core: {}
+  packages/monitor-core:
+    dependencies:
+      aiy-utils:
+        specifier: ^0.1.45
+        version: 0.1.45
 
   packages/monitor-server:
     dependencies:

@@ -1,6 +1,7 @@
 
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, FetchExtraData } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class FetchPlugin implements BrowserMonitorPlugin {
   name = 'fetch';
@@ -60,6 +61,7 @@ export class FetchPlugin implements BrowserMonitorPlugin {
         };
 
         self.monitor!.reportInfo('ERROR', {
+          logCategory: LogCategoryKeyValue.xhrFetch,
           pluginName: self.name,
           message: `Fetch Error: ${method} ${url} - ${error.message}`,
           url: window.location.href,

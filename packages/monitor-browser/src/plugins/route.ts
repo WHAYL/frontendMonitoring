@@ -2,6 +2,7 @@
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, RouteExtraData } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class RoutePlugin implements BrowserMonitorPlugin {
   name = 'route';
@@ -79,6 +80,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
 
     // 记录初始路由
     this.monitor!.reportInfo('INFO', {
+      logCategory: LogCategoryKeyValue.pageLifecycle,
       pluginName: this.name,
       message: `Initial Route: ${this.lastRoute}`,
       extraData,
@@ -114,6 +116,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
 
       // 记录路由变更
       this.monitor!.reportInfo('INFO', {
+        logCategory: LogCategoryKeyValue.pageLifecycle,
         pluginName: this.name,
         message: `Route Changed (${changeType}): ${currentRoute}`,
         extraData,
@@ -168,6 +171,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
             enterTime: getTimestamp()
           };
           self.monitor!.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.pageLifecycle,
             pluginName: self.name,
             message: `window.open -> ${url}`,
             url: window.location.href,
@@ -207,6 +211,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
       };
 
       this.monitor!.reportInfo('INFO', {
+        logCategory: LogCategoryKeyValue.pageLifecycle,
         pluginName: this.name,
         message: `A tag clicked -> ${href}`,
         url: window.location.href,
@@ -251,6 +256,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
       };
 
       this.monitor!.reportInfo('INFO', {
+        logCategory: LogCategoryKeyValue.pageLifecycle,
         pluginName: this.name,
         message: `Route Left: ${this.lastRoute}`,
         extraData,

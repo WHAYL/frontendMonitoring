@@ -2,6 +2,7 @@
 import { monitorRouteChange } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenExtraData, WhiteScreenPluginConfig } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class WhiteScreenPlugin implements BrowserMonitorPlugin {
   name = 'whiteScreen';
@@ -160,6 +161,7 @@ export class WhiteScreenPlugin implements BrowserMonitorPlugin {
     };
 
     this.monitor.reportInfo('INFO', {
+      logCategory: LogCategoryKeyValue.pagePerformance,
       pluginName: this.name,
       message: `WhiteScreen check ${status}`,
       url: window.location.href,

@@ -144,6 +144,703 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 
 var MYSTORAGE_COUNT = 100;
 var IMMEDIATE_REPORT_LEVEL = "ERROR";
+function e$1(e, r, t) {
+  return Object.fromEntries(e.map(function (e) {
+    return [String(e[r]), e[t]];
+  }));
+}
+function t$2(e, r, t, n) {
+  return new (t || (t = Promise))(function (i, o) {
+    function a(e) {
+      try {
+        c(n.next(e));
+      } catch (e) {
+        o(e);
+      }
+    }
+    function u(e) {
+      try {
+        c(n.throw(e));
+      } catch (e) {
+        o(e);
+      }
+    }
+    function c(e) {
+      var r;
+      e.done ? i(e.value) : (r = e.value, r instanceof t ? r : new t(function (e) {
+        e(r);
+      })).then(a, u);
+    }
+    c((n = n.apply(e, [])).next());
+  });
+}
+function n$2(e, r) {
+  var t,
+    n,
+    i,
+    o = {
+      label: 0,
+      sent: function () {
+        if (1 & i[0]) throw i[1];
+        return i[1];
+      },
+      trys: [],
+      ops: []
+    },
+    a = Object.create(("function" == typeof Iterator ? Iterator : Object).prototype);
+  return a.next = u(0), a.throw = u(1), a.return = u(2), "function" == typeof Symbol && (a[Symbol.iterator] = function () {
+    return this;
+  }), a;
+  function u(u) {
+    return function (c) {
+      return function (u) {
+        if (t) throw new TypeError("Generator is already executing.");
+        for (; a && (a = 0, u[0] && (o = 0)), o;) try {
+          if (t = 1, n && (i = 2 & u[0] ? n.return : u[0] ? n.throw || ((i = n.return) && i.call(n), 0) : n.next) && !(i = i.call(n, u[1])).done) return i;
+          switch (n = 0, i && (u = [2 & u[0], i.value]), u[0]) {
+            case 0:
+            case 1:
+              i = u;
+              break;
+            case 4:
+              return o.label++, {
+                value: u[1],
+                done: !1
+              };
+            case 5:
+              o.label++, n = u[1], u = [0];
+              continue;
+            case 7:
+              u = o.ops.pop(), o.trys.pop();
+              continue;
+            default:
+              if (!(i = o.trys, (i = i.length > 0 && i[i.length - 1]) || 6 !== u[0] && 2 !== u[0])) {
+                o = 0;
+                continue;
+              }
+              if (3 === u[0] && (!i || u[1] > i[0] && u[1] < i[3])) {
+                o.label = u[1];
+                break;
+              }
+              if (6 === u[0] && o.label < i[1]) {
+                o.label = i[1], i = u;
+                break;
+              }
+              if (i && o.label < i[2]) {
+                o.label = i[2], o.ops.push(u);
+                break;
+              }
+              i[2] && o.ops.pop(), o.trys.pop();
+              continue;
+          }
+          u = r.call(e, o);
+        } catch (e) {
+          u = [6, e], n = 0;
+        } finally {
+          t = i = 0;
+        }
+        if (5 & u[0]) throw u[1];
+        return {
+          value: u[0] ? u[1] : void 0,
+          done: true
+        };
+      }([u, c]);
+    };
+  }
+}
+function i$2(e) {
+  var r = "function" == typeof Symbol && Symbol.iterator,
+    t = r && e[r],
+    n = 0;
+  if (t) return t.call(e);
+  if (e && "number" == typeof e.length) return {
+    next: function () {
+      return e && n >= e.length && (e = void 0), {
+        value: e && e[n++],
+        done: !e
+      };
+    }
+  };
+  throw new TypeError(r ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+function o$2(e, r) {
+  var t = "function" == typeof Symbol && e[Symbol.iterator];
+  if (!t) return e;
+  var n,
+    i,
+    o = t.call(e),
+    a = [];
+  try {
+    for (; (void 0 === r || r-- > 0) && !(n = o.next()).done;) a.push(n.value);
+  } catch (e) {
+    i = {
+      error: e
+    };
+  } finally {
+    try {
+      n && !n.done && (t = o.return) && t.call(o);
+    } finally {
+      if (i) throw i.error;
+    }
+  }
+  return a;
+}
+function a$2(e, r, t) {
+  if (2 === arguments.length) for (var n, i = 0, o = r.length; i < o; i++) !n && i in r || (n || (n = Array.prototype.slice.call(r, 0, i)), n[i] = r[i]);
+  return e.concat(n || Array.prototype.slice.call(r));
+}
+"function" == typeof SuppressedError && SuppressedError, Function.prototype.after = function (e) {
+  var r = this;
+  return function () {
+    for (var i = [], u = 0; u < arguments.length; u++) i[u] = arguments[u];
+    return t$2(this, void 0, void 0, function () {
+      var t;
+      return n$2(this, function (n) {
+        switch (n.label) {
+          case 0:
+            return [4, Promise.resolve(r.apply(void 0, a$2([], o$2(i), false)))];
+          case 1:
+            return t = n.sent(), e(), [2, t];
+        }
+      });
+    });
+  };
+}, Function.prototype.before = function (e) {
+  var r = this;
+  return function () {
+    for (var i = [], u = 0; u < arguments.length; u++) i[u] = arguments[u];
+    return t$2(this, void 0, void 0, function () {
+      return n$2(this, function (t) {
+        switch (t.label) {
+          case 0:
+            return e(), [4, Promise.resolve(r.apply(void 0, a$2([], o$2(i), false)))];
+          case 1:
+            return [2, t.sent()];
+        }
+      });
+    });
+  };
+};
+var I$2 = "__lodash_hash_undefined__",
+  k$2 = 9007199254740991,
+  F$2 = "[object Arguments]",
+  W$1 = "[object Boolean]",
+  C$2 = "[object Date]",
+  $$2 = "[object Function]",
+  V$1 = "[object GeneratorFunction]",
+  K$1 = "[object Map]",
+  B$2 = "[object Number]",
+  R$1 = "[object Object]",
+  q$2 = "[object Promise]",
+  L$2 = "[object RegExp]",
+  H$2 = "[object Set]",
+  U$1 = "[object String]",
+  z$1 = "[object Symbol]",
+  G$1 = "[object WeakMap]",
+  X$1 = "[object ArrayBuffer]",
+  Y$1 = "[object DataView]",
+  J$1 = "[object Float32Array]",
+  Z$1 = "[object Float64Array]",
+  Q$1 = "[object Int8Array]",
+  ee$1 = "[object Int16Array]",
+  re$1 = "[object Int32Array]",
+  te$1 = "[object Uint8Array]",
+  ne$1 = "[object Uint8ClampedArray]",
+  ie$1 = "[object Uint16Array]",
+  oe$1 = "[object Uint32Array]",
+  ae$1 = /\w*$/,
+  ue$1 = /^\[object .+?Constructor\]$/,
+  ce$1 = /^(?:0|[1-9]\d*)$/,
+  le$1 = {};
+le$1[F$2] = le$1["[object Array]"] = le$1[X$1] = le$1[Y$1] = le$1[W$1] = le$1[C$2] = le$1[J$1] = le$1[Z$1] = le$1[Q$1] = le$1[ee$1] = le$1[re$1] = le$1[K$1] = le$1[B$2] = le$1[R$1] = le$1[L$2] = le$1[H$2] = le$1[U$1] = le$1[z$1] = le$1[te$1] = le$1[ne$1] = le$1[ie$1] = le$1[oe$1] = true, le$1["[object Error]"] = le$1[$$2] = le$1[G$1] = false;
+var se$1 = "object" == typeof global && global && global.Object === Object && global,
+  fe$1 = "object" == typeof self && self && self.Object === Object && self,
+  ve$1 = se$1 || fe$1 || Function("return this")(),
+  de$1 = "object" == typeof exports && exports && !exports.nodeType && exports,
+  he$1 = de$1 && "object" == typeof module && module && !module.nodeType && module,
+  pe$1 = he$1 && he$1.exports === de$1;
+function ye$1(e, r) {
+  return e.set(r[0], r[1]), e;
+}
+function ge$1(e, r) {
+  return e.add(r), e;
+}
+function me$1(e, r, t, n) {
+  for (var i = -1, o = e ? e.length : 0; ++i < o;) t = r(t, e[i], i, e);
+  return t;
+}
+function we$1(e) {
+  var r = false;
+  if (null != e && "function" != typeof e.toString) try {
+    r = !!(e + "");
+  } catch (e) {}
+  return r;
+}
+function be$1(e) {
+  var r = -1,
+    t = Array(e.size);
+  return e.forEach(function (e, n) {
+    t[++r] = [n, e];
+  }), t;
+}
+function _e$1(e, r) {
+  return function (t) {
+    return e(r(t));
+  };
+}
+function Ne$1(e) {
+  var r = -1,
+    t = Array(e.size);
+  return e.forEach(function (e) {
+    t[++r] = e;
+  }), t;
+}
+var Ae$1,
+  Se$1 = Array.prototype,
+  Ee$1 = Function.prototype,
+  Me$1 = Object.prototype,
+  je$1 = ve$1["__core-js_shared__"],
+  Te$1 = (Ae$1 = /[^.]+$/.exec(je$1 && je$1.keys && je$1.keys.IE_PROTO || "")) ? "Symbol(src)_1." + Ae$1 : "",
+  xe$1 = Ee$1.toString,
+  Oe$1 = Me$1.hasOwnProperty,
+  Pe$1 = Me$1.toString,
+  De$1 = RegExp("^" + xe$1.call(Oe$1).replace(/[\\^$.*+?()[\]{}|]/g, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"),
+  Ie$1 = pe$1 ? ve$1.Buffer : void 0,
+  ke$1 = ve$1.Symbol,
+  Fe$1 = ve$1.Uint8Array,
+  We$1 = _e$1(Object.getPrototypeOf, Object),
+  Ce$1 = Object.create,
+  $e$1 = Me$1.propertyIsEnumerable,
+  Ve$1 = Se$1.splice,
+  Ke$1 = Object.getOwnPropertySymbols,
+  Be$1 = Ie$1 ? Ie$1.isBuffer : void 0,
+  Re$1 = _e$1(Object.keys, Object),
+  qe$1 = hr$1(ve$1, "DataView"),
+  Le$1 = hr$1(ve$1, "Map"),
+  He$1 = hr$1(ve$1, "Promise"),
+  Ue$1 = hr$1(ve$1, "Set"),
+  ze$1 = hr$1(ve$1, "WeakMap"),
+  Ge$1 = hr$1(Object, "create"),
+  Xe$1 = wr$1(qe$1),
+  Ye$1 = wr$1(Le$1),
+  Je$1 = wr$1(He$1),
+  Ze$1 = wr$1(Ue$1),
+  Qe$1 = wr$1(ze$1),
+  er$1 = ke$1 ? ke$1.prototype : void 0,
+  rr$1 = er$1 ? er$1.valueOf : void 0;
+function tr$1(e) {
+  var r = -1,
+    t = e ? e.length : 0;
+  for (this.clear(); ++r < t;) {
+    var n = e[r];
+    this.set(n[0], n[1]);
+  }
+}
+function nr$1(e) {
+  var r = -1,
+    t = e ? e.length : 0;
+  for (this.clear(); ++r < t;) {
+    var n = e[r];
+    this.set(n[0], n[1]);
+  }
+}
+function ir$1(e) {
+  var r = -1,
+    t = e ? e.length : 0;
+  for (this.clear(); ++r < t;) {
+    var n = e[r];
+    this.set(n[0], n[1]);
+  }
+}
+function or$1(e) {
+  this.__data__ = new nr$1(e);
+}
+function ar$1(e, r) {
+  var t = _r$1(e) || function (e) {
+      return function (e) {
+        return function (e) {
+          return !!e && "object" == typeof e;
+        }(e) && Nr$1(e);
+      }(e) && Oe$1.call(e, "callee") && (!$e$1.call(e, "callee") || Pe$1.call(e) == F$2);
+    }(e) ? function (e, r) {
+      for (var t = -1, n = Array(e); ++t < e;) n[t] = r(t);
+      return n;
+    }(e.length, String) : [],
+    n = t.length,
+    i = !!n;
+  for (var o in e) !Oe$1.call(e, o) || i && ("length" == o || gr$1(o, n)) || t.push(o);
+  return t;
+}
+function ur$1(e, r, t) {
+  var n = e[r];
+  Oe$1.call(e, r) && br$1(n, t) && (void 0 !== t || r in e) || (e[r] = t);
+}
+function cr$1(e, r) {
+  for (var t = e.length; t--;) if (br$1(e[t][0], r)) return t;
+  return -1;
+}
+function lr$1(e, r, t, n, i, o, a) {
+  var u;
+  if (n && (u = o ? n(e, i, o, a) : n(e)), void 0 !== u) return u;
+  if (!Er$1(e)) return e;
+  var c = _r$1(e);
+  if (c) {
+    if (u = function (e) {
+      var r = e.length,
+        t = e.constructor(r);
+      r && "string" == typeof e[0] && Oe$1.call(e, "index") && (t.index = e.index, t.input = e.input);
+      return t;
+    }(e), !r) return function (e, r) {
+      var t = -1,
+        n = e.length;
+      r || (r = Array(n));
+      for (; ++t < n;) r[t] = e[t];
+      return r;
+    }(e, u);
+  } else {
+    var l = yr$1(e),
+      s = l == $$2 || l == V$1;
+    if (Ar$1(e)) return function (e, r) {
+      if (r) return e.slice();
+      var t = new e.constructor(e.length);
+      return e.copy(t), t;
+    }(e, r);
+    if (l == R$1 || l == F$2 || s && !o) {
+      if (we$1(e)) return o ? e : {};
+      if (u = function (e) {
+        return "function" != typeof e.constructor || mr$1(e) ? {} : (r = We$1(e), Er$1(r) ? Ce$1(r) : {});
+        var r;
+      }(s ? {} : e), !r) return function (e, r) {
+        return vr$1(e, pr$1(e), r);
+      }(e, function (e, r) {
+        return e && vr$1(r, Mr$1(r), e);
+      }(u, e));
+    } else {
+      if (!le$1[l]) return o ? e : {};
+      u = function (e, r, t, n) {
+        var i = e.constructor;
+        switch (r) {
+          case X$1:
+            return fr$1(e);
+          case W$1:
+          case C$2:
+            return new i(+e);
+          case Y$1:
+            return function (e, r) {
+              var t = r ? fr$1(e.buffer) : e.buffer;
+              return new e.constructor(t, e.byteOffset, e.byteLength);
+            }(e, n);
+          case J$1:
+          case Z$1:
+          case Q$1:
+          case ee$1:
+          case re$1:
+          case te$1:
+          case ne$1:
+          case ie$1:
+          case oe$1:
+            return function (e, r) {
+              var t = r ? fr$1(e.buffer) : e.buffer;
+              return new e.constructor(t, e.byteOffset, e.length);
+            }(e, n);
+          case K$1:
+            return function (e, r, t) {
+              var n = r ? t(be$1(e), true) : be$1(e);
+              return me$1(n, ye$1, new e.constructor());
+            }(e, n, t);
+          case B$2:
+          case U$1:
+            return new i(e);
+          case L$2:
+            return function (e) {
+              var r = new e.constructor(e.source, ae$1.exec(e));
+              return r.lastIndex = e.lastIndex, r;
+            }(e);
+          case H$2:
+            return function (e, r, t) {
+              var n = r ? t(Ne$1(e), true) : Ne$1(e);
+              return me$1(n, ge$1, new e.constructor());
+            }(e, n, t);
+          case z$1:
+            return o = e, rr$1 ? Object(rr$1.call(o)) : {};
+        }
+        var o;
+      }(e, l, lr$1, r);
+    }
+  }
+  a || (a = new or$1());
+  var f = a.get(e);
+  if (f) return f;
+  if (a.set(e, u), !c) var v = t ? function (e) {
+    return function (e, r, t) {
+      var n = r(e);
+      return _r$1(e) ? n : function (e, r) {
+        for (var t = -1, n = r.length, i = e.length; ++t < n;) e[i + t] = r[t];
+        return e;
+      }(n, t(e));
+    }(e, Mr$1, pr$1);
+  }(e) : Mr$1(e);
+  return function (e, r) {
+    for (var t = -1, n = e ? e.length : 0; ++t < n && false !== r(e[t], t, e););
+  }(v || e, function (i, o) {
+    v && (i = e[o = i]), ur$1(u, o, lr$1(i, r, t, n, o, e, a));
+  }), u;
+}
+function sr$1(e) {
+  return !(!Er$1(e) || (r = e, Te$1 && Te$1 in r)) && (Sr$1(e) || we$1(e) ? De$1 : ue$1).test(wr$1(e));
+  var r;
+}
+function fr$1(e) {
+  var r = new e.constructor(e.byteLength);
+  return new Fe$1(r).set(new Fe$1(e)), r;
+}
+function vr$1(e, r, t, n) {
+  t || (t = {});
+  for (var i = -1, o = r.length; ++i < o;) {
+    var a = r[i];
+    ur$1(t, a, e[a]);
+  }
+  return t;
+}
+function dr$1(e, r) {
+  var t,
+    n,
+    i = e.__data__;
+  return ("string" == (n = typeof (t = r)) || "number" == n || "symbol" == n || "boolean" == n ? "__proto__" !== t : null === t) ? i["string" == typeof r ? "string" : "hash"] : i.map;
+}
+function hr$1(e, r) {
+  var t = function (e, r) {
+    return null == e ? void 0 : e[r];
+  }(e, r);
+  return sr$1(t) ? t : void 0;
+}
+tr$1.prototype.clear = function () {
+  this.__data__ = Ge$1 ? Ge$1(null) : {};
+}, tr$1.prototype.delete = function (e) {
+  return this.has(e) && delete this.__data__[e];
+}, tr$1.prototype.get = function (e) {
+  var r = this.__data__;
+  if (Ge$1) {
+    var t = r[e];
+    return t === I$2 ? void 0 : t;
+  }
+  return Oe$1.call(r, e) ? r[e] : void 0;
+}, tr$1.prototype.has = function (e) {
+  var r = this.__data__;
+  return Ge$1 ? void 0 !== r[e] : Oe$1.call(r, e);
+}, tr$1.prototype.set = function (e, r) {
+  return this.__data__[e] = Ge$1 && void 0 === r ? I$2 : r, this;
+}, nr$1.prototype.clear = function () {
+  this.__data__ = [];
+}, nr$1.prototype.delete = function (e) {
+  var r = this.__data__,
+    t = cr$1(r, e);
+  return !(t < 0) && (t == r.length - 1 ? r.pop() : Ve$1.call(r, t, 1), true);
+}, nr$1.prototype.get = function (e) {
+  var r = this.__data__,
+    t = cr$1(r, e);
+  return t < 0 ? void 0 : r[t][1];
+}, nr$1.prototype.has = function (e) {
+  return cr$1(this.__data__, e) > -1;
+}, nr$1.prototype.set = function (e, r) {
+  var t = this.__data__,
+    n = cr$1(t, e);
+  return n < 0 ? t.push([e, r]) : t[n][1] = r, this;
+}, ir$1.prototype.clear = function () {
+  this.__data__ = {
+    hash: new tr$1(),
+    map: new (Le$1 || nr$1)(),
+    string: new tr$1()
+  };
+}, ir$1.prototype.delete = function (e) {
+  return dr$1(this, e).delete(e);
+}, ir$1.prototype.get = function (e) {
+  return dr$1(this, e).get(e);
+}, ir$1.prototype.has = function (e) {
+  return dr$1(this, e).has(e);
+}, ir$1.prototype.set = function (e, r) {
+  return dr$1(this, e).set(e, r), this;
+}, or$1.prototype.clear = function () {
+  this.__data__ = new nr$1();
+}, or$1.prototype.delete = function (e) {
+  return this.__data__.delete(e);
+}, or$1.prototype.get = function (e) {
+  return this.__data__.get(e);
+}, or$1.prototype.has = function (e) {
+  return this.__data__.has(e);
+}, or$1.prototype.set = function (e, r) {
+  var t = this.__data__;
+  if (t instanceof nr$1) {
+    var n = t.__data__;
+    if (!Le$1 || n.length < 199) return n.push([e, r]), this;
+    t = this.__data__ = new ir$1(n);
+  }
+  return t.set(e, r), this;
+};
+var pr$1 = Ke$1 ? _e$1(Ke$1, Object) : function () {
+    return [];
+  },
+  yr$1 = function (e) {
+    return Pe$1.call(e);
+  };
+function gr$1(e, r) {
+  return !!(r = null == r ? k$2 : r) && ("number" == typeof e || ce$1.test(e)) && e > -1 && e % 1 == 0 && e < r;
+}
+function mr$1(e) {
+  var r = e && e.constructor;
+  return e === ("function" == typeof r && r.prototype || Me$1);
+}
+function wr$1(e) {
+  if (null != e) {
+    try {
+      return xe$1.call(e);
+    } catch (e) {}
+    try {
+      return e + "";
+    } catch (e) {}
+  }
+  return "";
+}
+function br$1(e, r) {
+  return e === r || e != e && r != r;
+}
+(qe$1 && yr$1(new qe$1(new ArrayBuffer(1))) != Y$1 || Le$1 && yr$1(new Le$1()) != K$1 || He$1 && yr$1(He$1.resolve()) != q$2 || Ue$1 && yr$1(new Ue$1()) != H$2 || ze$1 && yr$1(new ze$1()) != G$1) && (yr$1 = function (e) {
+  var r = Pe$1.call(e),
+    t = r == R$1 ? e.constructor : void 0,
+    n = t ? wr$1(t) : void 0;
+  if (n) switch (n) {
+    case Xe$1:
+      return Y$1;
+    case Ye$1:
+      return K$1;
+    case Je$1:
+      return q$2;
+    case Ze$1:
+      return H$2;
+    case Qe$1:
+      return G$1;
+  }
+  return r;
+});
+var _r$1 = Array.isArray;
+function Nr$1(e) {
+  return null != e && function (e) {
+    return "number" == typeof e && e > -1 && e % 1 == 0 && e <= k$2;
+  }(e.length) && !Sr$1(e);
+}
+var Ar$1 = Be$1 || function () {
+  return false;
+};
+function Sr$1(e) {
+  var r = Er$1(e) ? Pe$1.call(e) : "";
+  return r == $$2 || r == V$1;
+}
+function Er$1(e) {
+  var r = typeof e;
+  return !!e && ("object" == r || "function" == r);
+}
+function Mr$1(e) {
+  return Nr$1(e) ? ar$1(e) : function (e) {
+    if (!mr$1(e)) return Re$1(e);
+    var r = [];
+    for (var t in Object(e)) Oe$1.call(e, t) && "constructor" != t && r.push(t);
+    return r;
+  }(e);
+}
+var jr$1 = function (e) {
+  return lr$1(e, true, true);
+};
+function Or$1(e, r, t, n, i, o) {
+  o = void 0 !== o && o, n = void 0 === n || o, Object.defineProperty(e, r, {
+    value: t,
+    enumerable: false,
+    writable: n,
+    configurable: o
+  });
+}
+var Pr$1,
+  Dr$1 = Array.prototype,
+  Ir$1 = Object.create(Dr$1),
+  kr$1 = "undefined" != typeof Proxy && "function" == typeof (Pr$1 = Proxy) && /native code/.test(Pr$1.toString()),
+  Wr$1 = ["push", "pop", "shift", "unshift", "splice", "sort", "reverse"];
+Wr$1.forEach(function (e) {
+  var r = Dr$1[e];
+  Or$1(Ir$1, e, function () {
+    for (var t, n, o, a, u, c, l, s, f, v, d, h, p, y, g, m, w, b, _, N, A = [], S = arguments.length; S--;) A[S] = arguments[S];
+    var E = jr$1(this),
+      M = r.apply(this, A);
+    if (this.__obc__) if (["push", "pop"].includes(e) && !kr$1) {
+      var j = this.__obc__.csKeyMap.get(this),
+        T = (null == j ? void 0 : j.labelKey) + "." + (null == j ? void 0 : j.key) + ((null == j ? void 0 : j.key) ? "." : "");
+      try {
+        for (var x = i$2(this.__obc__.myWaMap), O = x.next(); !O.done; O = x.next()) {
+          var P = O.value;
+          T.startsWith(P[0]) && ((null === (c = null === (u = P[1]) || void 0 === u ? void 0 : u.props) || void 0 === c ? void 0 : c.run) && this.__obc__.refreshDeps && this.__obc__.runPub(), (null === (s = null === (l = P[1]) || void 0 === l ? void 0 : l.props) || void 0 === s ? void 0 : s.deep) ? !(null === (v = null === (f = P[1]) || void 0 === f ? void 0 : f.props) || void 0 === v ? void 0 : v.run) && P[1].fun(this, E) : !(null === (h = null === (d = P[1]) || void 0 === d ? void 0 : d.props) || void 0 === h ? void 0 : h.run) && T === P[0] && P[1].fun(this, E));
+        }
+      } catch (e) {
+        t = {
+          error: e
+        };
+      } finally {
+        try {
+          O && !O.done && (n = x.return) && n.call(x);
+        } finally {
+          if (t) throw t.error;
+        }
+      }
+    } else try {
+      for (var D = i$2(this.__obc__.myWaMap), I = D.next(); !I.done; I = D.next()) {
+        P = I.value;
+        this.__obc__.currKey.value.startsWith(P[0]) && ((null === (y = null === (p = P[1]) || void 0 === p ? void 0 : p.props) || void 0 === y ? void 0 : y.run) && this.__obc__.refreshDeps && this.__obc__.runPub(), (null === (m = null === (g = P[1]) || void 0 === g ? void 0 : g.props) || void 0 === m ? void 0 : m.deep) ? !(null === (b = null === (w = P[1]) || void 0 === w ? void 0 : w.props) || void 0 === b ? void 0 : b.run) && P[1].fun(this, E) : !(null === (N = null === (_ = P[1]) || void 0 === _ ? void 0 : _.props) || void 0 === N ? void 0 : N.run) && this.__obc__.currKey.value === P[0] && P[1].fun(this, E));
+      }
+    } catch (e) {
+      o = {
+        error: e
+      };
+    } finally {
+      try {
+        I && !I.done && (a = D.return) && a.call(D);
+      } finally {
+        if (o) throw o.error;
+      }
+    }
+    return M;
+  });
+});
+var LogCategory = [{
+  label: '其他',
+  key: 'oth',
+  value: 0
+}, {
+  label: '页面生命周期',
+  key: 'pageLifecycle',
+  value: 1
+}, {
+  label: 'js错误，未处理的Promise，console.error',
+  key: 'error',
+  value: 2
+}, {
+  label: 'xhr,fetch请求信息',
+  key: 'xhrFetch',
+  value: 3
+}, {
+  label: '页面性能相关数据',
+  key: 'pagePerformance',
+  value: 4
+}, {
+  label: '系统相关访问数据',
+  key: 'osView',
+  value: 5
+}, {
+  label: '资源加载信息',
+  key: 'resource',
+  value: 6
+}, {
+  label: '用户行为',
+  key: 'userBehavior',
+  value: 7
+}];
+var LogCategoryKeyValue = e$1(LogCategory, 'key', 'value');
 var ReportLevelEnum;
 (function (ReportLevelEnum) {
   ReportLevelEnum[ReportLevelEnum["ERROR"] = 0] = "ERROR";
@@ -378,6 +1075,7 @@ var XhrPlugin = (function () {
                         duration: duration
                     };
                     self.monitor.reportInfo('INFO', {
+                        logCategory: LogCategoryKeyValue.xhrFetch,
                         pluginName: self.name,
                         message: "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                         url: window.location.href,
@@ -402,6 +1100,7 @@ var XhrPlugin = (function () {
                         duration: duration
                     };
                     self.monitor.reportInfo('INFO', {
+                        logCategory: LogCategoryKeyValue.xhrFetch,
                         pluginName: self.name,
                         message: "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
                         url: window.location.href,
@@ -468,6 +1167,7 @@ var FetchPlugin = (function () {
                     duration: duration
                 };
                 self.monitor.reportInfo('ERROR', {
+                    logCategory: LogCategoryKeyValue.xhrFetch,
                     pluginName: self.name,
                     message: "Fetch Error: ".concat(method, " ").concat(url, " - ").concat(error.message),
                     url: window.location.href,
@@ -1288,6 +1988,7 @@ var DomPlugin = (function () {
                 error: event.error,
             };
             _this.monitor.reportInfo('ERROR', {
+                logCategory: LogCategoryKeyValue.error,
                 pluginName: _this.name,
                 message: "JavaScript Error: ".concat(event.message),
                 url: window.location.href,
@@ -1309,6 +2010,7 @@ var DomPlugin = (function () {
                 errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
             };
             _this.monitor.reportInfo('ERROR', {
+                logCategory: LogCategoryKeyValue.error,
                 pluginName: _this.name,
                 message: "Unhandled Promise Rejection: ".concat(event.reason),
                 url: window.location.href,
@@ -1394,6 +2096,7 @@ var DomPlugin = (function () {
                 }).join(','),
             };
             _this.monitor.reportInfo('DEBUG', {
+                logCategory: LogCategoryKeyValue.userBehavior,
                 pluginName: _this.name,
                 message: "User Mouse Event (".concat(eventType, "): ").concat(reportEl.tagName).concat(reportEl.id ? '#' + reportEl.id : '').concat(reportEl.className ? '.' + reportEl.className : ''),
                 extraData: extraData,
@@ -1427,6 +2130,7 @@ var DomPlugin = (function () {
                 devicePixelRatio: devicePixelRatio
             };
             (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('DEBUG', {
+                logCategory: LogCategoryKeyValue.userBehavior,
                 pluginName: _this.name,
                 message: "Window Resize: ".concat(innerWidth, "x").concat(innerHeight),
                 url: window.location.href,
@@ -1495,6 +2199,7 @@ var DomPlugin = (function () {
                 url: typeof window !== 'undefined' ? window.location.href : '',
             };
             this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.userBehavior,
                 pluginName: this.name,
                 message: 'click_path',
                 extraData: extraData,
@@ -1540,6 +2245,7 @@ var RoutePlugin = (function () {
                     target: a.target
                 };
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: _this.name,
                     message: "A tag clicked -> ".concat(href),
                     url: window.location.href,
@@ -1611,6 +2317,7 @@ var RoutePlugin = (function () {
             enterTime: this.routeEnterTime
         };
         this.monitor.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.pageLifecycle,
             pluginName: this.name,
             message: "Initial Route: ".concat(this.lastRoute),
             extraData: extraData,
@@ -1633,6 +2340,7 @@ var RoutePlugin = (function () {
                 enterTime: this.routeEnterTime
             };
             this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.pageLifecycle,
                 pluginName: this.name,
                 message: "Route Changed (".concat(changeType, "): ").concat(currentRoute),
                 extraData: extraData,
@@ -1687,6 +2395,7 @@ var RoutePlugin = (function () {
                         enterTime: getTimestamp()
                     };
                     self.monitor.reportInfo('INFO', {
+                        logCategory: LogCategoryKeyValue.pageLifecycle,
                         pluginName: self.name,
                         message: "window.open -> ".concat(url),
                         url: window.location.href,
@@ -1718,6 +2427,7 @@ var RoutePlugin = (function () {
                 duration: duration
             };
             this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.pageLifecycle,
                 pluginName: this.name,
                 message: "Route Left: ".concat(this.lastRoute),
                 extraData: extraData,
@@ -2099,6 +2809,7 @@ var PerformancePlugin = (function () {
                             attribution: entry.attribution || []
                         };
                         (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.oth,
                             pluginName: _this.name,
                             message: 'Long Task Detected',
                             url: window.location.href,
@@ -2182,6 +2893,7 @@ var PerformancePlugin = (function () {
                             trend: trend
                         };
                         (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.oth,
                             pluginName: _this.name,
                             message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
                             url: window.location.href,
@@ -2259,6 +2971,7 @@ var PerformancePlugin = (function () {
                     timeSinceLastInteraction: now - lastUserInteraction
                 };
                 (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.oth,
                     pluginName: _this.name,
                     message: 'Frame Drop Detected',
                     url: window.location.href,
@@ -2289,6 +3002,7 @@ var PerformancePlugin = (function () {
                         duration: now - lastReportTime
                     };
                     (_b = _this.monitor) === null || _b === void 0 ? void 0 : _b.reportInfo('INFO', {
+                        logCategory: LogCategoryKeyValue.oth,
                         pluginName: _this.name,
                         message: 'FPS Report',
                         url: window.location.href,
@@ -2387,6 +3101,7 @@ var PerformancePlugin = (function () {
                             cached: fromCache
                         };
                         _this.monitor.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.resource,
                             pluginName: _this.name,
                             message: "Resource loaded: ".concat(resourceEntry.name),
                             url: window.location.href,
@@ -2439,6 +3154,7 @@ var PerformancePlugin = (function () {
                             redirectCount: navEntry.redirectCount
                         };
                         _this.monitor.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.oth,
                             pluginName: _this.name,
                             message: 'Page navigation performance',
                             url: window.location.href,
@@ -2461,6 +3177,7 @@ var PerformancePlugin = (function () {
             x(function (metric) {
                 var extraData = __assign$1(__assign$1({ type: 'web_vitals', metric: 'LCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 2500, 4000) });
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pagePerformance,
                     pluginName: _this.name,
                     message: 'Largest Contentful Paint (LCP)',
                     url: window.location.href,
@@ -2472,6 +3189,7 @@ var PerformancePlugin = (function () {
             S(function (metric) {
                 var extraData = __assign$1(__assign$1({ type: 'web_vitals', metric: 'INP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 200, 500) });
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pagePerformance,
                     pluginName: _this.name,
                     message: 'Interaction to Next Paint (INP)',
                     url: window.location.href,
@@ -2489,6 +3207,7 @@ var PerformancePlugin = (function () {
                     rating: _this.getRating(metric.value, 0.1, 0.25)
                 };
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pagePerformance,
                     pluginName: _this.name,
                     message: 'Cumulative Layout Shift (CLS)',
                     url: window.location.href,
@@ -2500,6 +3219,7 @@ var PerformancePlugin = (function () {
             E(function (metric) {
                 var extraData = __assign$1(__assign$1({ type: 'web_vitals', metric: 'FCP', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 1800, 3000) });
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pagePerformance,
                     pluginName: _this.name,
                     message: 'First Contentful Paint (FCP)',
                     url: window.location.href,
@@ -2511,6 +3231,7 @@ var PerformancePlugin = (function () {
             $(function (metric) {
                 var extraData = __assign$1(__assign$1({ type: 'web_vitals', metric: 'TTFB', value: metric.value }, (metric.attribution && { attribution: metric.attribution })), { navigationType: metric.navigationType, rating: _this.getRating(metric.value, 800, 1800) });
                 _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pagePerformance,
                     pluginName: _this.name,
                     message: 'Time to First Byte (TTFB)',
                     url: window.location.href,
@@ -2699,6 +3420,7 @@ var WhiteScreenPlugin = (function () {
             selectors: this.config.keySelectors
         };
         this.monitor.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.pagePerformance,
             pluginName: this.name,
             message: "WhiteScreen check ".concat(status),
             url: window.location.href,
@@ -2755,6 +3477,7 @@ var ConsolePlugin = (function () {
                         var stack = (new Error()).stack;
                         var extraData = { args: args, stack: stack };
                         self.monitor && self.monitor.reportInfo('ERROR', {
+                            logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.error',
                             url: window.location.href,
@@ -2790,6 +3513,7 @@ var ConsolePlugin = (function () {
                         var stack = (new Error()).stack;
                         var extraData = { args: args, stack: stack };
                         self.monitor && self.monitor.reportInfo('WARN', {
+                            logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.warn',
                             url: window.location.href,
@@ -2907,6 +3631,7 @@ var AnalyticsPlugin = (function () {
                 try {
                     if (this.monitor) {
                         this.monitor.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.osView,
                             pluginName: this.name,
                             message: 'analytics_history_before_cleanup',
                             extraData: {
@@ -3032,6 +3757,7 @@ var AnalyticsPlugin = (function () {
                 timestamp: getTimestamp(),
             };
             this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.osView,
                 pluginName: this.name,
                 message: 'analytics_report',
                 url: window.location.href,
@@ -3125,6 +3851,7 @@ var BrowserMonitor = (function () {
             _this.cacheLog.push({
                 type: 'OFF',
                 data: {
+                    logCategory: LogCategoryKeyValue.oth,
                     pluginName: 'monitor-browser',
                     url: window.location.href,
                     extraData: {},
@@ -3142,6 +3869,7 @@ var BrowserMonitor = (function () {
             _this.cacheLog.push({
                 type: 'OFF',
                 data: {
+                    logCategory: LogCategoryKeyValue.oth,
                     pluginName: 'monitor-browser',
                     url: window.location.href,
                     extraData: {},

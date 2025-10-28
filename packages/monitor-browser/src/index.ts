@@ -1,4 +1,4 @@
-import { DeviceInfo, FrontendMonitor, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
+import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { XhrPlugin } from './plugins/xhr';
 import { FetchPlugin } from './plugins/fetch';
 import { DomPlugin } from './plugins/dom';
@@ -106,6 +106,7 @@ class BrowserMonitor implements BrowserMonitorBase {
             this.cacheLog.push({
                 type: 'OFF',
                 data: {
+                    logCategory: LogCategoryKeyValue.oth,
                     pluginName: 'monitor-browser',
                     url: window.location.href,
                     extraData: {},
@@ -124,6 +125,7 @@ class BrowserMonitor implements BrowserMonitorBase {
             this.cacheLog.push({
                 type: 'OFF',
                 data: {
+                    logCategory: LogCategoryKeyValue.oth,
                     pluginName: 'monitor-browser',
                     url: window.location.href,
                     extraData: {},

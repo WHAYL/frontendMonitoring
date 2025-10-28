@@ -14,6 +14,7 @@ import type {
   BrowserMonitorPlugin,
   PerformancePluginConfig
 } from '../type';
+import { LogCategoryKeyValue } from '@whayl/monitor-core';
 
 export class PerformancePlugin implements BrowserMonitorPlugin {
   name = 'performance';
@@ -104,6 +105,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
               attribution: (entry as any).attribution || []
             };
             this.monitor?.reportInfo('INFO', {
+              logCategory: LogCategoryKeyValue.oth,
               pluginName: this.name,
               message: 'Long Task Detected',
               url: window.location.href,
@@ -214,6 +216,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
               trend
             };
             this.monitor?.reportInfo('INFO', {
+              logCategory: LogCategoryKeyValue.oth,
               pluginName: this.name,
               message: isLeakDetected ? 'Memory Leak Detected' : 'Memory Usage',
               url: window.location.href,
@@ -330,6 +333,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
         };
 
         this.monitor?.reportInfo('INFO', {
+          logCategory: LogCategoryKeyValue.oth,
           pluginName: this.name,
           message: 'Frame Drop Detected',
           url: window.location.href,
@@ -367,6 +371,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
           };
 
           this.monitor?.reportInfo('INFO', {
+            logCategory: LogCategoryKeyValue.oth,
             pluginName: this.name,
             message: 'FPS Report',
             url: window.location.href,
@@ -493,6 +498,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
             };
 
             this.monitor!.reportInfo('INFO', {
+              logCategory: LogCategoryKeyValue.resource,
               pluginName: this.name,
               message: `Resource loaded: ${resourceEntry.name}`,
               url: window.location.href,
@@ -551,6 +557,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
             };
 
             this.monitor!.reportInfo('INFO', {
+              logCategory: LogCategoryKeyValue.oth,
               pluginName: this.name,
               message: 'Page navigation performance',
               url: window.location.href,
@@ -588,6 +595,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
         };
 
         this.monitor!.reportInfo('INFO', {
+          logCategory: LogCategoryKeyValue.pagePerformance,
           pluginName: this.name,
           message: 'Largest Contentful Paint (LCP)',
           url: window.location.href,
@@ -610,6 +618,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
         };
 
         this.monitor!.reportInfo('INFO', {
+          logCategory: LogCategoryKeyValue.pagePerformance,
           pluginName: this.name,
           message: 'Interaction to Next Paint (INP)',
           url: window.location.href,
@@ -630,6 +639,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
         };
 
         this.monitor!.reportInfo('INFO', {
+          logCategory: LogCategoryKeyValue.pagePerformance,
           pluginName: this.name,
           message: 'Cumulative Layout Shift (CLS)',
           url: window.location.href,
@@ -653,6 +663,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
 
         this.monitor!.reportInfo('INFO',
           {
+            logCategory: LogCategoryKeyValue.pagePerformance,
             pluginName: this.name,
             message: 'First Contentful Paint (FCP)',
             url: window.location.href,
@@ -677,6 +688,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
 
         this.monitor!.reportInfo('INFO',
           {
+            logCategory: LogCategoryKeyValue.pagePerformance,
             pluginName: this.name,
             message: 'Time to First Byte (TTFB)',
             url: window.location.href,

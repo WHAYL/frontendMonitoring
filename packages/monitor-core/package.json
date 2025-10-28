@@ -33,5 +33,8 @@
     "access": "public"
   },
   "repository": {},
-  "gitHead": "de922e4e2f4f90eaacfe07d2c832a0de4bc0a82e"
+  "gitHead": "de922e4e2f4f90eaacfe07d2c832a0de4bc0a82e",
+  "dependencies": {
+    "aiy-utils": "^0.1.45"
+  }
 }

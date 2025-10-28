@@ -1,30 +1,12 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import initTable from './initTable';
 
 // 创建 SQLite 数据库连接
 const db = new Database(path.join(__dirname, '../database.sqlite'));
 
 // 初始化数据库表
-db.exec(`
-  CREATE TABLE IF NOT EXISTS report_info (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    platform TEXT,
-    plugin_name TEXT,
-    message TEXT,
-    url TEXT,
-    timestamp INTEGER,
-    date TEXT,
-    level TEXT,
-    device_width INTEGER,
-    device_height INTEGER,
-    device_pixel_ratio REAL,
-    fingerprint TEXT,
-    old_fingerprint TEXT,
-    ip TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+initTable(db);
 
 /**
  * 连接数据库
