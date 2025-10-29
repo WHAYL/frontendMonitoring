@@ -1,6 +1,6 @@
 import { Context } from 'koa';
 import { ReportInfoModel } from '../database/models/ReportInfo';
-import { ErrorInfo } from '@whayl/monitor-core/types';
+import { ErrorInfo,LogCategoryKeyValue } from '@whayl/monitor-core/types';
 import { IReportInfo } from '../types';
 
 /**
@@ -49,14 +49,14 @@ const parseRequestBody = (data: any): ErrorInfo | ErrorInfo[] => {
  * @param ip 客户端IP
  */
 const handleSingleMonitorReport = async (ctx, reportData: ErrorInfo, ip: string) => {
-  // 字段名适配，将驼峰转换为下划线命名
 
   // 构造完整的报告信息
   const reportInfo: IReportInfo = {
+    logCategory: reportData.logCategory,
     platform: reportData.platform,
     plugin_name: reportData.pluginName,
     message: reportData.message,
-    url: reportData.url,
+    page: reportData.url,
     timestamp: reportData.timestamp,
     date: reportData.date,
     level: reportData.level,
@@ -66,12 +66,13 @@ const handleSingleMonitorReport = async (ctx, reportData: ErrorInfo, ip: string)
     fingerprint: reportData.fingerprint,
     old_fingerprint: reportData.oldFingerprint,
     ip: ip,
+    extraData: reportData.extraData,
     created_at: new Date(),
     updated_at: new Date()
   };
 
   // 保存到数据库
-  const result = await ReportInfoModel.create(reportInfo);
+  const result = await ReportInfoModel.create(ctx,reportInfo);
 
   // 返回成功响应
   ctx.status = 200;
@@ -100,10 +101,11 @@ const handleBatchMonitorReport = async (ctx, reportsData: ErrorInfo[], ip: strin
 
   // 构造完整的报告信息数组
   const reports: IReportInfo[] = reportsData.map(reportData => ({
+    logCategory: reportData.logCategory,
     platform: reportData.platform,
     plugin_name: reportData.pluginName,
     message: reportData.message,
-    url: reportData.url,
+    page: reportData.url,
     timestamp: reportData.timestamp,
     date: reportData.date,
     level: reportData.level,
@@ -113,12 +115,13 @@ const handleBatchMonitorReport = async (ctx, reportsData: ErrorInfo[], ip: strin
     fingerprint: reportData.fingerprint,
     old_fingerprint: reportData.oldFingerprint,
     ip: ip,
+    extraData: reportData.extraData,
     created_at: new Date(),
     updated_at: new Date()
   }));
 
   // 批量保存到数据库
-  await ReportInfoModel.createBatch(reports);
+  await ReportInfoModel.createBatch(ctx,reports);
 
   // 返回成功响应
   ctx.status = 200;

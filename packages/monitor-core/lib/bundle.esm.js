@@ -830,4 +830,4 @@ var FrontendMonitor = (function () {
     return FrontendMonitor;
 }());
 
-export { FrontendMonitor, IMMEDIATE_REPORT_LEVEL, LogCategoryKeyValue, MYSTORAGE_COUNT, ReportLevelEnum };
+export { FrontendMonitor, IMMEDIATE_REPORT_LEVEL, LogCategory, LogCategoryKeyValue, MYSTORAGE_COUNT, ReportLevelEnum };

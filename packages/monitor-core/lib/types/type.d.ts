@@ -1,5 +1,5 @@
 import { type EnumValuesForKey } from 'aiy-utils';
-declare const LogCategory: readonly [{
+export declare const LogCategory: readonly [{
     readonly label: "其他";
     readonly key: "oth";
     readonly value: 0;
@@ -83,4 +83,3 @@ export interface ErrorInfo extends LogData {
     platform: string;
     [key: string]: any;
 }
-export {};

@@ -838,6 +838,7 @@
 
     exports.FrontendMonitor = FrontendMonitor;
     exports.IMMEDIATE_REPORT_LEVEL = IMMEDIATE_REPORT_LEVEL;
+    exports.LogCategory = LogCategory;
     exports.LogCategoryKeyValue = LogCategoryKeyValue;
     exports.MYSTORAGE_COUNT = MYSTORAGE_COUNT;
 

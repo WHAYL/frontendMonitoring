@@ -1,6 +1,6 @@
 import type { FrontendMonitor } from "./monitor";
 import { type EnumValuesForKey, createEnumFromArray } from 'aiy-utils';
-const LogCategory = [
+export const LogCategory = [
   { label: '其他', key: 'oth', value: 0 },
   { label: '页面生命周期', key: 'pageLifecycle', value: 1 },
   { label: 'js错误，未处理的Promise，console.error', key: 'error', value: 2 },
