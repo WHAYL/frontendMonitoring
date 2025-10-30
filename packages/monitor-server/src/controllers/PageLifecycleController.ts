@@ -2,27 +2,6 @@ import { Context } from 'koa';
 import { PageLifecycleModel, IPageLifecycle } from '../database/models/PageLifecycle';
 
 /**
- * 将驼峰命名转换为下划线命名
- * @param obj 需要转换的对象
- * @returns 转换后的对象
- */
-const camelToSnakeCase = (obj: Record<string, any>): Record<string, any> => {
-  if (!obj || typeof obj !== 'object') {
-    return obj;
-  }
-
-  const converted: Record<string, any> = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      // 将驼峰命名转换为下划线命名
-      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-      converted[snakeKey] = obj[key];
-    }
-  }
-  return converted;
-};
-
-/**
  * 解析请求体数据
  * @param data 原始请求体数据
  * @returns 解析后的数据
@@ -44,32 +23,19 @@ const parseRequestBody = (data: any): any | any[] => {
  * 处理单条页面生命周期数据
  * @param ctx Koa上下文
  * @param lifecycleData 生命周期数据
- * @param ip 客户端IP
  */
-const handleSinglePageLifecycle = async (ctx, lifecycleData: any, ip: string) => {
+const handleSinglePageLifecycle = async (ctx, lifecycleData: any) => {
   // 构造完整的页面生命周期信息
   const lifecycleInfo: IPageLifecycle = {
-    platform: lifecycleData.platform,
-    plugin_name: lifecycleData.pluginName,
-    message: lifecycleData.message,
-    page: lifecycleData.page,
-    timestamp: lifecycleData.timestamp,
-    date: lifecycleData.date,
-    level: lifecycleData.level,
-    device_width: lifecycleData.deviceInfo?.width,
-    device_height: lifecycleData.deviceInfo?.height,
-    device_pixel_ratio: lifecycleData.deviceInfo?.pixelRatio,
-    fingerprint: lifecycleData.fingerprint,
-    old_fingerprint: lifecycleData.oldFingerprint,
-    ip: ip,
-    change_type: lifecycleData.changeType,
-    enter_time: lifecycleData.enterTime,
-    leave_time: lifecycleData.leaveTime,
-    current_route: lifecycleData.currentRoute,
-    previous_route: lifecycleData.previousRoute,
-    route: lifecycleData.route,
-    target: lifecycleData.target,
-    duration: lifecycleData.duration
+    ...lifecycleData,
+    change_type: lifecycleData.extraData.changeType,
+    enter_time: lifecycleData.extraData.enterTime,
+    leave_time: lifecycleData.extraData.leaveTime,
+    current_route: lifecycleData.extraData.currentRoute,
+    previous_route: lifecycleData.extraData.previousRoute,
+    route: lifecycleData.extraData.route,
+    target: lifecycleData.extraData.target,
+    duration: lifecycleData.extraData.duration
   };
 
   // 保存到数据库
@@ -88,9 +54,8 @@ const handleSinglePageLifecycle = async (ctx, lifecycleData: any, ip: string) =>
  * 处理批量页面生命周期数据
  * @param ctx Koa上下文
  * @param lifecyclesData 生命周期数据数组
- * @param ip 客户端IP
  */
-const handleBatchPageLifecycle = async (ctx, lifecyclesData: any[], ip: string) => {
+const handleBatchPageLifecycle = async (ctx, lifecyclesData: any[]) => {
   if (!Array.isArray(lifecyclesData)) {
     ctx.status = 400;
     ctx.body = {
@@ -102,27 +67,15 @@ const handleBatchPageLifecycle = async (ctx, lifecyclesData: any[], ip: string) 
 
   // 构造完整的生命周期信息数组
   const lifecycles: IPageLifecycle[] = lifecyclesData.map(lifecycleData => ({
-    platform: lifecycleData.platform,
-    plugin_name: lifecycleData.pluginName,
-    message: lifecycleData.message,
-    page: lifecycleData.page,
-    timestamp: lifecycleData.timestamp,
-    date: lifecycleData.date,
-    level: lifecycleData.level,
-    device_width: lifecycleData.deviceInfo?.width,
-    device_height: lifecycleData.deviceInfo?.height,
-    device_pixel_ratio: lifecycleData.deviceInfo?.pixelRatio,
-    fingerprint: lifecycleData.fingerprint,
-    old_fingerprint: lifecycleData.oldFingerprint,
-    ip: ip,
-    change_type: lifecycleData.changeType,
-    enter_time: lifecycleData.enterTime,
-    leave_time: lifecycleData.leaveTime,
-    current_route: lifecycleData.currentRoute,
-    previous_route: lifecycleData.previousRoute,
-    route: lifecycleData.route,
-    target: lifecycleData.target,
-    duration: lifecycleData.duration
+    ...lifecycleData,
+    change_type: lifecycleData.extraData.changeType,
+    enter_time: lifecycleData.extraData.enterTime,
+    leave_time: lifecycleData.extraData.leaveTime,
+    current_route: lifecycleData.extraData.currentRoute,
+    previous_route: lifecycleData.extraData.previousRoute,
+    route: lifecycleData.extraData.route,
+    target: lifecycleData.extraData.target,
+    duration: lifecycleData.extraData.duration
   }));
 
   // 批量保存到数据库
@@ -141,19 +94,13 @@ const handleBatchPageLifecycle = async (ctx, lifecyclesData: any[], ip: string) 
  * 处理页面生命周期数据
  * @param ctx Koa上下文
  */
-export const handlePageLifecycle = async (ctx) => {
+export const handlePageLifecycle = async (ctx, lifecycleData) => {
   try {
-    // 获取客户端IP地址
-    const ip = ctx.ip || ctx.request.ip || (ctx.headers['x-forwarded-for'] as string) || 'unknown';
-
-    // 获取请求体数据并解析
-    const rawData = ctx.request.body;
-    const lifecycleData = parseRequestBody(rawData);
 
     if (Array.isArray(lifecycleData)) {
-      await handleBatchPageLifecycle(ctx, lifecycleData, ip);
+      await handleBatchPageLifecycle(ctx, lifecycleData);
     } else {
-      await handleSinglePageLifecycle(ctx, lifecycleData, ip);
+      await handleSinglePageLifecycle(ctx, lifecycleData);
     }
   } catch (error) {
     console.error('Error processing page lifecycle data:', error);
