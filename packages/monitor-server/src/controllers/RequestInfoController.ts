@@ -2,27 +2,6 @@ import { Context } from 'koa';
 import { RequestInfoModel, IRequestInfo } from '../database/models/RequestInfo';
 
 /**
- * 将驼峰命名转换为下划线命名
- * @param obj 需要转换的对象
- * @returns 转换后的对象
- */
-const camelToSnakeCase = (obj: Record<string, any>): Record<string, any> => {
-  if (!obj || typeof obj !== 'object') {
-    return obj;
-  }
-
-  const converted: Record<string, any> = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      // 将驼峰命名转换为下划线命名
-      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-      converted[snakeKey] = obj[key];
-    }
-  }
-  return converted;
-};
-
-/**
  * 解析请求体数据
  * @param data 原始请求体数据
  * @returns 解析后的数据
@@ -44,30 +23,17 @@ const parseRequestBody = (data: any): any | any[] => {
  * 处理单条请求信息数据
  * @param ctx Koa上下文
  * @param requestData 请求数据
- * @param ip 客户端IP
  */
-const handleSingleRequestInfo = async (ctx, requestData: any, ip: string) => {
+const handleSingleRequestInfo = async (ctx, requestData: any) => {
   // 构造完整的请求信息
   const requestInfo: IRequestInfo = {
-    platform: requestData.platform,
-    plugin_name: requestData.pluginName,
-    message: requestData.message,
-    page: requestData.page,
-    timestamp: requestData.timestamp,
-    date: requestData.date,
-    level: requestData.level,
-    device_width: requestData.deviceInfo?.width,
-    device_height: requestData.deviceInfo?.height,
-    device_pixel_ratio: requestData.deviceInfo?.pixelRatio,
-    fingerprint: requestData.fingerprint,
-    old_fingerprint: requestData.oldFingerprint,
-    ip: ip,
-    url: requestData.url,
-    method: requestData.method,
-    start_time: requestData.startTime,
-    end_time: requestData.endTime,
-    duration: requestData.duration,
-    error_info: requestData.errorInfo || ''
+    ...requestData,
+    url: requestData.extraData.url,
+    method: requestData.extraData.method,
+    start_time: requestData.extraData.startTime,
+    end_time: requestData.extraData.endTime,
+    duration: requestData.extraData.duration,
+    error_info: requestData.extraData.error || requestData.extraData.stack || ''
   };
 
   // 保存到数据库
@@ -86,9 +52,8 @@ const handleSingleRequestInfo = async (ctx, requestData: any, ip: string) => {
  * 处理批量请求信息数据
  * @param ctx Koa上下文
  * @param requestsData 请求数据数组
- * @param ip 客户端IP
  */
-const handleBatchRequestInfo = async (ctx, requestsData: any[], ip: string) => {
+const handleBatchRequestInfo = async (ctx, requestsData: any[]) => {
   if (!Array.isArray(requestsData)) {
     ctx.status = 400;
     ctx.body = {
@@ -100,25 +65,13 @@ const handleBatchRequestInfo = async (ctx, requestsData: any[], ip: string) => {
 
   // 构造完整的请求信息数组
   const requests: IRequestInfo[] = requestsData.map(requestData => ({
-    platform: requestData.platform,
-    plugin_name: requestData.pluginName,
-    message: requestData.message,
-    page: requestData.page,
-    timestamp: requestData.timestamp,
-    date: requestData.date,
-    level: requestData.level,
-    device_width: requestData.deviceInfo?.width,
-    device_height: requestData.deviceInfo?.height,
-    device_pixel_ratio: requestData.deviceInfo?.pixelRatio,
-    fingerprint: requestData.fingerprint,
-    old_fingerprint: requestData.oldFingerprint,
-    ip: ip,
-    url: requestData.url,
-    method: requestData.method,
-    start_time: requestData.startTime,
-    end_time: requestData.endTime,
-    duration: requestData.duration,
-    error_info: requestData.errorInfo || ''
+    ...requestData,
+    url: requestData.extraData.url,
+    method: requestData.extraData.method,
+    start_time: requestData.extraData.startTime,
+    end_time: requestData.extraData.endTime,
+    duration: requestData.extraData.duration,
+    error_info: requestData.extraData.error || requestData.extraData.stack || ''
   }));
 
   // 批量保存到数据库
@@ -137,19 +90,12 @@ const handleBatchRequestInfo = async (ctx, requestsData: any[], ip: string) => {
  * 处理请求信息数据
  * @param ctx Koa上下文
  */
-export const handleRequestInfo = async (ctx) => {
+export const handleRequestInfo = async (ctx, requestData) => {
   try {
-    // 获取客户端IP地址
-    const ip = ctx.ip || ctx.request.ip || (ctx.headers['x-forwarded-for'] as string) || 'unknown';
-
-    // 获取请求体数据并解析
-    const rawData = ctx.request.body;
-    const requestData = parseRequestBody(rawData);
-
     if (Array.isArray(requestData)) {
-      await handleBatchRequestInfo(ctx, requestData, ip);
+      await handleBatchRequestInfo(ctx, requestData);
     } else {
-      await handleSingleRequestInfo(ctx, requestData, ip);
+      await handleSingleRequestInfo(ctx, requestData);
     }
   } catch (error) {
     console.error('Error processing request info data:', error);

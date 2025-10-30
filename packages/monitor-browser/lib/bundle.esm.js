@@ -1072,7 +1072,7 @@ var XhrPlugin = (function () {
                         endTime: endTime,
                         duration: duration
                     };
-                    self.monitor.reportInfo('INFO', {
+                    self.monitor.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.xhrFetch,
                         pluginName: self.name,
                         message: "XHR Error: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),
@@ -1097,7 +1097,7 @@ var XhrPlugin = (function () {
                         endTime: endTime,
                         duration: duration
                     };
-                    self.monitor.reportInfo('INFO', {
+                    self.monitor.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.xhrFetch,
                         pluginName: self.name,
                         message: "XHR Timeout: ".concat(xhrInfo.method, " ").concat(xhrInfo.url),

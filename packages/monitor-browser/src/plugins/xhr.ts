@@ -82,7 +82,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
             duration
           };
 
-          self.monitor!.reportInfo('INFO', {
+          self.monitor!.reportInfo('ERROR', {
             logCategory: LogCategoryKeyValue.xhrFetch,
             pluginName: self.name,
             message: `XHR Error: ${xhrInfo.method} ${xhrInfo.url}`,
@@ -112,7 +112,7 @@ export class XhrPlugin implements BrowserMonitorPlugin {
             duration
           };
 
-          self.monitor!.reportInfo('INFO', {
+          self.monitor!.reportInfo('ERROR', {
             logCategory: LogCategoryKeyValue.xhrFetch,
             pluginName: self.name,
             message: `XHR Timeout: ${xhrInfo.method} ${xhrInfo.url}`,

@@ -3,10 +3,12 @@ import { db } from '../index';
 import { LogCategoryKeyValue, LogCategory, LogCategoryValue } from '@whayl/monitor-core';
 import { handleErrorInfo } from '../../controllers/ErrorInfoController';
 import { handlePageLifecycle } from '../../controllers/PageLifecycleController';
+import { handleRequestInfo } from '../../controllers/RequestInfoController';
 
 const CategoryMap = {
   [LogCategoryKeyValue.error]: handleErrorInfo,
   [LogCategoryKeyValue.pageLifecycle]: handlePageLifecycle,
+  [LogCategoryKeyValue.xhrFetch]: handleRequestInfo,
 } as const;
 export class ReportInfoModel {
   static async create(ctx, reportInfo: IReportInfo) {
