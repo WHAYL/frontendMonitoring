@@ -4,11 +4,13 @@ import { LogCategoryKeyValue, LogCategory, LogCategoryValue } from '@whayl/monit
 import { handleErrorInfo } from '../../controllers/ErrorInfoController';
 import { handlePageLifecycle } from '../../controllers/PageLifecycleController';
 import { handleRequestInfo } from '../../controllers/RequestInfoController';
+import { handleResourceInfo } from '../../controllers/ResourceInfoController';
 
 const CategoryMap = {
   [LogCategoryKeyValue.error]: handleErrorInfo,
   [LogCategoryKeyValue.pageLifecycle]: handlePageLifecycle,
   [LogCategoryKeyValue.xhrFetch]: handleRequestInfo,
+  [LogCategoryKeyValue.resource]: handleResourceInfo,
 } as const;
 export class ReportInfoModel {
   static async create(ctx, reportInfo: IReportInfo) {

@@ -74,4 +74,47 @@ export default function initTable(db) {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+  db.exec(`
+  CREATE TABLE IF NOT EXISTS resource_info (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform TEXT,
+    plugin_name TEXT,
+    message TEXT,
+    page TEXT,
+    timestamp INTEGER,
+    date TEXT,
+    level TEXT,
+    device_width INTEGER,
+    device_height INTEGER,
+    device_pixel_ratio REAL,
+    fingerprint TEXT,
+    old_fingerprint TEXT,
+    ip TEXT,
+    name TEXT,
+    entry_type TEXT,
+    start_time INTEGER,
+    duration INTEGER,
+    initiator_type TEXT,
+    next_hop_protocol TEXT,
+    worker_start INTEGER,
+    redirect_start INTEGER,
+    redirect_end INTEGER,
+    fetch_start INTEGER,
+    domain_lookup_start INTEGER,
+    domain_lookup_end INTEGER,
+    connect_start INTEGER,
+    connect_end INTEGER,
+    secure_connection_start INTEGER,
+    request_start INTEGER,
+    response_start INTEGER,
+    response_end INTEGER,
+    transfer_size INTEGER,
+    encoded_body_size INTEGER,
+    decoded_body_size INTEGER,
+    server_timing TEXT,
+    cached TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 }
