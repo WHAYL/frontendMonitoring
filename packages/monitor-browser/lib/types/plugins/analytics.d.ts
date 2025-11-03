@@ -7,6 +7,7 @@ export declare class AnalyticsPlugin implements BrowserMonitorPlugin {
     private ipCached;
     constructor(config?: AnalyticsPluginConfig);
     init(monitor: BrowserMonitorPluginInitArg): void;
+    private handleRouteChange;
     private getTodayDate;
     private getTodayKey;
     private clearOldRecords;

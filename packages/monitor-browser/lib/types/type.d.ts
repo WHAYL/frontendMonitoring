@@ -257,8 +257,8 @@ export interface WhiteScreenExtraData {
     selectors: string[] | undefined;
 }
 export interface AnalyticsExtraData {
-    pv: number;
-    uv: number;
+    pv: Record<string, number>;
+    uv: Record<string, number>;
     vv: number;
     ip: string | null;
     timestamp: number;

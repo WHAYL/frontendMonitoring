@@ -1,6 +1,7 @@
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { AnalyticsExtraData, AnalyticsHistoryExtraData, AnalyticsPluginConfig, BrowserMonitorPlugin, BrowserMonitorPluginInitArg } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
+import { monitorEventBus } from '../eventBus';
 
 const DAILY_KEY_PREFIX = '__whayl_analytics_';
 
@@ -36,17 +37,20 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
         this.abortController = new AbortController();
         const { signal } = this.abortController;
 
-        // PV: 每次页面加载或本次脚本执行计为一次 PV
-        this.increasePV();
+        // 初始 PV: 每次页面加载或本次脚本执行计为一次 PV
+        this.increasePV(window.location.href);
 
-        // UV: 以浏览器指纹(fingerprint)或device为准，按日去重，使用 monitor.getFingerprint() 如果可用
-        this.ensureUV();
+        // 初始 UV: 以浏览器指纹(fingerprint)或device为准，按日去重，使用 monitor.getFingerprint() 如果可用
+        this.ensureUV(window.location.href);
 
-        // VV: 访问次数，使用 sessionStorage 标记一次会话，session 结束后再次打开计为新 VV
+        // 初始 VV: 访问次数，使用 sessionStorage 标记一次会话，session 结束后再次打开计为新 VV
         this.ensureVV();
 
         // IP: 如果提供 ipProvider，则获取并缓存到当天 key
         this.ensureIP();
+
+        // 监听路由变化事件
+        monitorEventBus.on("monitorRouteChange", this.handleRouteChange.bind(this));
 
         // 在页面隐藏或卸载时上报当前计数（可选）
         const onUnload = () => {
@@ -64,6 +68,13 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
             }, { signal });
         }
     }
+
+    private handleRouteChange(data: any) {
+        // 当路由发生变化时增加 PV 和 UV
+        this.increasePV(data.currentRoute);
+        this.ensureUV(data.currentRoute);
+    }
+
     private getTodayDate(): string {
         // 返回 YYYY/MM/DD
         // 使用 monitor 的 formatTimestamp，参数顺序为 (format, timestamp)
@@ -92,16 +103,40 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
             // 如果有要移除的旧记录，先收集并上报一次，然后再删除
             if (keysToRemove.length > 0) {
                 const oldRecords: Record<string, any> = {};
+
+                // 分别收集旧的 PV 和 UV 数据
+                const pvData: Record<string, number> = {};
+                const uvData: Record<string, Record<string, number>> = {};
+                let vvData = 0;
+                let ipData = null;
+
                 keysToRemove.forEach(k => {
                     try {
                         const raw = localStorage.getItem(k);
-                        // 解析 JSON 或保留原始字符串
-                        oldRecords[k] = safeJSONParse(raw, raw);
+                        if (k.includes('_pv')) {
+                            Object.assign(pvData, safeJSONParse(raw, {}));
+                        } else if (k.includes('_uv')) {
+                            Object.assign(uvData, safeJSONParse(raw, {}));
+                        } else if (k.includes('_vv')) {
+                            vvData = safeJSONParse(raw, 0);
+                        } else if (k.includes('_ip_list')) {
+                            ipData = safeJSONParse(raw, null);
+                        }
                     } catch (e) {
                         // ignore per-key parse error
-                        oldRecords[k] = null;
                     }
                 });
+
+                // 计算 UV 数量（与 reportNow 方法保持一致）
+                const uvCount: Record<string, number> = {};
+                Object.keys(uvData).forEach(route => {
+                    uvCount[route] = Object.keys(uvData[route]).length;
+                });
+
+                oldRecords['pv'] = pvData;
+                oldRecords['uv'] = uvCount;
+                oldRecords['vv'] = vvData;
+                oldRecords['ip'] = ipData;
 
                 try {
                     if (this.monitor) {
@@ -111,7 +146,7 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
                             message: 'analytics_history_before_cleanup',
                             extraData: {
                                 timestamp: getTimestamp(),
-                                items: oldRecords,
+                                ...oldRecords,
                             },
                             url: window.location.href,
                             timestamp: getTimestamp(),
@@ -130,26 +165,32 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
         }
     }
 
-    private increasePV() {
+    private increasePV(route: string) {
         try {
             const key = this.getTodayKey('pv');
-            const cur = safeJSONParse<number>(localStorage.getItem(key), 0) as number;
-            localStorage.setItem(key, JSON.stringify(cur + 1));
+            const pvData = safeJSONParse<Record<string, number>>(localStorage.getItem(key), {});
+            pvData[route] = (pvData[route] || 0) + 1;
+            localStorage.setItem(key, JSON.stringify(pvData));
         } catch (e) {
             // ignore
         }
     }
 
-    private ensureUV() {
+    private ensureUV(route: string) {
         try {
             const key = this.getTodayKey('uv');
             // 使用 fingerprint 优先
             const fp = this.monitor ? this.monitor.getFingerprint() : '';
-            const uvSet = safeJSONParse<Record<string, number>>(localStorage.getItem(key), {});
+            const uvData = safeJSONParse<Record<string, Record<string, number>>>(localStorage.getItem(key), {});
+
+            if (!uvData[route]) {
+                uvData[route] = {};
+            }
+
             const id = fp || this.getClientId();
-            if (!uvSet[id]) {
-                uvSet[id] = getTimestamp();
-                localStorage.setItem(key, JSON.stringify(uvSet));
+            if (!uvData[route][id]) {
+                uvData[route][id] = getTimestamp();
+                localStorage.setItem(key, JSON.stringify(uvData));
             }
         } catch (e) {
             // ignore
@@ -216,16 +257,20 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
             const vvKey = this.getTodayKey('vv');
             const ipKey = this.getTodayKey('ip_list');
 
-            const pv = safeJSONParse<number>(localStorage.getItem(pvKey), 0) as number;
-            const uvObj = safeJSONParse<Record<string, number>>(localStorage.getItem(uvKey), {});
+            const pvData = safeJSONParse<Record<string, number>>(localStorage.getItem(pvKey), {});
+            const uvData = safeJSONParse<Record<string, Record<string, number>>>(localStorage.getItem(uvKey), {});
             const vv = safeJSONParse<number>(localStorage.getItem(vvKey), 0) as number;
             const ip = safeJSONParse<string | null>(localStorage.getItem(ipKey), null);
 
-            const uv = Object.keys(uvObj).length;
+            // 计算每个页面的 UV 数量
+            const uvCount: Record<string, number> = {};
+            Object.keys(uvData).forEach(route => {
+                uvCount[route] = Object.keys(uvData[route]).length;
+            });
 
             const payload: AnalyticsExtraData = {
-                pv,
-                uv,
+                pv: pvData,
+                uv: uvCount,
                 vv,
                 ip: ip || this.ipCached || null,
                 timestamp: getTimestamp(),
@@ -253,6 +298,8 @@ export class AnalyticsPlugin implements BrowserMonitorPlugin {
             this.abortController.abort();
             this.abortController = null;
         }
+        // 移除路由监听
+        monitorEventBus.off("monitorRouteChange", this.handleRouteChange.bind(this));
     }
 }
 

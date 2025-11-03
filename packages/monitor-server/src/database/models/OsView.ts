@@ -1,6 +1,6 @@
 import { db } from '../index';
 
-export interface IUserBehaviorInfo {
+export interface IOsViewInfo {
     id?: number;
     platform: string;
     plugin_name: string;
@@ -15,65 +15,49 @@ export interface IUserBehaviorInfo {
     fingerprint: string;
     old_fingerprint: string;
     ip: string;
-    x: number;
-    y: number;
-    scrollX: number;
-    scrollY: number;
-    local_name: string;
-    class_name: string;
-    class_list: string;
-    dom_id: string;
-    node_name: string;
-    tag_name: string;
-    data_set: string;
-    path: string;
+    uv: string;  // 修正为字符串类型
+    vv: number;
+    pv: string;  // 修正为字符串类型
+    o_ip: string;
     created_at?: Date;
     updated_at?: Date;
 }
 
-export class UserBehaviorInfoModel {
+export class OsViewInfoModel {
     /**
      * 创建资源信息
      */
-    static async create(UserBehaviorInfo: IUserBehaviorInfo): Promise<IUserBehaviorInfo> {
+    static async create(OsViewInfo: IOsViewInfo): Promise<IOsViewInfo> {
         const stmt = db.prepare(`
-      INSERT INTO user_behavior (
+      INSERT INTO os_view (
         platform, plugin_name, message, page, timestamp, date, level,
         device_width, device_height, device_pixel_ratio, fingerprint, old_fingerprint, ip,
-        x, y, scrollX, scrollY, local_name, class_name, class_list, dom_id, node_name, tag_name, data_set, path
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        uv, vv, pv, o_ip
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const info = stmt.run(
-            UserBehaviorInfo.platform,
-            UserBehaviorInfo.plugin_name,
-            UserBehaviorInfo.message,
-            UserBehaviorInfo.page,
-            UserBehaviorInfo.timestamp,
-            UserBehaviorInfo.date,
-            UserBehaviorInfo.level,
-            UserBehaviorInfo.device_width,
-            UserBehaviorInfo.device_height,
-            UserBehaviorInfo.device_pixel_ratio,
-            UserBehaviorInfo.fingerprint,
-            UserBehaviorInfo.old_fingerprint,
-            UserBehaviorInfo.ip,
-            UserBehaviorInfo.x,
-            UserBehaviorInfo.y,
-            UserBehaviorInfo.scrollX,
-            UserBehaviorInfo.scrollY,
-            UserBehaviorInfo.local_name,
-            UserBehaviorInfo.class_name,
-            UserBehaviorInfo.class_list,
-            UserBehaviorInfo.dom_id,
-            UserBehaviorInfo.node_name,
-            UserBehaviorInfo.tag_name,
-            UserBehaviorInfo.data_set,
-            UserBehaviorInfo.path,
+            OsViewInfo.platform,
+            OsViewInfo.plugin_name,
+            OsViewInfo.message,
+            OsViewInfo.page,
+            OsViewInfo.timestamp,
+            OsViewInfo.date,
+            OsViewInfo.level,
+            OsViewInfo.device_width,
+            OsViewInfo.device_height,
+            OsViewInfo.device_pixel_ratio,
+            OsViewInfo.fingerprint,
+            OsViewInfo.old_fingerprint,
+            OsViewInfo.ip,
+            OsViewInfo.uv,  // 已经是字符串
+            OsViewInfo.vv,
+            OsViewInfo.pv,  // 已经是字符串
+            OsViewInfo.o_ip,
         );
 
         return {
-            ...UserBehaviorInfo,
+            ...OsViewInfo,
             id: info.lastInsertRowid as number
         };
     }
@@ -81,16 +65,16 @@ export class UserBehaviorInfoModel {
     /**
      * 批量创建资源信息
      */
-    static async createBatch(resources: IUserBehaviorInfo[]): Promise<void> {
+    static async createBatch(resources: IOsViewInfo[]): Promise<void> {
         const stmt = db.prepare(`
-      INSERT INTO user_behavior (
+      INSERT INTO os_view (
         platform, plugin_name, message, page, timestamp, date, level,
         device_width, device_height, device_pixel_ratio, fingerprint, old_fingerprint, ip,
-        x, y, scrollX, scrollY, local_name, class_name, class_list, dom_id, node_name, tag_name, data_set, path
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        uv, vv, pv, o_ip
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-        const insertMany = db.transaction((resources: IUserBehaviorInfo[]) => {
+        const insertMany = db.transaction((resources: IOsViewInfo[]) => {
             for (const resource of resources) {
                 stmt.run(
                     resource.platform,
@@ -106,18 +90,10 @@ export class UserBehaviorInfoModel {
                     resource.fingerprint,
                     resource.old_fingerprint,
                     resource.ip,
-                    resource.x,
-                    resource.y,
-                    resource.scrollX,
-                    resource.scrollY,
-                    resource.local_name,
-                    resource.class_name,
-                    resource.class_list,
-                    resource.dom_id,
-                    resource.node_name,
-                    resource.tag_name,
-                    resource.data_set,
-                    resource.path,
+                    resource.uv,  // 已经是字符串
+                    resource.vv,
+                    resource.pv,  // 已经是字符串
+                    resource.o_ip,
                 );
             }
         });
@@ -133,7 +109,7 @@ export class UserBehaviorInfoModel {
         limit?: number;
         offset?: number;
         order?: string[][];
-    } = {}): Promise<IUserBehaviorInfo[]> {
+    } = {}): Promise<IOsViewInfo[]> {
         let sql = 'SELECT * FROM resource';
         const params: any[] = [];
 
@@ -167,7 +143,7 @@ export class UserBehaviorInfoModel {
         }
 
         const stmt = db.prepare(sql);
-        return stmt.all(...params) as IUserBehaviorInfo[];
+        return stmt.all(...params) as IOsViewInfo[];
     }
 
     /**
@@ -199,24 +175,24 @@ export class UserBehaviorInfoModel {
     /**
      * 根据ID查找单个资源信息
      */
-    static async findById(id: number): Promise<IUserBehaviorInfo | null> {
+    static async findById(id: number): Promise<IOsViewInfo | null> {
         const stmt = db.prepare('SELECT * FROM resource WHERE id = ?');
         const result = stmt.get(id);
-        return result as IUserBehaviorInfo || null;
+        return result as IOsViewInfo || null;
     }
 
     /**
      * 根据ID更新资源信息
      */
-    static async updateById(id: number, UserBehaviorInfo: Partial<IUserBehaviorInfo>): Promise<boolean> {
+    static async updateById(id: number, OsViewInfo: Partial<IOsViewInfo>): Promise<boolean> {
         const fields: string[] = [];
         const params: any[] = [];
 
         // 构建更新字段
-        for (const key in UserBehaviorInfo) {
-            if (UserBehaviorInfo.hasOwnProperty(key) && UserBehaviorInfo[key] !== undefined) {
+        for (const key in OsViewInfo) {
+            if (OsViewInfo.hasOwnProperty(key) && OsViewInfo[key] !== undefined) {
                 fields.push(`${key} = ?`);
-                params.push(UserBehaviorInfo[key]);
+                params.push(OsViewInfo[key]);
             }
         }
 

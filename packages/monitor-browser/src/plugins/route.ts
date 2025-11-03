@@ -1,5 +1,5 @@
 
-import { monitorRouteChange } from '../eventBus';
+import { monitorEventBus } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, RouteExtraData } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
@@ -124,7 +124,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
-      monitorRouteChange.emit("monitorRouteChange", extraData);
+      monitorEventBus.emit("monitorRouteChange", extraData);
     }
   }
 
@@ -179,7 +179,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
             timestamp: getTimestamp(),
             date: formatTimestamp()
           });
-          monitorRouteChange.emit('monitorRouteChange', extraData);
+          monitorEventBus.emit('monitorRouteChange', extraData);
         } catch (e) {
           // ignore
         }
@@ -219,7 +219,7 @@ export class RoutePlugin implements BrowserMonitorPlugin {
         timestamp: getTimestamp(),
         date: formatTimestamp()
       });
-      monitorRouteChange.emit('monitorRouteChange', extraData);
+      monitorEventBus.emit('monitorRouteChange', extraData);
     } catch (e) {
       // ignore
     }

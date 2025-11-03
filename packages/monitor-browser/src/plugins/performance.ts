@@ -1,6 +1,6 @@
 
 import { onLCP, onINP, onCLS, onFCP, onTTFB, type LCPMetricWithAttribution, type INPMetricWithAttribution, type CLSMetric, type FCPMetricWithAttribution, type TTFBMetricWithAttribution } from 'web-vitals';
-import { monitorRouteChange } from '../eventBus';
+import { monitorEventBus } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type {
   PerformanceLongTaskExtraData,
@@ -51,7 +51,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
     }
     this.run();
     this.boundHandleRouteChange = this.handleRouteChange.bind(this);
-    monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+    monitorEventBus.on("monitorRouteChange", this.boundHandleRouteChange);
   }
 
   run(): void {
@@ -399,7 +399,7 @@ export class PerformancePlugin implements BrowserMonitorPlugin {
   destroy(): void {
     this.clearEffects();
     if (this.boundHandleRouteChange) {
-      monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+      monitorEventBus.off("monitorRouteChange", this.boundHandleRouteChange);
     }
     // 使用abort controller一次性取消所有事件监听器
     if (this.abortController) {

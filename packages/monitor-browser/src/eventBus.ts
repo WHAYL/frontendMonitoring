@@ -5,5 +5,5 @@ type EventMap = {
     // 可以添加更多的事件类型
 };
 const arr = ['monitorRouteChange'] as const;
-const monitorRouteChange = EventEmitter<EventMap>(arr);
-export { monitorRouteChange };
+const monitorEventBus = EventEmitter<EventMap>(arr);
+export { monitorEventBus };

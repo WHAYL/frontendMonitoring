@@ -10,7 +10,7 @@ import { AnalyticsPlugin } from './plugins/analytics';
 import { getTimestamp, formatTimestamp } from './utils';
 import { BrowserLogData, BrowserMonitorBase, BrowserMonitorConfig, BrowserMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-
+export { monitorEventBus } from './eventBus';
 /**
  * 浏览器监控类
  */

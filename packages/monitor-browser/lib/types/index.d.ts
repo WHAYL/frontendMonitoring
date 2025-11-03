@@ -1,5 +1,6 @@
 import { ReportingLevel } from '@whayl/monitor-core';
 import { BrowserLogData, BrowserMonitorBase, BrowserMonitorConfig, BrowserMonitorPlugin } from './type';
+export { monitorEventBus } from './eventBus';
 declare class BrowserMonitor implements BrowserMonitorBase {
     private plugins;
     private monitor;

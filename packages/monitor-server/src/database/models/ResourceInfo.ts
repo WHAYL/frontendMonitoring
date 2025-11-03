@@ -110,7 +110,7 @@ export class ResourceInfoModel {
    */
   static async createBatch(resources: IResourceInfo[]): Promise<void> {
     const stmt = db.prepare(`
-      INSERT INTO resource (
+      INSERT INTO resource_info (
         platform, plugin_name, message, page, timestamp, date, level,
         device_width, device_height, device_pixel_ratio, fingerprint, old_fingerprint, ip,
         name, entry_type, start_time, duration, initiator_type, next_hop_protocol,

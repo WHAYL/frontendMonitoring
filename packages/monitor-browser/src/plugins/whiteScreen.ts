@@ -1,5 +1,5 @@
 
-import { monitorRouteChange } from '../eventBus';
+import { monitorEventBus } from '../eventBus';
 import { getTimestamp, formatTimestamp } from '../utils';
 import type { BrowserMonitorPlugin, BrowserMonitorPluginInitArg, WhiteScreenExtraData, WhiteScreenPluginConfig } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
@@ -27,7 +27,7 @@ export class WhiteScreenPlugin implements BrowserMonitorPlugin {
     this.monitor = monitor;
     this.run();
     this.boundHandleRouteChange = this.handleRouteChange.bind(this);
-    monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+    monitorEventBus.on("monitorRouteChange", this.boundHandleRouteChange);
   }
   run(): void {
     if (!this.monitor) { return; }
@@ -45,7 +45,7 @@ export class WhiteScreenPlugin implements BrowserMonitorPlugin {
   destroy(): void {
     this.clearEffects();
     if (this.boundHandleRouteChange) {
-      monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+      monitorEventBus.off("monitorRouteChange", this.boundHandleRouteChange);
     }
     this.monitor = null;
   }

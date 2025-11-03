@@ -299,8 +299,8 @@ export interface WhiteScreenExtraData {
 
 // Analytics 插件的 ExtraData 类型
 export interface AnalyticsExtraData {
-    pv: number;
-    uv: number;
+    pv: Record<string, number>;
+    uv: Record<string, number>;
     vv: number;
     ip: string | null;
     timestamp: number;

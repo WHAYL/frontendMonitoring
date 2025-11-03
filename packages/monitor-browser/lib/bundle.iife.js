@@ -1,4 +1,4 @@
-var AiyMonitorBrowser = (function () {
+var AiyMonitorBrowser = (function (exports) {
     'use strict';
 
     /******************************************************************************
@@ -2220,7 +2220,7 @@ var AiyMonitorBrowser = (function () {
     }());
 
     var arr = ['monitorRouteChange'];
-    var monitorRouteChange = u$1(arr);
+    var monitorEventBus = u$1(arr);
 
     var RoutePlugin = (function () {
         function RoutePlugin() {
@@ -2258,7 +2258,7 @@ var AiyMonitorBrowser = (function () {
                         timestamp: getTimestamp(),
                         date: formatTimestamp()
                     });
-                    monitorRouteChange.emit('monitorRouteChange', extraData);
+                    monitorEventBus.emit('monitorRouteChange', extraData);
                 }
                 catch (e) {
                 }
@@ -2353,7 +2353,7 @@ var AiyMonitorBrowser = (function () {
                     timestamp: getTimestamp(),
                     date: formatTimestamp()
                 });
-                monitorRouteChange.emit("monitorRouteChange", extraData);
+                monitorEventBus.emit("monitorRouteChange", extraData);
             }
         };
         RoutePlugin.prototype.getCurrentRoute = function () {
@@ -2408,7 +2408,7 @@ var AiyMonitorBrowser = (function () {
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
                         });
-                        monitorRouteChange.emit('monitorRouteChange', extraData);
+                        monitorEventBus.emit('monitorRouteChange', extraData);
                     }
                     catch (e) {
                     }
@@ -2748,7 +2748,7 @@ var AiyMonitorBrowser = (function () {
             }
             this.run();
             this.boundHandleRouteChange = this.handleRouteChange.bind(this);
-            monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+            monitorEventBus.on("monitorRouteChange", this.boundHandleRouteChange);
         };
         PerformancePlugin.prototype.run = function () {
             if (this.config.resourceEnabled) {
@@ -3030,7 +3030,7 @@ var AiyMonitorBrowser = (function () {
         PerformancePlugin.prototype.destroy = function () {
             this.clearEffects();
             if (this.boundHandleRouteChange) {
-                monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+                monitorEventBus.off("monitorRouteChange", this.boundHandleRouteChange);
             }
             if (this.abortController) {
                 this.abortController.abort();
@@ -3280,7 +3280,7 @@ var AiyMonitorBrowser = (function () {
             this.monitor = monitor;
             this.run();
             this.boundHandleRouteChange = this.handleRouteChange.bind(this);
-            monitorRouteChange.on("monitorRouteChange", this.boundHandleRouteChange);
+            monitorEventBus.on("monitorRouteChange", this.boundHandleRouteChange);
         };
         WhiteScreenPlugin.prototype.run = function () {
             if (!this.monitor) {
@@ -3300,7 +3300,7 @@ var AiyMonitorBrowser = (function () {
         WhiteScreenPlugin.prototype.destroy = function () {
             this.clearEffects();
             if (this.boundHandleRouteChange) {
-                monitorRouteChange.off("monitorRouteChange", this.boundHandleRouteChange);
+                monitorEventBus.off("monitorRouteChange", this.boundHandleRouteChange);
             }
             this.monitor = null;
         };
@@ -3585,10 +3585,11 @@ var AiyMonitorBrowser = (function () {
             }
             this.abortController = new AbortController();
             var signal = this.abortController.signal;
-            this.increasePV();
-            this.ensureUV();
+            this.increasePV(window.location.href);
+            this.ensureUV(window.location.href);
             this.ensureVV();
             this.ensureIP();
+            monitorEventBus.on("monitorRouteChange", this.handleRouteChange.bind(this));
             var onUnload = function () {
                 _this.reportNow();
             };
@@ -3601,6 +3602,10 @@ var AiyMonitorBrowser = (function () {
                     }
                 }, { signal: signal });
             }
+        };
+        AnalyticsPlugin.prototype.handleRouteChange = function (data) {
+            this.increasePV(data.currentRoute);
+            this.ensureUV(data.currentRoute);
         };
         AnalyticsPlugin.prototype.getTodayDate = function () {
             return formatTimestamp('YYYY/MM/DD', getTimestamp());
@@ -3623,26 +3628,45 @@ var AiyMonitorBrowser = (function () {
                     }
                 }
                 if (keysToRemove.length > 0) {
-                    var oldRecords_1 = {};
+                    var oldRecords = {};
+                    var pvData_1 = {};
+                    var uvData_1 = {};
+                    var vvData_1 = 0;
+                    var ipData_1 = null;
                     keysToRemove.forEach(function (k) {
                         try {
                             var raw = localStorage.getItem(k);
-                            oldRecords_1[k] = safeJSONParse(raw, raw);
+                            if (k.includes('_pv')) {
+                                Object.assign(pvData_1, safeJSONParse(raw, {}));
+                            }
+                            else if (k.includes('_uv')) {
+                                Object.assign(uvData_1, safeJSONParse(raw, {}));
+                            }
+                            else if (k.includes('_vv')) {
+                                vvData_1 = safeJSONParse(raw, 0);
+                            }
+                            else if (k.includes('_ip_list')) {
+                                ipData_1 = safeJSONParse(raw, null);
+                            }
                         }
                         catch (e) {
-                            oldRecords_1[k] = null;
                         }
                     });
+                    var uvCount_1 = {};
+                    Object.keys(uvData_1).forEach(function (route) {
+                        uvCount_1[route] = Object.keys(uvData_1[route]).length;
+                    });
+                    oldRecords['pv'] = pvData_1;
+                    oldRecords['uv'] = uvCount_1;
+                    oldRecords['vv'] = vvData_1;
+                    oldRecords['ip'] = ipData_1;
                     try {
                         if (this.monitor) {
                             this.monitor.reportInfo('INFO', {
                                 logCategory: LogCategoryKeyValue.osView,
                                 pluginName: this.name,
                                 message: 'analytics_history_before_cleanup',
-                                extraData: {
-                                    timestamp: getTimestamp(),
-                                    items: oldRecords_1,
-                                },
+                                extraData: __assign$1({ timestamp: getTimestamp() }, oldRecords),
                                 url: window.location.href,
                                 timestamp: getTimestamp(),
                                 date: formatTimestamp()
@@ -3657,24 +3681,28 @@ var AiyMonitorBrowser = (function () {
             catch (e) {
             }
         };
-        AnalyticsPlugin.prototype.increasePV = function () {
+        AnalyticsPlugin.prototype.increasePV = function (route) {
             try {
                 var key = this.getTodayKey('pv');
-                var cur = safeJSONParse(localStorage.getItem(key), 0);
-                localStorage.setItem(key, JSON.stringify(cur + 1));
+                var pvData = safeJSONParse(localStorage.getItem(key), {});
+                pvData[route] = (pvData[route] || 0) + 1;
+                localStorage.setItem(key, JSON.stringify(pvData));
             }
             catch (e) {
             }
         };
-        AnalyticsPlugin.prototype.ensureUV = function () {
+        AnalyticsPlugin.prototype.ensureUV = function (route) {
             try {
                 var key = this.getTodayKey('uv');
                 var fp = this.monitor ? this.monitor.getFingerprint() : '';
-                var uvSet = safeJSONParse(localStorage.getItem(key), {});
+                var uvData = safeJSONParse(localStorage.getItem(key), {});
+                if (!uvData[route]) {
+                    uvData[route] = {};
+                }
                 var id = fp || this.getClientId();
-                if (!uvSet[id]) {
-                    uvSet[id] = getTimestamp();
-                    localStorage.setItem(key, JSON.stringify(uvSet));
+                if (!uvData[route][id]) {
+                    uvData[route][id] = getTimestamp();
+                    localStorage.setItem(key, JSON.stringify(uvData));
                 }
             }
             catch (e) {
@@ -3749,14 +3777,17 @@ var AiyMonitorBrowser = (function () {
                 var uvKey = this.getTodayKey('uv');
                 var vvKey = this.getTodayKey('vv');
                 var ipKey = this.getTodayKey('ip_list');
-                var pv = safeJSONParse(localStorage.getItem(pvKey), 0);
-                var uvObj = safeJSONParse(localStorage.getItem(uvKey), {});
+                var pvData = safeJSONParse(localStorage.getItem(pvKey), {});
+                var uvData_2 = safeJSONParse(localStorage.getItem(uvKey), {});
                 var vv = safeJSONParse(localStorage.getItem(vvKey), 0);
                 var ip = safeJSONParse(localStorage.getItem(ipKey), null);
-                var uv = Object.keys(uvObj).length;
+                var uvCount_2 = {};
+                Object.keys(uvData_2).forEach(function (route) {
+                    uvCount_2[route] = Object.keys(uvData_2[route]).length;
+                });
                 var payload = {
-                    pv: pv,
-                    uv: uv,
+                    pv: pvData,
+                    uv: uvCount_2,
                     vv: vv,
                     ip: ip || this.ipCached || null,
                     timestamp: getTimestamp(),
@@ -3780,6 +3811,7 @@ var AiyMonitorBrowser = (function () {
                 this.abortController.abort();
                 this.abortController = null;
             }
+            monitorEventBus.off("monitorRouteChange", this.handleRouteChange.bind(this));
         };
         return AnalyticsPlugin;
     }());
@@ -3951,6 +3983,11 @@ var AiyMonitorBrowser = (function () {
         return BrowserMonitor;
     }());
 
-    return BrowserMonitor;
+    exports.default = BrowserMonitor;
+    exports.monitorEventBus = monitorEventBus;
 
-})();
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+    return exports;
+
+})({});
