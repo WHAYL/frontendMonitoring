@@ -2091,6 +2091,10 @@ var AiyMonitorBrowser = (function () {
                     id: reportEl.id,
                     nodeName: reportEl.nodeName,
                     tagName: reportEl.tagName,
+                    x: event.clientX,
+                    y: event.clientY,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
                     dataSet: Object.entries(reportEl.dataset).map(function (_a) {
                         var key = _a[0], value = _a[1];
                         return "".concat(key, ":").concat(value);

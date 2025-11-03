@@ -155,6 +155,10 @@ export interface DomMouseEventExtraData {
     nodeName: string;
     tagName: string;
     dataSet: string;
+    x: number;
+    y: number;
+    scrollX: number;
+    scrollY: number;
 }
 
 export interface DomClickPathExtraData {

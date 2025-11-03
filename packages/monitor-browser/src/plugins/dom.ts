@@ -167,6 +167,12 @@ export class DomPlugin implements BrowserMonitorPlugin {
         id: reportEl.id,
         nodeName: reportEl.nodeName,
         tagName: reportEl.tagName,
+        // 位置信息
+        x: event.clientX,
+        y: event.clientY,
+        // 页面状态
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
         dataSet: Object.entries(reportEl.dataset).map(([key, value]) => `${key}:${value}`).join(','),
       };
       this.monitor!.reportInfo('DEBUG', {
