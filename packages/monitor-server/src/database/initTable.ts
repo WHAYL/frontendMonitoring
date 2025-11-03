@@ -173,4 +173,33 @@ export default function initTable(db) {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+  db.exec(`
+  CREATE TABLE IF NOT EXISTS page_performance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform TEXT,
+    plugin_name TEXT,
+    message TEXT,
+    page TEXT,
+    timestamp INTEGER,
+    date TEXT,
+    level TEXT,
+    device_width INTEGER,
+    device_height INTEGER,
+    device_pixel_ratio REAL,
+    fingerprint TEXT,
+    old_fingerprint TEXT,
+    ip TEXT,
+    metric_type TEXT,
+    value REAL,
+    navigation_type TEXT,
+    rating TEXT,
+    page_start_time INTEGER,
+    page_end_time INTEGER,
+    white_screen_duration INTEGER,
+    status TEXT,
+    selectors TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 }
