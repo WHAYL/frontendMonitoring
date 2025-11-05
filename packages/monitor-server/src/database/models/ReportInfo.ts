@@ -8,6 +8,7 @@ import { handleResourceInfo } from '../../controllers/ResourceInfoController';
 import { handleUserBehaviorInfo } from '../../controllers/UserBehaviorController';
 import { handleOsViewInfo } from '../../controllers/OsViewController';
 import { handlePagePerformanceInfo } from '../../controllers/PagePerformanceController';
+import { handleOthInfo } from '../../controllers/OthInfoController';
 
 const CategoryMap = {
   [LogCategoryKeyValue.error]: handleErrorInfo,
@@ -17,6 +18,7 @@ const CategoryMap = {
   [LogCategoryKeyValue.userBehavior]: handleUserBehaviorInfo,
   [LogCategoryKeyValue.osView]: handleOsViewInfo,
   [LogCategoryKeyValue.pagePerformance]: handlePagePerformanceInfo,
+  [LogCategoryKeyValue.oth]: handleOthInfo
 } as const;
 export class ReportInfoModel {
   static async create(ctx, reportInfo: IReportInfo) {
