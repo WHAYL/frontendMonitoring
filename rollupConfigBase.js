@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename)
 const resolveFile = function (filePath) {
   return path.join(__dirname, filePath)
 }
-const mitoArr = ["core", "browser"]
+const mitoArr = ["core", "browser", "uniapp"]
 const formatArr = ["cjs", "esm", "umd", "iife", "amd"]
 const baseRollupArr = []
 mitoArr.forEach(item => {

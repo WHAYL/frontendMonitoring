@@ -52,10 +52,12 @@
   },
   "pnpm": {
     "overrides": {
-      "@whayl/monitor": "link:"
+      "@whayl/monitor": "link:",
+      "@whayl/monitor-uniApp": "link:packages/monitor-uniapp"
     }
   },
   "dependencies": {
-    "@whayl/monitor": "link:"
+    "@whayl/monitor": "link:",
+    "@whayl/monitor-uniApp": "link:packages/monitor-uniapp"
   }
 }

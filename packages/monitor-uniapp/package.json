@@ -1,0 +1,43 @@
+{
+  "name": "@whayl/monitor-uniApp",
+  "version": "1.0.0",
+  "description": "uniApp端监控SDK，包含各种监控插件",
+  "type": "module",
+  "main": "lib/bundle.cjs.js",
+  "module": "lib/bundle.esm.js",
+  "browser": "lib/bundle.umd.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/bundle.esm.js",
+      "require": "./lib/bundle.cjs.js",
+      "browser": "./lib/bundle.umd.js",
+      "default": "./lib/bundle.umd.js"
+    },
+    "./types": {
+      "types": "./lib/types/type.d.ts",
+      "import": "./lib/types/type.d.ts",
+      "require": "./lib/types/type.d.ts",
+      "default": "./lib/types/type.d.ts"
+    }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "rollup -wc rollup.config.dev.js",
+    "build": "rollup -c rollup.config.js"
+  },
+  "keywords": [
+    "monitor",
+    "browser",
+    "frontend"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whayl/monitor-core": "workspace:*",
+    "aiy-utils": "^0.1.45"
+  }
+}
