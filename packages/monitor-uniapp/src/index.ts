@@ -10,7 +10,6 @@ export { monitorEventBus } from './eventBus';
  * 浏览器监控类
  */
 class UniAppMonitor implements UniAppMonitorBase {
-    private platform: string = 'uniApp';
     private plugins: UniAppMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
     private abortController: AbortController | null = null;
@@ -21,14 +20,6 @@ class UniAppMonitor implements UniAppMonitorBase {
     constructor(config: UniAppMonitorConfig) {
         // 缓存设备信息
         getDeviceInfo();
-
-        // #ifdef H5
-        this.platform = 'h5';
-        // #endif
-
-        // #ifdef MP-WEIXIN
-        this.platform = 'mp-weixin';
-        // #endif
 
         // 默认配置都为 true
         const {
@@ -83,11 +74,11 @@ class UniAppMonitor implements UniAppMonitorBase {
     private async getNavigatorData(): Promise<PartialNavigator> {
         const getCatchDeviceInfo = await getDeviceInfo();
         return {
-            userAgent: getCatchDeviceInfo.ua,
-            platform: this.platform,
+            userAgent: getCatchDeviceInfo.osName + '----' + getCatchDeviceInfo.ua + '----' + getCatchDeviceInfo.deviceType,
+            platform: getCatchDeviceInfo.uniPlatform,
             language: getCatchDeviceInfo.appLanguage,
             onLine: true,
-            cookieEnabled: false,
+            cookieEnabled: true,
         };
     }
     private async getDeviceInfoData(): Promise<DeviceInfo> {

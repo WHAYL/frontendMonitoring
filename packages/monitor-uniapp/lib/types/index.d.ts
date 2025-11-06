@@ -2,7 +2,6 @@ import { ReportingLevel } from '@whayl/monitor-core';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin } from './type';
 export { monitorEventBus } from './eventBus';
 declare class UniAppMonitor implements UniAppMonitorBase {
-    private platform;
     private plugins;
     private monitor;
     private abortController;

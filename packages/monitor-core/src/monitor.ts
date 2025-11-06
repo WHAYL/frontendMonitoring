@@ -33,6 +33,9 @@ export class FrontendMonitor {
         this.fingerprint = this.config?.fingerprint || "";
 
     }
+    getConfig(): MonitorConfig {
+        return { ...this.config };
+    }
     // 支持运行时动态更新配置
     public updateConfig(newConfig: Partial<MonitorConfig>): void {
         const oldConfig = { ...this.config };

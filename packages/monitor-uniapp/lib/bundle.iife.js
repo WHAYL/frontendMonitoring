@@ -900,6 +900,9 @@ var AiyMonitorUniapp = (function (exports) {
         this.config = Object.assign(this.config, config);
         this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
       };
+      FrontendMonitor.prototype.getConfig = function () {
+        return __assign({}, this.config);
+      };
       FrontendMonitor.prototype.updateConfig = function (newConfig) {
         var oldConfig = __assign({}, this.config);
         this.config = Object.assign(this.config, newConfig);
@@ -1921,15 +1924,12 @@ var AiyMonitorUniapp = (function (exports) {
     var UniAppMonitor = (function () {
         function UniAppMonitor(config) {
             var _this = this;
-            this.platform = 'uniApp';
             this.plugins = [];
             this.monitor = new FrontendMonitor();
             this.abortController = null;
             this.isOnline = navigator.onLine;
             this.cacheLog = [];
             getDeviceInfo();
-            this.platform = 'h5';
-            this.platform = 'mp-weixin';
             var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c;
             this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
             var pluginsToRegister = [
@@ -1975,11 +1975,11 @@ var AiyMonitorUniapp = (function (exports) {
                         case 1:
                             getCatchDeviceInfo = _a.sent();
                             return [2, {
-                                    userAgent: getCatchDeviceInfo.ua,
-                                    platform: this.platform,
+                                    userAgent: getCatchDeviceInfo.osName + '----' + getCatchDeviceInfo.ua + '----' + getCatchDeviceInfo.deviceType,
+                                    platform: getCatchDeviceInfo.uniPlatform,
                                     language: getCatchDeviceInfo.appLanguage,
                                     onLine: true,
-                                    cookieEnabled: false,
+                                    cookieEnabled: true,
                                 }];
                     }
                 });

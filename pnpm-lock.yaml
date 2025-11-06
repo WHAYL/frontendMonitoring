@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@whayl/monitor': 'link:'
+  '@whayl/monitor-uniApp': link:packages/monitor-uniapp
 
 importers:
 
@@ -14,6 +15,9 @@ importers:
       '@whayl/monitor':
         specifier: 'link:'
         version: 'link:'
+      '@whayl/monitor-uniApp':
+        specifier: link:packages/monitor-uniapp
+        version: link:packages/monitor-uniapp
     devDependencies:
       '@babel/core':
         specifier: ^7.28.4

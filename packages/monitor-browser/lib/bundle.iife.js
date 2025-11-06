@@ -900,6 +900,9 @@ var AiyMonitorBrowser = (function (exports) {
         this.config = Object.assign(this.config, config);
         this.fingerprint = ((_a = this.config) === null || _a === void 0 ? void 0 : _a.fingerprint) || "";
       };
+      FrontendMonitor.prototype.getConfig = function () {
+        return __assign({}, this.config);
+      };
       FrontendMonitor.prototype.updateConfig = function (newConfig) {
         var oldConfig = __assign({}, this.config);
         this.config = Object.assign(this.config, newConfig);

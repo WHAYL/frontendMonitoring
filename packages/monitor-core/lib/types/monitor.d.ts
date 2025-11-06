@@ -6,6 +6,7 @@ export declare class FrontendMonitor {
     private fingerprint;
     private oldFingerprint;
     init(config: MonitorConfig): void;
+    getConfig(): MonitorConfig;
     updateConfig(newConfig: Partial<MonitorConfig>): void;
     getFingerprint(): string;
     setFingerprint(fingerprint: string): void;
