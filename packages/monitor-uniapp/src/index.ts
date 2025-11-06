@@ -1,6 +1,7 @@
 import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
+import { RouterPlugin } from './plugins/router';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
@@ -12,9 +13,9 @@ export { monitorEventBus } from './eventBus';
 class UniAppMonitor implements UniAppMonitorBase {
     private plugins: UniAppMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
-    private abortController: AbortController | null = null;
+
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
-    private isOnline: boolean = navigator.onLine;
+    private isOnline: boolean = true;
     private cacheLog: { type: ReportingLevel, data: SetRequired<UniAppLogData, 'deviceInfo' | 'navigator'> }[] = [];
 
     constructor(config: UniAppMonitorConfig) {
@@ -25,6 +26,7 @@ class UniAppMonitor implements UniAppMonitorBase {
         const {
             consolePluginEnabled = true,
             errorPluginEnabled = true,
+            routerPluginEnabled = true,
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -34,6 +36,7 @@ class UniAppMonitor implements UniAppMonitorBase {
         const pluginsToRegister = [
             consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consolePluginConfig || {}) },
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
+            routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -46,8 +49,6 @@ class UniAppMonitor implements UniAppMonitorBase {
     }
 
     private init(): void {
-        // 创建AbortController来管理所有事件监听器
-        this.abortController = new AbortController();
 
     }
     reportAllLog(): void {
@@ -133,11 +134,6 @@ class UniAppMonitor implements UniAppMonitorBase {
      * 销毁监控实例
      */
     destroy(): void {
-        // 使用abort controller一次性取消所有事件监听器
-        if (this.abortController) {
-            this.abortController.abort();
-            this.abortController = null;
-        }
 
         // 销毁所有插件
         this.plugins.forEach(plugin => {

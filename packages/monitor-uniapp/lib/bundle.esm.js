@@ -135,6 +135,15 @@ function __generator(thisArg, body) {
     };
   }
 }
+function __spreadArray(to, from, pack) {
+  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+    if (ar || !(i in from)) {
+      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+      ar[i] = from[i];
+    }
+  }
+  return to.concat(ar || Array.prototype.slice.call(from));
+}
 typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
   var e = new Error(message);
   return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
@@ -1219,6 +1228,108 @@ var ErrorPlugin = (function () {
     return ErrorPlugin;
 }());
 
+var RouterPlugin = (function () {
+    function RouterPlugin() {
+        this.name = 'router';
+        this.monitor = null;
+        this.name = 'router';
+    }
+    RouterPlugin.prototype.init = function (monitor) {
+        this.monitor = monitor;
+        this.rewriteApp();
+        this.rewritePage();
+        this.rewriteWXRouter();
+    };
+    RouterPlugin.prototype.rewriteRouter = function () {
+        try {
+            if (!uni) {
+                return;
+            }
+            var originUni_1 = __assign$1({}, uni);
+            var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
+            originRouter.forEach(function (item) {
+                uni[item] = function (obj) {
+                    originUni_1[item] && originUni_1[item](obj);
+                    console.log('rewrite--router', item, obj);
+                };
+            });
+        }
+        catch (error) {
+            console.error(error);
+        }
+    };
+    RouterPlugin.prototype.rewriteWXRouter = function () {
+        try {
+            if (!wx) {
+                return;
+            }
+            var originWx_1 = __assign$1({}, wx);
+            var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
+            originRouter.forEach(function (item) {
+                wx[item] = function (obj) {
+                    originWx_1[item] && originWx_1[item](obj);
+                    console.log('rewrite--cs', item, obj);
+                };
+            });
+        }
+        catch (error) {
+            console.log('rewrite--cs error', error);
+        }
+    };
+    RouterPlugin.prototype.rewritePage = function () {
+        try {
+            console.log('rewrite--page', Page);
+            if (!Page) {
+                return;
+            }
+            var originPage_1 = Page;
+            var that = this;
+            var load_1 = ['onLoad', 'onShow', 'onHide', 'onReady', 'onUnload'];
+            Page = function (page) {
+                console.log('rewrite--page', 111111);
+                __spreadArray([], load_1, true).forEach(function (methodName) {
+                    var userDefinedMethod = page[methodName];
+                    page[methodName] = function (options) {
+                        console.log('[rewrite--Page]', methodName, options);
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originPage_1(page);
+            };
+        }
+        catch (error) {
+        }
+    };
+    RouterPlugin.prototype.rewriteApp = function () {
+        try {
+            console.log('rewrite--App', App);
+            if (!App) {
+                return;
+            }
+            var originApp_1 = App;
+            var that = this;
+            var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+            var load_2 = ['onLaunch', 'onShow', 'onHide'];
+            App = function (app) {
+                __spreadArray(__spreadArray([], err_1, true), load_2, true).forEach(function (methodName) {
+                    var userDefinedMethod = app[methodName];
+                    app[methodName] = function (options) {
+                        console.log('[rewrite--App]', methodName, options);
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originApp_1(app);
+            };
+        }
+        catch (error) {
+        }
+    };
+    RouterPlugin.prototype.destroy = function () {
+        this.monitor = null;
+    };
+    return RouterPlugin;
+}());
+
 function t(e, r, t, n) {
   return new (t || (t = Promise))(function (i, o) {
     function a(e) {
@@ -1923,15 +2034,15 @@ var UniAppMonitor = (function () {
         var _this = this;
         this.plugins = [];
         this.monitor = new FrontendMonitor();
-        this.abortController = null;
-        this.isOnline = navigator.onLine;
+        this.isOnline = true;
         this.cacheLog = [];
         getDeviceInfo();
-        var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c;
+        var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d;
         this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
         var pluginsToRegister = [
             consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consolePluginConfig) || {}); } },
             errorPluginEnabled && { name: 'ErrorPlugin', creator: function () { return new ErrorPlugin(); } },
+            routerPluginEnabled && { name: 'RouterPlugin', creator: function () { return new RouterPlugin(); } },
         ].filter(Boolean);
         pluginsToRegister.forEach(function (plugin) {
             _this.use(plugin.creator());
@@ -1940,7 +2051,6 @@ var UniAppMonitor = (function () {
         this.setupNetworkListener();
     }
     UniAppMonitor.prototype.init = function () {
-        this.abortController = new AbortController();
     };
     UniAppMonitor.prototype.reportAllLog = function () {
         this.reportCacheLog();
@@ -2040,10 +2150,6 @@ var UniAppMonitor = (function () {
         plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     };
     UniAppMonitor.prototype.destroy = function () {
-        if (this.abortController) {
-            this.abortController.abort();
-            this.abortController = null;
-        }
         this.plugins.forEach(function (plugin) {
             if (typeof plugin.destroy === 'function') {
                 plugin.destroy();

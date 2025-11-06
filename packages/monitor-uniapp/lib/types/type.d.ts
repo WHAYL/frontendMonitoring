@@ -12,6 +12,7 @@ export interface UniAppMonitorConfig {
     pluginsUse?: {
         consolePluginEnabled?: boolean;
         errorPluginEnabled?: boolean;
+        routerPluginEnabled?: boolean;
     };
     consolePluginConfig?: ConsolePluginConfig;
 }
