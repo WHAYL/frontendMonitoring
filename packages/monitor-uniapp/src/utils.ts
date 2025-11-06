@@ -58,11 +58,11 @@ export function getUniCurrentPages(index: number = -1): string {
     // 优化 options 处理
     let queryString = '';
     if (options && Object.keys(options).length > 0) {
-        const params = new URLSearchParams();
+        const params: string[] = [];
         Object.entries(options).forEach(([key, value]) => {
-            params.append(key, String(value));
+            params.push(encodeURIComponent(key) + '=' + encodeURIComponent(String(value)));
         });
-        queryString = '?' + params.toString();
+        queryString = '?' + params.join('&');
     }
 
     return route + queryString;

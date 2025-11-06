@@ -1061,12 +1061,12 @@ var AiyMonitorUniapp = (function (exports) {
         }
         var queryString = '';
         if (options && Object.keys(options).length > 0) {
-            var params_1 = new URLSearchParams();
+            var params_1 = [];
             Object.entries(options).forEach(function (_a) {
                 var key = _a[0], value = _a[1];
-                params_1.append(key, String(value));
+                params_1.push(encodeURIComponent(key) + '=' + encodeURIComponent(String(value)));
             });
-            queryString = '?' + params_1.toString();
+            queryString = '?' + params_1.join('&');
         }
         return route + queryString;
     }
@@ -1266,12 +1266,27 @@ var AiyMonitorUniapp = (function (exports) {
                 if (!wx) {
                     return;
                 }
+                wx.onBeforePageLoad(function (res) {
+                    console.log('rewrite--onBeforePageLoad', res);
+                });
+                wx.onAfterPageLoad(function (res) {
+                    console.log('rewrite--onAfterPageLoad', getUniCurrentPages());
+                });
+                wx.onBeforePageUnload(function (res) {
+                    console.log('rewrite--onBeforePageUnload', res);
+                });
+                wx.onAfterPageUnload(function (res) {
+                    console.log('rewrite--onAfterPageUnload', res, getUniCurrentPages());
+                });
                 var originWx_1 = __assign$1({}, wx);
                 var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
                 originRouter.forEach(function (item) {
                     wx[item] = function (obj) {
                         originWx_1[item] && originWx_1[item](obj);
                         console.log('rewrite--cs', item, obj);
+                        setTimeout(function () {
+                            console.log('rewrite--cs', item, getUniCurrentPages());
+                        }, 0);
                     };
                 });
             }
@@ -1287,7 +1302,7 @@ var AiyMonitorUniapp = (function (exports) {
                 }
                 var originPage_1 = Page;
                 var that = this;
-                var load_1 = ['onLoad', 'onShow', 'onHide', 'onReady', 'onUnload'];
+                var load_1 = ['onLoad', 'onShow', 'onHide', 'onReady', 'onUnload', 'onTabItemTap'];
                 Page = function (page) {
                     console.log('rewrite--page', 111111);
                     __spreadArray([], load_1, true).forEach(function (methodName) {

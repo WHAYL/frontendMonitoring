@@ -37,12 +37,27 @@ export class RouterPlugin implements UniAppMonitorPlugin {
     private rewriteWXRouter() {
         try {
             if (!wx) { return; }
+            wx.onBeforePageLoad(function (res) {
+                console.log('rewrite--onBeforePageLoad', res);
+            });
+            wx.onAfterPageLoad(function (res) {
+                console.log('rewrite--onAfterPageLoad', getUniCurrentPages());
+            });
+            wx.onBeforePageUnload(function (res) {
+                console.log('rewrite--onBeforePageUnload', res);
+            });
+            wx.onAfterPageUnload(function (res) {
+                console.log('rewrite--onAfterPageUnload', res, getUniCurrentPages());
+            });
             const originWx = { ...wx };
             const originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
             originRouter.forEach(item => {
                 wx[item] = function (obj) {
                     originWx[item] && originWx[item](obj);
                     console.log('rewrite--cs', item, obj);
+                    setTimeout(() => {
+                        console.log('rewrite--cs', item, getUniCurrentPages());
+                    }, 0);
                 };
             });
         } catch (error) {
@@ -59,7 +74,7 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             }
             const originPage = Page;
             const that = this;
-            const load = ['onLoad', 'onShow', 'onHide', 'onReady', 'onUnload'];
+            const load = ['onLoad', 'onShow', 'onHide', 'onReady', 'onUnload', 'onTabItemTap'];
             Page = function (page) {
                 console.log('rewrite--page', 111111);
                 // 合并方法，插入记录脚本
