@@ -45,28 +45,33 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             const originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
             originRouter.forEach(item => {
                 uni[item] = function (obj) {
-                    if (item === 'navigateBack') {
-                        setTimeout(() => {
-                            const { pages, page } = getUniCurrentPages();
-                            that.routerList.push({
-                                page: page,
-                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                            });
-                        }, 40);
 
-                    } else {
-                        that.routerList.push({
-                            page: obj.url,
-                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        });
-                    }
-                    originUni[item] && originUni[item](obj);
+                    originUni[item] && originUni[item]({
+                        ...obj, success: function (res) {
+                            obj.success && obj.success(res);
+                            if (item === 'navigateBack') {
+                                setTimeout(() => {
+                                    const { pages, page } = getUniCurrentPages();
+                                    that.routerList.push({
+                                        page: page,
+                                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                    });
+                                }, 40);
+
+                            } else {
+                                that.routerList.push({
+                                    page: obj.url,
+                                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                });
+                            }
+                        }
+                    });
 
                     let ur = '';
                     that.routerList.forEach((item, index) => {
-                        ur += index + 1 + '----------' + item.page + ':' + item.timestamp + ';';
+                        ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
                     });
-                    console.log('rewrite--router', item, ur);
+                    console.log('rewrite--router', item, ur, that.routerList);
                 };
             });
         } catch (error) {

@@ -2056,27 +2056,29 @@ define(['exports'], (function (exports) { 'use strict';
                 var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
                 originRouter.forEach(function (item) {
                     uni[item] = function (obj) {
-                        if (item === 'navigateBack') {
-                            setTimeout(function () {
-                                var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
-                                that_1.routerList.push({
-                                    page: page,
-                                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                });
-                            }, 40);
-                        }
-                        else {
-                            that_1.routerList.push({
-                                page: obj.url,
-                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                            });
-                        }
-                        originUni_1[item] && originUni_1[item](obj);
+                        originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {
+                                obj.success && obj.success(res);
+                                if (item === 'navigateBack') {
+                                    setTimeout(function () {
+                                        var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
+                                        that_1.routerList.push({
+                                            page: page,
+                                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                        });
+                                    }, 40);
+                                }
+                                else {
+                                    that_1.routerList.push({
+                                        page: obj.url,
+                                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                    });
+                                }
+                            } }));
                         var ur = '';
                         that_1.routerList.forEach(function (item, index) {
-                            ur += index + 1 + '----------' + item.page + ':' + item.timestamp + ';';
+                            ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
                         });
-                        console.log('rewrite--router', item, ur);
+                        console.log('rewrite--router', item, ur, that_1.routerList);
                     };
                 });
             }
