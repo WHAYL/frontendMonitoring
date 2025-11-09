@@ -6,9 +6,5 @@ export declare class RouterPlugin implements UniAppMonitorPlugin {
     constructor();
     init(monitor: UniAppMonitorPluginInitArg): void;
     private rewriteRouter;
-    private inTabbarPage;
-    private setTabbarPageProxy;
-    private rewriteWXRouter;
-    private rewriteWxApp;
     destroy(): void;
 }

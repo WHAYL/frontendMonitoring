@@ -4,22 +4,22 @@ import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
-import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
+import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
 export { monitorEventBus } from './eventBus';
 /**
- * 浏览器监控类
+ * wxapp监控类
  */
-class UniAppMonitor implements UniAppMonitorBase {
-    private plugins: UniAppMonitorPlugin[] = [];
+class WxAppMonitor implements WxAppMonitorBase {
+    private plugins: WxAppMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
-    private config: UniAppMonitorConfig;
+    private config: WxAppMonitorConfig;
 
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
     private isOnline: boolean = true;
-    private cacheLog: { type: ReportingLevel, data: SetRequired<UniAppLogData, 'deviceInfo' | 'navigator'> }[] = [];
+    private cacheLog: { type: ReportingLevel, data: SetRequired<WxAppLogData, 'deviceInfo' | 'navigator'> }[] = [];
 
-    constructor(config: UniAppMonitorConfig) {
+    constructor(config: WxAppMonitorConfig) {
         this.config = config;
         // 缓存设备信息
         getDeviceInfo();
@@ -77,9 +77,9 @@ class UniAppMonitor implements UniAppMonitorBase {
     private async getNavigatorData(): Promise<PartialNavigator> {
         const getCatchDeviceInfo = await getDeviceInfo();
         return {
-            userAgent: getCatchDeviceInfo.osName + '----' + getCatchDeviceInfo.ua + '----' + getCatchDeviceInfo.deviceType,
-            platform: getCatchDeviceInfo.uniPlatform,
-            language: getCatchDeviceInfo.appLanguage,
+            userAgent: getCatchDeviceInfo.system + '----' + getCatchDeviceInfo.brand + '----' + getCatchDeviceInfo.model + '----' + getCatchDeviceInfo.version,
+            platform: getCatchDeviceInfo.platform,
+            language: getCatchDeviceInfo.language,
             onLine: true,
             cookieEnabled: true,
         };
@@ -89,10 +89,10 @@ class UniAppMonitor implements UniAppMonitorBase {
         return {
             width: getCatchDeviceInfo.screenWidth,
             height: getCatchDeviceInfo.screenHeight,
-            pixelRatio: getCatchDeviceInfo.devicePixelRatio,
+            pixelRatio: getCatchDeviceInfo.pixelRatio,
         };
     }
-    async reportInfo(type: ReportingLevel, data: UniAppLogData) {
+    async reportInfo(type: ReportingLevel, data: WxAppLogData) {
         data.navigator = await this.getNavigatorData();
         const deviceInfo = await this.getDeviceInfoData();
         if (!this.isOnline) {
@@ -107,7 +107,7 @@ class UniAppMonitor implements UniAppMonitorBase {
      * 添加插件
      * @param plugin 监控插件
      */
-    use(plugin: UniAppMonitorPlugin): void {
+    use(plugin: WxAppMonitorPlugin): void {
         // 检查插件是否包含必需的name属性
         if (!plugin.name) {
             console.error('Plugin must have a name property');
@@ -150,4 +150,4 @@ class UniAppMonitor implements UniAppMonitorBase {
 }
 
 // 默认导出浏览器监控类
-export default UniAppMonitor;
+export default WxAppMonitor;

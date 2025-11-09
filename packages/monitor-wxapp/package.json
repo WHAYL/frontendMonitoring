@@ -1,7 +1,7 @@
 {
-  "name": "@whayl/monitor-uniApp",
+  "name": "@whayl/monitor-wxApp",
   "version": "1.0.0",
-  "description": "uniApp端监控SDK，包含各种监控插件",
+  "description": "wxapp端监控SDK，包含各种监控插件",
   "type": "module",
   "main": "lib/bundle.cjs.js",
   "module": "lib/bundle.esm.js",
@@ -38,7 +38,6 @@
   "license": "ISC",
   "dependencies": {
     "@whayl/monitor-core": "workspace:*",
-    "@whayl/monitor-wxApp": "workspace:*",
     "aiy-utils": "^0.1.45"
   }
 }

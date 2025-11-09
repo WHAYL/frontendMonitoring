@@ -191,6 +191,18 @@ importers:
       '@whayl/monitor-core':
         specifier: workspace:*
         version: link:../monitor-core
+      '@whayl/monitor-wxApp':
+        specifier: workspace:*
+        version: link:../monitor-wxapp
+      aiy-utils:
+        specifier: ^0.1.45
+        version: 0.1.45
+
+  packages/monitor-wxapp:
+    dependencies:
+      '@whayl/monitor-core':
+        specifier: workspace:*
+        version: link:../monitor-core
       aiy-utils:
         specifier: ^0.1.45
         version: 0.1.45
