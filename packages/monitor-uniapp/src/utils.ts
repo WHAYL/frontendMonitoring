@@ -49,20 +49,27 @@ export function getQueryString(options: Record<string, any> = {}) {
     }
     return queryString;
 }
+export function arrayAt<T>(arr: T[], index: number): T | undefined {
+    if (index >= 0) {
+        return arr[index];
+    } else {
+        return arr[arr.length + index];
+    }
+}
 export function getUniCurrentPages(data?: { index?: number }) {
     const { index = -1 } = data || {};
     const pages = getCurrentPages();
     if (!pages || pages.length === 0) {
         return {
             pages: [],
-            page: ''
+            page: 'No page found'
         };
     }
-    const page = pages.at(index);
+    const page = arrayAt(pages, index);
     if (!page) {
         return {
             pages,
-            page: ''
+            page: 'No page found'
         };
     }
 
@@ -70,7 +77,7 @@ export function getUniCurrentPages(data?: { index?: number }) {
     if (!route) {
         return {
             pages,
-            page: ''
+            page: 'No page found'
         };
     }
 

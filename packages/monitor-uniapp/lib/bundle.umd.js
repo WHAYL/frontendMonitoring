@@ -1061,27 +1061,35 @@
         }
         return queryString;
     }
+    function arrayAt(arr, index) {
+        if (index >= 0) {
+            return arr[index];
+        }
+        else {
+            return arr[arr.length + index];
+        }
+    }
     function getUniCurrentPages(data) {
         var _a = ({}).index, index = _a === void 0 ? -1 : _a;
         var pages = getCurrentPages();
         if (!pages || pages.length === 0) {
             return {
                 pages: [],
-                page: ''
+                page: 'No page found'
             };
         }
-        var page = pages.at(index);
+        var page = arrayAt(pages, index);
         if (!page) {
             return {
                 pages: pages,
-                page: ''
+                page: 'No page found'
             };
         }
         var route = page.route, options = page.options;
         if (!route) {
             return {
                 pages: pages,
-                page: ''
+                page: 'No page found'
             };
         }
         return {
@@ -2040,16 +2048,18 @@
                 if (!uni) {
                     return;
                 }
-                this.routerList.push({
-                    page: '/',
-                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                });
                 var that_1 = this;
+                setTimeout(function () {
+                    var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
+                    that_1.routerList.push({
+                        page: page,
+                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                    });
+                }, 400);
                 var originUni_1 = __assign$1({}, uni);
                 var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
                 originRouter.forEach(function (item) {
                     uni[item] = function (obj) {
-                        originUni_1[item] && originUni_1[item](obj);
                         if (item === 'navigateBack') {
                             setTimeout(function () {
                                 var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
@@ -2065,7 +2075,12 @@
                                 timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                             });
                         }
-                        console.log('rewrite--router', item, obj, that_1.routerList);
+                        originUni_1[item] && originUni_1[item](obj);
+                        var ur = '';
+                        that_1.routerList.forEach(function (item, index) {
+                            ur += index + 1 + '----------' + item.page + ':' + item.timestamp + ';';
+                        });
+                        console.log('rewrite--router', item, ur);
                     };
                 });
             }

@@ -33,16 +33,18 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             if (!uni) {
                 return;
             }
-            this.routerList.push({
-                page: '/',
-                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-            });
             const that = this;
+            setTimeout(() => {
+                const { pages, page } = getUniCurrentPages();
+                that.routerList.push({
+                    page: page,
+                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                });
+            }, 400);
             const originUni = { ...uni };
             const originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
             originRouter.forEach(item => {
                 uni[item] = function (obj) {
-                    originUni[item] && originUni[item](obj);
                     if (item === 'navigateBack') {
                         setTimeout(() => {
                             const { pages, page } = getUniCurrentPages();
@@ -58,8 +60,13 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                         });
                     }
+                    originUni[item] && originUni[item](obj);
 
-                    console.log('rewrite--router', item, obj, that.routerList);
+                    let ur = '';
+                    that.routerList.forEach((item, index) => {
+                        ur += index + 1 + '----------' + item.page + ':' + item.timestamp + ';';
+                    });
+                    console.log('rewrite--router', item, ur);
                 };
             });
         } catch (error) {
