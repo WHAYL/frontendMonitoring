@@ -16,7 +16,7 @@ export class ErrorPlugin implements UniAppMonitorPlugin {
                 logCategory: LogCategoryKeyValue.error,
                 pluginName: that.name,
                 message: err,
-                url: getUniCurrentPages(),
+                url: getUniCurrentPages().page,
                 extraData: err,
                 timestamp: getTimestamp(),
                 date: formatTimestamp()

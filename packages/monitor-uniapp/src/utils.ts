@@ -38,24 +38,7 @@ export function formatTimestamp(format: string = 'YYYY/MM/DD hh:mm:ss.SSS', time
         .replace(/ss/g, second)
         .replace(/SSS/g, ms);
 }
-
-export function getUniCurrentPages(index: number = -1): string {
-    const pages = getCurrentPages();
-    if (!pages || pages.length === 0) {
-        return '';
-    }
-
-    const page = pages.at(index);
-    if (!page) {
-        return '';
-    }
-
-    const { route, options } = page;
-    if (!route) {
-        return '';
-    }
-
-    // 优化 options 处理
+export function getQueryString(options: Record<string, any> = {}) {
     let queryString = '';
     if (options && Object.keys(options).length > 0) {
         const params: string[] = [];
@@ -64,8 +47,37 @@ export function getUniCurrentPages(index: number = -1): string {
         });
         queryString = '?' + params.join('&');
     }
+    return queryString;
+}
+export function getUniCurrentPages(data?: { index?: number }) {
+    const { index = -1 } = data || {};
+    const pages = getCurrentPages();
+    if (!pages || pages.length === 0) {
+        return {
+            pages: [],
+            page: ''
+        };
+    }
+    const page = pages.at(index);
+    if (!page) {
+        return {
+            pages,
+            page: ''
+        };
+    }
 
-    return route + queryString;
+    const { route, options } = page;
+    if (!route) {
+        return {
+            pages,
+            page: ''
+        };
+    }
+
+    return {
+        pages,
+        page: route + getQueryString(options)
+    };
 }
 let DeviceInfo: UniSystemInfo;
 export function getDeviceInfo(): Promise<UniSystemInfo> {

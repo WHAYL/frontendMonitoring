@@ -2,11 +2,13 @@ import type { UniAppMonitorPlugin, UniAppMonitorPluginInitArg } from '../type';
 export declare class RouterPlugin implements UniAppMonitorPlugin {
     name: string;
     private monitor;
+    private routerList;
     constructor();
     init(monitor: UniAppMonitorPluginInitArg): void;
     private rewriteRouter;
+    private inTabbarPage;
+    private setTabbarPageProxy;
     private rewriteWXRouter;
-    private rewritePage;
-    private rewriteApp;
+    private rewriteWxApp;
     destroy(): void;
 }

@@ -7,6 +7,7 @@ declare let Component: (obj: Record<string, any>) => any;//微信小程序
 interface UniPage {
     route?: string;
     options?: Record<string, any>;
+    [K: string]: any
 }
 
 declare function getCurrentPages(): UniPage[];

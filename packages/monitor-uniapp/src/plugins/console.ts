@@ -41,7 +41,7 @@ export class ConsolePlugin implements UniAppMonitorPlugin {
                             logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.error',
-                            url: getUniCurrentPages(),
+                            url: getUniCurrentPages().page,
                             extraData,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
@@ -69,7 +69,7 @@ export class ConsolePlugin implements UniAppMonitorPlugin {
                             logCategory: LogCategoryKeyValue.error,
                             pluginName: self.name,
                             message: message || 'console.warn',
-                            url: getUniCurrentPages(),
+                            url: getUniCurrentPages().page,
                             extraData,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()

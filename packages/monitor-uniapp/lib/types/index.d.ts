@@ -4,6 +4,7 @@ export { monitorEventBus } from './eventBus';
 declare class UniAppMonitor implements UniAppMonitorBase {
     private plugins;
     private monitor;
+    private config;
     private isOnline;
     private cacheLog;
     constructor(config: UniAppMonitorConfig);

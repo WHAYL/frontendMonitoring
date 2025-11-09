@@ -13,12 +13,14 @@ export { monitorEventBus } from './eventBus';
 class UniAppMonitor implements UniAppMonitorBase {
     private plugins: UniAppMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
+    private config: UniAppMonitorConfig;
 
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
     private isOnline: boolean = true;
     private cacheLog: { type: ReportingLevel, data: SetRequired<UniAppLogData, 'deviceInfo' | 'navigator'> }[] = [];
 
     constructor(config: UniAppMonitorConfig) {
+        this.config = config;
         // 缓存设备信息
         getDeviceInfo();
 
@@ -127,7 +129,7 @@ class UniAppMonitor implements UniAppMonitorBase {
 
         this.plugins.push(plugin);
         // 初始化插件
-        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this),tabbarPage:this.config.tabbarPage });
     }
 
     /**
