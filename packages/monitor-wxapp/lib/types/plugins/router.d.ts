@@ -13,6 +13,8 @@ export declare class RouterPlugin implements WxAppMonitorPlugin {
         timestamp: string;
         routeEventId: string;
     }[];
+    private uniWxCreatePage;
+    private wxPage;
     private rewriteWXRouter;
     private rewriteWxApp;
     destroy(): void;

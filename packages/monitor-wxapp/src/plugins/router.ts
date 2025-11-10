@@ -54,12 +54,72 @@ export class RouterPlugin implements WxAppMonitorPlugin {
         });
         return Array.from(uniqueMap.values());
     }
+    private uniWxCreatePage() {
+        try {
+            if (!wx) {
+                return;
+            }
+            const wxC = wx.createPage;
+            const load = ['onShow'];
+            const that = this;
+            wx.createPage = function (options) {
+                load.forEach(methodName => {
+                    const userDefinedMethod = options[methodName]; // 暂存用户定义的方法
+                    options[methodName] = function (options) {
+                        const { pages, page } = getWxCurrentPages();
+                        that.routerList.push({
+                            page: page,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: "show-" + (++that.showIndex)
+                        });
+                        console.log('[rewrite--createPage]', methodName, that.getRouterList());
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return wxC(options);
+            };
+        } catch (error) {
+
+        }
+    }
+    private wxPage() {
+        try {
+            console.log('rewrite--Page', Page);
+            if (!Page) {
+                return;
+            }
+            const originPage = Page;
+            const that = this;
+            const load = ['onShow'];
+            Page = function (prams) {
+                // 合并方法，插入记录脚本
+                [...load].forEach((methodName) => {
+                    const userDefinedMethod = prams[methodName]; // 暂存用户定义的方法
+                    prams[methodName] = function (options) {
+                        const { pages, page } = getWxCurrentPages();
+                        that.routerList.push({
+                            page: page,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: "show-" + (++that.showIndex)
+                        });
+                        console.log('[rewrite--Page]', methodName, that.getRouterList());
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originPage(prams);
+            };
+        } catch (error) {
+
+        }
+    }
     private rewriteWXRouter() {
 
         try {
             const that = this;
             if (!wx) { return; }
             if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
+                this.wxPage();
+                this.uniWxCreatePage();
                 return;
             }
             const { pages, page } = getWxCurrentPages();

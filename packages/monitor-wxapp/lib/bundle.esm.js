@@ -1303,41 +1303,100 @@ var RouterPlugin = (function () {
         });
         return Array.from(uniqueMap.values());
     };
+    RouterPlugin.prototype.uniWxCreatePage = function () {
+        try {
+            if (!wx) {
+                return;
+            }
+            var wxC_1 = wx.createPage;
+            var load_1 = ['onShow'];
+            var that_1 = this;
+            wx.createPage = function (options) {
+                load_1.forEach(function (methodName) {
+                    var userDefinedMethod = options[methodName];
+                    options[methodName] = function (options) {
+                        var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                        that_1.routerList.push({
+                            page: page,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: "show-" + (++that_1.showIndex)
+                        });
+                        console.log('[rewrite--createPage]', methodName, that_1.getRouterList());
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return wxC_1(options);
+            };
+        }
+        catch (error) {
+        }
+    };
+    RouterPlugin.prototype.wxPage = function () {
+        try {
+            console.log('rewrite--Page', Page);
+            if (!Page) {
+                return;
+            }
+            var originPage_1 = Page;
+            var that_2 = this;
+            var load_2 = ['onShow'];
+            Page = function (prams) {
+                __spreadArray([], load_2, true).forEach(function (methodName) {
+                    var userDefinedMethod = prams[methodName];
+                    prams[methodName] = function (options) {
+                        var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                        that_2.routerList.push({
+                            page: page,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: "show-" + (++that_2.showIndex)
+                        });
+                        console.log('[rewrite--Page]', methodName, that_2.getRouterList());
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originPage_1(prams);
+            };
+        }
+        catch (error) {
+        }
+    };
     RouterPlugin.prototype.rewriteWXRouter = function () {
         try {
-            var that_1 = this;
+            var that_3 = this;
             if (!wx) {
                 return;
             }
             if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
+                this.wxPage();
+                this.uniWxCreatePage();
                 return;
             }
             var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-            that_1.setTabbarPageProxy(pages);
+            that_3.setTabbarPageProxy(pages);
             var routeEventId_1 = "";
             wx.onAfterPageLoad(function (res) {
                 var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                that_1.setTabbarPageProxy(pages);
-                that_1.routerList.push({
+                that_3.setTabbarPageProxy(pages);
+                that_3.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                     routeEventId: res.routeEventId
                 });
                 routeEventId_1 = res.routeEventId;
-                console.log('rewrite--onAfterPageLoad', page, res, that_1.getRouterList());
+                console.log('rewrite--onAfterPageLoad', page, res, that_3.getRouterList());
             });
             wx.onAfterPageUnload(function (res) {
                 var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                that_1.setTabbarPageProxy(pages);
-                if (!that_1.inTabbarPage(page) && routeEventId_1 !== res.routeEventId) {
+                that_3.setTabbarPageProxy(pages);
+                if (!that_3.inTabbarPage(page) && routeEventId_1 !== res.routeEventId) {
                     routeEventId_1 = res.routeEventId;
-                    that_1.routerList.push({
+                    that_3.routerList.push({
                         page: page,
                         timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                         routeEventId: res.routeEventId
                     });
                 }
-                console.log('rewrite--onAfterPageUnload', page, res, that_1.getRouterList());
+                console.log('rewrite--onAfterPageUnload', page, res, that_3.getRouterList());
             });
         }
         catch (error) {
@@ -1353,9 +1412,9 @@ var RouterPlugin = (function () {
             var originApp_1 = App;
             var that = this;
             var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            var load_1 = ['onLaunch', 'onShow', 'onHide'];
+            var load_3 = ['onLaunch', 'onShow', 'onHide'];
             App = function (app) {
-                __spreadArray(__spreadArray([], err_1, true), load_1, true).forEach(function (methodName) {
+                __spreadArray(__spreadArray([], err_1, true), load_3, true).forEach(function (methodName) {
                     var userDefinedMethod = app[methodName];
                     app[methodName] = function (options) {
                         console.log('[rewrite--App]', methodName, options);
