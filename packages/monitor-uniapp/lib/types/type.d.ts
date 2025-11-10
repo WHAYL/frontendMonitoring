@@ -9,7 +9,6 @@ export interface ConsolePluginConfig {
 }
 export interface UniAppMonitorConfig {
     monitorConfig: MonitorConfig;
-    tabbarPage: string[];
     pluginsUse?: {
         consolePluginEnabled?: boolean;
         errorPluginEnabled?: boolean;
@@ -32,7 +31,6 @@ export type ReportInfo = (level: ReportingLevel, data: UniAppLogData) => void;
 export interface UniAppMonitorPluginInitArg {
     reportInfo: ReportInfo;
     getFingerprint: () => string;
-    tabbarPage: string[];
 }
 export interface UniAppMonitorPlugin {
     name: string;

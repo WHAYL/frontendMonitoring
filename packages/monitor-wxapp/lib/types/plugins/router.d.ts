@@ -6,8 +6,6 @@ export declare class RouterPlugin implements WxAppMonitorPlugin {
     private showIndex;
     constructor();
     init(monitor: WxAppMonitorPluginInitArg): void;
-    private inTabbarPage;
-    private setTabbarPageProxy;
     getRouterList(): {
         page: string;
         timestamp: string;

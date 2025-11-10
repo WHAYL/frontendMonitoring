@@ -129,7 +129,7 @@ class UniAppMonitor implements UniAppMonitorBase {
 
         this.plugins.push(plugin);
         // 初始化插件
-        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this), tabbarPage: this.config.tabbarPage });
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     }
 
     /**

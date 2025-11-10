@@ -17,35 +17,35 @@ export class RouterPlugin implements WxAppMonitorPlugin {
         this.rewriteWXRouter();
     }
 
-    private inTabbarPage(page) {
-        return this.monitor?.tabbarPage.some((item) => page.startsWith(item) || item.startsWith('/' + item));
-    }
-    private setTabbarPageProxy(pages: any[]) {
-        const tabbarPage = this.monitor?.tabbarPage || [];
-        const that = this;
-        pages.forEach((item) => {
-            if (item.proxyRouter) {
-                return;
-            }
-            if (!tabbarPage.includes(item.route as string)) {
-                return;
-            }
-            item.proxyRouter = true;
-            const originItem = { ...item };
-            const originRouter = ["onShow"];
-            originRouter.forEach(pro => {
-                item[pro] = function (obj) {
-                    originItem[pro] && originItem[pro](obj);
-                    that.routerList.push({
-                        page: item.route + getQueryString(item.options),
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        routeEventId: "show-" + (++that.showIndex)
-                    });
-                    console.log('rewrite--cs', pro, item, that.getRouterList());
-                };
-            });
-        });
-    }
+    // private inTabbarPage(page) {
+    //     return this.monitor?.tabbarPage.some((item) => page.startsWith(item) || item.startsWith('/' + item));
+    // }
+    // private setTabbarPageProxy(pages: any[]) {
+    //     const tabbarPage = this.monitor?.tabbarPage || [];
+    //     const that = this;
+    //     pages.forEach((item) => {
+    //         if (item.proxyRouter) {
+    //             return;
+    //         }
+    //         if (!tabbarPage.includes(item.route as string)) {
+    //             return;
+    //         }
+    //         item.proxyRouter = true;
+    //         const originItem = { ...item };
+    //         const originRouter = ["onShow"];
+    //         originRouter.forEach(pro => {
+    //             item[pro] = function (obj) {
+    //                 originItem[pro] && originItem[pro](obj);
+    //                 that.routerList.push({
+    //                     page: item.route + getQueryString(item.options),
+    //                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+    //                     routeEventId: "show-" + (++that.showIndex)
+    //                 });
+    //                 console.log('rewrite--cs', pro, item, that.getRouterList());
+    //             };
+    //         });
+    //     });
+    // }
     getRouterList() {
         // 根据routeEventId去重，保留重复项的最后一条数据
         const uniqueMap = new Map<string, { page: string, timestamp: string, routeEventId: string }>();
@@ -115,41 +115,43 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     private rewriteWXRouter() {
 
         try {
-            const that = this;
             if (!wx) { return; }
-            if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
-                this.wxPage();
-                this.uniWxCreatePage();
-                return;
-            }
-            const { pages, page } = getWxCurrentPages();
-            that.setTabbarPageProxy(pages);
-            let routeEventId = "";
-            wx.onAfterPageLoad(function (res) {
-                const { pages, page } = getWxCurrentPages();
-                that.setTabbarPageProxy(pages);
-                that.routerList.push({
-                    page: page,
-                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                    routeEventId: res.routeEventId
-                });
-                routeEventId = res.routeEventId;
-                console.log('rewrite--onAfterPageLoad', page, res, that.getRouterList());
-            });
-            wx.onAfterPageUnload(function (res) {
-                const { pages, page } = getWxCurrentPages();
-                that.setTabbarPageProxy(pages);
-                if (!that.inTabbarPage(page) && routeEventId !== res.routeEventId) {
-                    routeEventId = res.routeEventId;
-                    that.routerList.push({
-                        page: page,
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        routeEventId: res.routeEventId
-                    });
-                }
+            this.wxPage();
+            this.uniWxCreatePage();
+            return;
+            // if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
+            //     this.wxPage();
+            //     this.uniWxCreatePage();
+            //     return;
+            // }
+            // const { pages, page } = getWxCurrentPages();
+            // that.setTabbarPageProxy(pages);
+            // let routeEventId = "";
+            // wx.onAfterPageLoad(function (res) {
+            //     const { pages, page } = getWxCurrentPages();
+            //     that.setTabbarPageProxy(pages);
+            //     that.routerList.push({
+            //         page: page,
+            //         timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+            //         routeEventId: res.routeEventId
+            //     });
+            //     routeEventId = res.routeEventId;
+            //     console.log('rewrite--onAfterPageLoad', page, res, that.getRouterList());
+            // });
+            // wx.onAfterPageUnload(function (res) {
+            //     const { pages, page } = getWxCurrentPages();
+            //     that.setTabbarPageProxy(pages);
+            //     if (!that.inTabbarPage(page) && routeEventId !== res.routeEventId) {
+            //         routeEventId = res.routeEventId;
+            //         that.routerList.push({
+            //             page: page,
+            //             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+            //             routeEventId: res.routeEventId
+            //         });
+            //     }
 
-                console.log('rewrite--onAfterPageUnload', page, res, that.getRouterList());
-            });
+            //     console.log('rewrite--onAfterPageUnload', page, res, that.getRouterList());
+            // });
 
         } catch (error) {
             console.log('rewrite--cs error', error);

@@ -2140,7 +2140,7 @@ var UniAppMonitor = (function () {
             return;
         }
         this.plugins.push(plugin);
-        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this), tabbarPage: this.config.tabbarPage });
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     };
     UniAppMonitor.prototype.destroy = function () {
         this.plugins.forEach(function (plugin) {

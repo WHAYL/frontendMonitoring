@@ -13,7 +13,6 @@ export interface ConsolePluginConfig {
 // 定义浏览器监控插件配置接口
 export interface WxAppMonitorConfig {
     monitorConfig: MonitorConfig;
-    tabbarPage: string[];
     pluginsUse?: {
         consolePluginEnabled?: boolean;
         errorPluginEnabled?: boolean;
@@ -39,7 +38,6 @@ export type ReportInfo = (level: ReportingLevel, data: WxAppLogData) => void;
 export interface WxAppMonitorPluginInitArg {
     reportInfo: ReportInfo;
     getFingerprint: () => string;
-    tabbarPage: string[];
 }
 // 插件接口
 export interface WxAppMonitorPlugin {

@@ -1269,37 +1269,6 @@ var RouterPlugin = (function () {
         this.rewriteWxApp();
         this.rewriteWXRouter();
     };
-    RouterPlugin.prototype.inTabbarPage = function (page) {
-        var _a;
-        return (_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage.some(function (item) { return page.startsWith(item) || item.startsWith('/' + item); });
-    };
-    RouterPlugin.prototype.setTabbarPageProxy = function (pages) {
-        var _a;
-        var tabbarPage = ((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage) || [];
-        var that = this;
-        pages.forEach(function (item) {
-            if (item.proxyRouter) {
-                return;
-            }
-            if (!tabbarPage.includes(item.route)) {
-                return;
-            }
-            item.proxyRouter = true;
-            var originItem = __assign$1({}, item);
-            var originRouter = ["onShow"];
-            originRouter.forEach(function (pro) {
-                item[pro] = function (obj) {
-                    originItem[pro] && originItem[pro](obj);
-                    that.routerList.push({
-                        page: item.route + getQueryString(item.options),
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        routeEventId: "show-" + (++that.showIndex)
-                    });
-                    console.log('rewrite--cs', pro, item, that.getRouterList());
-                };
-            });
-        });
-    };
     RouterPlugin.prototype.getRouterList = function () {
         var uniqueMap = new Map();
         this.routerList.forEach(function (item) {
@@ -1366,42 +1335,12 @@ var RouterPlugin = (function () {
     };
     RouterPlugin.prototype.rewriteWXRouter = function () {
         try {
-            var that_3 = this;
             if (!wx) {
                 return;
             }
-            if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
-                this.wxPage();
-                this.uniWxCreatePage();
-                return;
-            }
-            var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-            that_3.setTabbarPageProxy(pages);
-            var routeEventId_1 = "";
-            wx.onAfterPageLoad(function (res) {
-                var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                that_3.setTabbarPageProxy(pages);
-                that_3.routerList.push({
-                    page: page,
-                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                    routeEventId: res.routeEventId
-                });
-                routeEventId_1 = res.routeEventId;
-                console.log('rewrite--onAfterPageLoad', page, res, that_3.getRouterList());
-            });
-            wx.onAfterPageUnload(function (res) {
-                var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                that_3.setTabbarPageProxy(pages);
-                if (!that_3.inTabbarPage(page) && routeEventId_1 !== res.routeEventId) {
-                    routeEventId_1 = res.routeEventId;
-                    that_3.routerList.push({
-                        page: page,
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        routeEventId: res.routeEventId
-                    });
-                }
-                console.log('rewrite--onAfterPageUnload', page, res, that_3.getRouterList());
-            });
+            this.wxPage();
+            this.uniWxCreatePage();
+            return;
         }
         catch (error) {
             console.log('rewrite--cs error', error);

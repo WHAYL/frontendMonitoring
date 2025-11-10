@@ -9,7 +9,6 @@ export interface ConsolePluginConfig {
 }
 export interface WxAppMonitorConfig {
     monitorConfig: MonitorConfig;
-    tabbarPage: string[];
     pluginsUse?: {
         consolePluginEnabled?: boolean;
         errorPluginEnabled?: boolean;
@@ -32,7 +31,6 @@ export type ReportInfo = (level: ReportingLevel, data: WxAppLogData) => void;
 export interface WxAppMonitorPluginInitArg {
     reportInfo: ReportInfo;
     getFingerprint: () => string;
-    tabbarPage: string[];
 }
 export interface WxAppMonitorPlugin {
     name: string;
