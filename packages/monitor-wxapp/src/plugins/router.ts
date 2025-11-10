@@ -6,7 +6,8 @@ import { debounce } from 'aiy-utils';
 export class RouterPlugin implements WxAppMonitorPlugin {
     name = 'router';
     private monitor: WxAppMonitorPluginInitArg | null = null;
-    private routerList: { page: string, timestamp: string }[] = [];
+    private routerList: { page: string, timestamp: string, routeEventId: string }[] = [];
+    private showIndex = 0;
     constructor() {
         this.name = 'router';
     }
@@ -38,11 +39,20 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                     that.routerList.push({
                         page: item.route + getQueryString(item.options),
                         timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                        routeEventId: "show-" + (++that.showIndex)
                     });
-                    console.log('rewrite--cs', pro, item, that.routerList);
+                    console.log('rewrite--cs', pro, item, that.getRouterList());
                 };
             });
         });
+    }
+    getRouterList() {
+        // 根据routeEventId去重，保留重复项的最后一条数据
+        const uniqueMap = new Map<string, { page: string, timestamp: string, routeEventId: string }>();
+        this.routerList.forEach(item => {
+            uniqueMap.set(item.routeEventId, item);
+        });
+        return Array.from(uniqueMap.values());
     }
     private rewriteWXRouter() {
 
@@ -61,11 +71,12 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                 that.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                    routeEventId: res.routeEventId
                 });
                 routeEventId = res.routeEventId;
-                console.log('rewrite--onAfterPageLoad', page, res, that.routerList);
+                console.log('rewrite--onAfterPageLoad', page, res, that.getRouterList());
             });
-            wx.onAfterPageUnload(debounce(function (res) {
+            wx.onAfterPageUnload(function (res) {
                 const { pages, page } = getWxCurrentPages();
                 that.setTabbarPageProxy(pages);
                 if (!that.inTabbarPage(page) && routeEventId !== res.routeEventId) {
@@ -73,11 +84,12 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                     that.routerList.push({
                         page: page,
                         timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                        routeEventId: res.routeEventId
                     });
                 }
 
-                console.log('rewrite--onAfterPageUnload', page, res, that.routerList);
-            }, 1000, false, true));
+                console.log('rewrite--onAfterPageUnload', page, res, that.getRouterList());
+            });
 
         } catch (error) {
             console.log('rewrite--cs error', error);

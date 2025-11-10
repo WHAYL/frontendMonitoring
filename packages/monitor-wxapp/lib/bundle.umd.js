@@ -1258,6 +1258,128 @@
         return ErrorPlugin;
     }());
 
+    var RouterPlugin = (function () {
+        function RouterPlugin() {
+            this.name = 'router';
+            this.monitor = null;
+            this.routerList = [];
+            this.showIndex = 0;
+            this.name = 'router';
+        }
+        RouterPlugin.prototype.init = function (monitor) {
+            this.monitor = monitor;
+            this.rewriteWxApp();
+            this.rewriteWXRouter();
+        };
+        RouterPlugin.prototype.inTabbarPage = function (page) {
+            var _a;
+            return (_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage.some(function (item) { return page.startsWith(item) || item.startsWith('/' + item); });
+        };
+        RouterPlugin.prototype.setTabbarPageProxy = function (pages) {
+            var _a;
+            var tabbarPage = ((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage) || [];
+            var that = this;
+            pages.forEach(function (item) {
+                if (item.proxyRouter) {
+                    return;
+                }
+                if (!tabbarPage.includes(item.route)) {
+                    return;
+                }
+                item.proxyRouter = true;
+                var originItem = __assign$1({}, item);
+                var originRouter = ["onShow"];
+                originRouter.forEach(function (pro) {
+                    item[pro] = function (obj) {
+                        originItem[pro] && originItem[pro](obj);
+                        that.routerList.push({
+                            page: item.route + getQueryString(item.options),
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: "show-" + (++that.showIndex)
+                        });
+                        console.log('rewrite--cs', pro, item, that.getRouterList());
+                    };
+                });
+            });
+        };
+        RouterPlugin.prototype.getRouterList = function () {
+            var uniqueMap = new Map();
+            this.routerList.forEach(function (item) {
+                uniqueMap.set(item.routeEventId, item);
+            });
+            return Array.from(uniqueMap.values());
+        };
+        RouterPlugin.prototype.rewriteWXRouter = function () {
+            try {
+                var that_1 = this;
+                if (!wx) {
+                    return;
+                }
+                if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
+                    return;
+                }
+                var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                that_1.setTabbarPageProxy(pages);
+                var routeEventId_1 = "";
+                wx.onAfterPageLoad(function (res) {
+                    var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                    that_1.setTabbarPageProxy(pages);
+                    that_1.routerList.push({
+                        page: page,
+                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                        routeEventId: res.routeEventId
+                    });
+                    routeEventId_1 = res.routeEventId;
+                    console.log('rewrite--onAfterPageLoad', page, res, that_1.getRouterList());
+                });
+                wx.onAfterPageUnload(function (res) {
+                    var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                    that_1.setTabbarPageProxy(pages);
+                    if (!that_1.inTabbarPage(page) && routeEventId_1 !== res.routeEventId) {
+                        routeEventId_1 = res.routeEventId;
+                        that_1.routerList.push({
+                            page: page,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            routeEventId: res.routeEventId
+                        });
+                    }
+                    console.log('rewrite--onAfterPageUnload', page, res, that_1.getRouterList());
+                });
+            }
+            catch (error) {
+                console.log('rewrite--cs error', error);
+            }
+        };
+        RouterPlugin.prototype.rewriteWxApp = function () {
+            try {
+                console.log('rewrite--App', App);
+                if (!App) {
+                    return;
+                }
+                var originApp_1 = App;
+                var that = this;
+                var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+                var load_1 = ['onLaunch', 'onShow', 'onHide'];
+                App = function (app) {
+                    __spreadArray(__spreadArray([], err_1, true), load_1, true).forEach(function (methodName) {
+                        var userDefinedMethod = app[methodName];
+                        app[methodName] = function (options) {
+                            console.log('[rewrite--App]', methodName, options);
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    });
+                    return originApp_1(app);
+                };
+            }
+            catch (error) {
+            }
+        };
+        RouterPlugin.prototype.destroy = function () {
+            this.monitor = null;
+        };
+        return RouterPlugin;
+    }());
+
     function t(e, r, t, n) {
       return new (t || (t = Promise))(function (i, o) {
         function a(e) {
@@ -1467,71 +1589,6 @@
         });
       };
     };
-    var c = Object.prototype.toString;
-    function l(e) {
-      return function (r) {
-        return c.call(r) === "[object ".concat(e, "]");
-      };
-    }
-    var s = {
-        isNumber: l("Number"),
-        isString: l("String"),
-        isBoolean: l("Boolean"),
-        isNull: l("Null"),
-        isUndefined: l("Undefined"),
-        isSymbol: l("Symbol"),
-        isFunction: l("Function"),
-        isAsyncFunction: l("AsyncFunction"),
-        isGeneratorFunction: l("GeneratorFunction"),
-        isAsyncGeneratorFunction: l("AsyncGeneratorFunction"),
-        isObject: l("Object"),
-        isArray: function (e) {
-          return Array.isArray(e);
-        },
-        isProcess: l("process"),
-        isWindow: l("Window"),
-        isDate: l("Date"),
-        isMap: l("Map"),
-        isSet: l("Set"),
-        isWeakMap: l("WeakMap"),
-        isWeakSet: l("WeakSet"),
-        isPromise: l("Promise"),
-        isNumNotNaN: function (e) {
-          return "number" == typeof e && !isNaN(e);
-        },
-        isOth: function (e, r) {
-          return l(r)(e);
-        }
-      };
-    var g = function (e, r, i, o) {
-        var a;
-        return "function" != typeof e ? (console.error("debounce ==> 参数1不是Function "), function () {}) : s.isNumNotNaN(r) ? function () {
-          var l = this,
-            s = arguments;
-          return new Promise(function (f, v) {
-            function d() {
-              return t(this, void 0, void 0, function () {
-                var r, t;
-                return n(this, function (n) {
-                  switch (n.label) {
-                    case 0:
-                      return n.trys.push([0, 2,, 3]), [4, e.apply(l, s)];
-                    case 1:
-                      return r = n.sent(), f(r), [3, 3];
-                    case 2:
-                      return t = n.sent(), v(t), [3, 3];
-                    case 3:
-                      return [2];
-                  }
-                });
-              });
-            }
-            if (a && clearTimeout(a), i) ; else a = setTimeout(function () {
-              d();
-            }, r);
-          });
-        } : (console.error("debounce ==> 参数2不是Number(!NaN)"), e);
-      };
     var I = "__lodash_hash_undefined__",
       k = 9007199254740991,
       F = "[object Arguments]",
@@ -2018,117 +2075,6 @@
         return M;
       });
     });
-
-    var RouterPlugin = (function () {
-        function RouterPlugin() {
-            this.name = 'router';
-            this.monitor = null;
-            this.routerList = [];
-            this.name = 'router';
-        }
-        RouterPlugin.prototype.init = function (monitor) {
-            this.monitor = monitor;
-            this.rewriteWxApp();
-            this.rewriteWXRouter();
-        };
-        RouterPlugin.prototype.inTabbarPage = function (page) {
-            var _a;
-            return (_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage.some(function (item) { return page.startsWith(item) || item.startsWith('/' + item); });
-        };
-        RouterPlugin.prototype.setTabbarPageProxy = function (pages) {
-            var _a;
-            var tabbarPage = ((_a = this.monitor) === null || _a === void 0 ? void 0 : _a.tabbarPage) || [];
-            var that = this;
-            pages.forEach(function (item) {
-                if (item.proxyRouter) {
-                    return;
-                }
-                if (!tabbarPage.includes(item.route)) {
-                    return;
-                }
-                item.proxyRouter = true;
-                var originItem = __assign$1({}, item);
-                var originRouter = ["onShow"];
-                originRouter.forEach(function (pro) {
-                    item[pro] = function (obj) {
-                        originItem[pro] && originItem[pro](obj);
-                        that.routerList.push({
-                            page: item.route + getQueryString(item.options),
-                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        });
-                        console.log('rewrite--cs', pro, item, that.routerList);
-                    };
-                });
-            });
-        };
-        RouterPlugin.prototype.rewriteWXRouter = function () {
-            try {
-                var that_1 = this;
-                if (!wx) {
-                    return;
-                }
-                if (!wx.onAfterPageLoad || !wx.onAfterPageUnload) {
-                    return;
-                }
-                var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                that_1.setTabbarPageProxy(pages);
-                var routeEventId_1 = "";
-                wx.onAfterPageLoad(function (res) {
-                    var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                    that_1.setTabbarPageProxy(pages);
-                    that_1.routerList.push({
-                        page: page,
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                    });
-                    routeEventId_1 = res.routeEventId;
-                    console.log('rewrite--onAfterPageLoad', page, res, that_1.routerList);
-                });
-                wx.onAfterPageUnload(g(function (res) {
-                    var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                    that_1.setTabbarPageProxy(pages);
-                    if (!that_1.inTabbarPage(page) && routeEventId_1 !== res.routeEventId) {
-                        routeEventId_1 = res.routeEventId;
-                        that_1.routerList.push({
-                            page: page,
-                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                        });
-                    }
-                    console.log('rewrite--onAfterPageUnload', page, res, that_1.routerList);
-                }, 1000, false, true));
-            }
-            catch (error) {
-                console.log('rewrite--cs error', error);
-            }
-        };
-        RouterPlugin.prototype.rewriteWxApp = function () {
-            try {
-                console.log('rewrite--App', App);
-                if (!App) {
-                    return;
-                }
-                var originApp_1 = App;
-                var that = this;
-                var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-                var load_1 = ['onLaunch', 'onShow', 'onHide'];
-                App = function (app) {
-                    __spreadArray(__spreadArray([], err_1, true), load_1, true).forEach(function (methodName) {
-                        var userDefinedMethod = app[methodName];
-                        app[methodName] = function (options) {
-                            console.log('[rewrite--App]', methodName, options);
-                            return userDefinedMethod && userDefinedMethod.call(this, options);
-                        };
-                    });
-                    return originApp_1(app);
-                };
-            }
-            catch (error) {
-            }
-        };
-        RouterPlugin.prototype.destroy = function () {
-            this.monitor = null;
-        };
-        return RouterPlugin;
-    }());
 
     var arr = ['monitorRouteChange'];
     var monitorEventBus = u(arr);
