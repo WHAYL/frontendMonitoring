@@ -1,6 +1,7 @@
 import { getTimestamp, formatTimestamp, getWxCurrentPages } from '../utils';
 import type { WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
+import { WxAppEventBus } from '../eventBus';
 
 export class ErrorPlugin implements WxAppMonitorPlugin {
     name = 'error';
@@ -12,6 +13,25 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
         this.monitor = monitor;
         this.rewriteWxApp();
         this.rewriteUniApp();
+        // this.wxMethods()
+
+    }
+    private wxMethods() {
+        const that = this;
+        const methods = ['onError', 'onPageNotFound', 'onUnhandledRejection'];
+        methods.forEach((methodName) => {
+            wx[methodName](function (err) {
+                that.monitor && that.monitor.reportInfo('ERROR', {
+                    logCategory: LogCategoryKeyValue.error,
+                    pluginName: that.name,
+                    message: 'wx.' + methodName,
+                    url: getWxCurrentPages().page,
+                    extraData: err,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
+            });
+        });
     }
     private rewriteUniApp() {
         try {
@@ -40,32 +60,24 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
     /** 拦截 微信 App */
     private rewriteWxApp() {
         try {
-            console.log('rewrite--App', App);
             if (!App) {
                 return;
             }
-            const originApp = App;
             const that = this;
-            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            App = function (app) {
-                // 合并方法，插入记录脚本
-                [...err].forEach((methodName) => {
-                    const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
-                    app[methodName] = function (options) {
-                        that.monitor?.reportInfo('ERROR', {
-                            logCategory: LogCategoryKeyValue.error,
-                            pluginName: that.name,
-                            message: 'wxapp ' + methodName,
-                            url: getWxCurrentPages().page,
-                            extraData: options,
-                            timestamp: getTimestamp(),
-                            date: formatTimestamp()
-                        });
-                        return userDefinedMethod && userDefinedMethod.call(that, options);
-                    };
+            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'] as const;
+            [...err].forEach((methodName) => {
+                WxAppEventBus.on(methodName, function (options) {
+                    that.monitor?.reportInfo('ERROR', {
+                        logCategory: LogCategoryKeyValue.error,
+                        pluginName: that.name,
+                        message: 'wx-App ' + methodName,
+                        url: getWxCurrentPages().page,
+                        extraData: options,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
                 });
-                return originApp(app);
-            };
+            });
         } catch (error) {
 
         }

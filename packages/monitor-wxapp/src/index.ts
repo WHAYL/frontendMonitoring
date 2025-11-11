@@ -67,6 +67,7 @@ class WxAppMonitor implements WxAppMonitorBase {
                 UniCreatePageMethods.forEach(methodName => {
                     const userDefinedMethod = options[methodName]; // 暂存用户定义的方法
                     options[methodName] = function (options) {
+                        UniCreatePageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -89,7 +90,7 @@ class WxAppMonitor implements WxAppMonitorBase {
                 [...wxPageMethods].forEach((methodName) => {
                     const userDefinedMethod = prams[methodName]; // 暂存用户定义的方法
                     prams[methodName] = function (options) {
-
+                        WxPageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -112,6 +113,7 @@ class WxAppMonitor implements WxAppMonitorBase {
                 wxAppMethods.forEach((methodName) => {
                     const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
                     app[methodName] = function (options) {
+                        WxAppEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });

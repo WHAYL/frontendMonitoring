@@ -17,35 +17,6 @@ export class RouterPlugin implements WxAppMonitorPlugin {
         this.rewriteWXRouter();
     }
 
-    // private inTabbarPage(page) {
-    //     return this.monitor?.tabbarPage.some((item) => page.startsWith(item) || item.startsWith('/' + item));
-    // }
-    // private setTabbarPageProxy(pages: any[]) {
-    //     const tabbarPage = this.monitor?.tabbarPage || [];
-    //     const that = this;
-    //     pages.forEach((item) => {
-    //         if (item.proxyRouter) {
-    //             return;
-    //         }
-    //         if (!tabbarPage.includes(item.route as string)) {
-    //             return;
-    //         }
-    //         item.proxyRouter = true;
-    //         const originItem = { ...item };
-    //         const originRouter = ["onShow"];
-    //         originRouter.forEach(pro => {
-    //             item[pro] = function (obj) {
-    //                 originItem[pro] && originItem[pro](obj);
-    //                 that.routerList.push({
-    //                     page: item.route + getQueryString(item.options),
-    //                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-    //                     routeEventId: "show-" + (++that.showIndex)
-    //                 });
-    //                 console.log('rewrite--cs', pro, item, that.getRouterList());
-    //             };
-    //         });
-    //     });
-    // }
     getRouterList() {
         // 根据routeEventId去重，保留重复项的最后一条数据
         const uniqueMap = new Map<string, PageRouterData>();
@@ -59,24 +30,15 @@ export class RouterPlugin implements WxAppMonitorPlugin {
             if (!wx) {
                 return;
             }
-            const wxC = wx.createPage;
-            const load = ['onShow'];
             const that = this;
-            wx.createPage = function (options) {
-                load.forEach(methodName => {
-                    const userDefinedMethod = options[methodName]; // 暂存用户定义的方法
-                    options[methodName] = function (options) {
-                        const { pages, page } = getWxCurrentPages();
-                        that.routerList.push({
-                            page: page,
-                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                            routeEventId: "show-" + (++that.showIndex)
-                        });
-                        return userDefinedMethod && userDefinedMethod.call(this, options);
-                    };
+            UniCreatePageEventBus.on('onShow', function (options) {
+                const { pages, page } = getWxCurrentPages();
+                that.routerList.push({
+                    page: page,
+                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                    routeEventId: "show-" + (++that.showIndex)
                 });
-                return wxC(options);
-            };
+            });
         } catch (error) {
 
         }
@@ -86,25 +48,15 @@ export class RouterPlugin implements WxAppMonitorPlugin {
             if (!Page) {
                 return;
             }
-            const originPage = Page;
             const that = this;
-            const load = ['onShow'];
-            Page = function (prams) {
-                // 合并方法，插入记录脚本
-                [...load].forEach((methodName) => {
-                    const userDefinedMethod = prams[methodName]; // 暂存用户定义的方法
-                    prams[methodName] = function (options) {
-                        const { pages, page } = getWxCurrentPages();
-                        that.routerList.push({
-                            page: page,
-                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                            routeEventId: "show-" + (++that.showIndex)
-                        });
-                        return userDefinedMethod && userDefinedMethod.call(this, options);
-                    };
+            WxPageEventBus.on('onShow', function (options) {
+                const { pages, page } = getWxCurrentPages();
+                that.routerList.push({
+                    page: page,
+                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                    routeEventId: "show-" + (++that.showIndex)
                 });
-                return originPage(prams);
-            };
+            });
         } catch (error) {
 
         }
@@ -160,29 +112,19 @@ export class RouterPlugin implements WxAppMonitorPlugin {
             if (!App) {
                 return;
             }
-            const originApp = App;
             const that = this;
-            const load = ['onHide'];
-            App = function (app) {
-                // 合并方法，插入记录脚本
-                [...load].forEach((methodName) => {
-                    const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
-                    app[methodName] = function (options) {
-                        that.monitor && that.monitor.reportInfo('INFO', {
-                            logCategory: LogCategoryKeyValue.pageLifecycle,
-                            pluginName: that.name,
-                            message: 'wx.onHide',
-                            url: getWxCurrentPages().page,
-                            extraData: that.getRouterList(),
-                            timestamp: getTimestamp(),
-                            date: formatTimestamp()
-                        });
-                        that.routerList = [];
-                        return userDefinedMethod && userDefinedMethod.call(this, options);
-                    };
+            WxAppEventBus.on('onHide', function (options) {
+                that.monitor && that.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pageLifecycle,
+                    pluginName: that.name,
+                    message: 'wx.onHide',
+                    url: getWxCurrentPages().page,
+                    extraData: that.getRouterList(),
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
                 });
-                return originApp(app);
-            };
+                that.routerList = [];
+            });
         } catch (error) {
 
         }
@@ -193,4 +135,33 @@ export class RouterPlugin implements WxAppMonitorPlugin {
 
         this.monitor = null;
     }
+    // private inTabbarPage(page) {
+    //     return this.monitor?.tabbarPage.some((item) => page.startsWith(item) || item.startsWith('/' + item));
+    // }
+    // private setTabbarPageProxy(pages: any[]) {
+    //     const tabbarPage = this.monitor?.tabbarPage || [];
+    //     const that = this;
+    //     pages.forEach((item) => {
+    //         if (item.proxyRouter) {
+    //             return;
+    //         }
+    //         if (!tabbarPage.includes(item.route as string)) {
+    //             return;
+    //         }
+    //         item.proxyRouter = true;
+    //         const originItem = { ...item };
+    //         const originRouter = ["onShow"];
+    //         originRouter.forEach(pro => {
+    //             item[pro] = function (obj) {
+    //                 originItem[pro] && originItem[pro](obj);
+    //                 that.routerList.push({
+    //                     page: item.route + getQueryString(item.options),
+    //                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+    //                     routeEventId: "show-" + (++that.showIndex)
+    //                 });
+    //                 console.log('rewrite--cs', pro, item, that.getRouterList());
+    //             };
+    //         });
+    //     });
+    // }
 }
