@@ -3,10 +3,10 @@ import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
 
-import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
+import { getTimestamp, formatTimestamp, getDeviceInfo, getUniCurrentPages } from './utils';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-export { monitorEventBus } from './eventBus';
+import { UniNavMethods, UniNavEventBus, UniAppEventBus } from './eventBus';
 /**
  * 浏览器监控类
  */
@@ -14,6 +14,7 @@ class UniAppMonitor implements UniAppMonitorBase {
     private plugins: UniAppMonitorPlugin[] = [];
     private monitor: FrontendMonitor = new FrontendMonitor();
     private config: UniAppMonitorConfig;
+    private abortController: any = null;
 
     // 添加网络状态监听，离线时缓存日志，上线时自动上报
     private isOnline: boolean = true;
@@ -51,7 +52,65 @@ class UniAppMonitor implements UniAppMonitorBase {
     }
 
     private init(): void {
+        this.rewriteRouter();
+        this.appHide();
+    }
+    private appHide() {
+        uni.onAppHide(() => {
+            UniAppEventBus.emit('onAppHide', {});
+        });
+        this.h5Hide();
+    }
+    private h5Hide() {
+        try {
+            // 创建AbortController来管理所有事件监听器
+            this.abortController = new AbortController();
 
+            // 添加事件监听器，优先使用visibilitychange事件，如果不支持则使用pagehide事件
+            if (typeof document !== 'undefined' && 'hidden' in document) {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        UniAppEventBus.emit('onAppHide', {});
+                    }
+                }, {
+                    signal: this.abortController.signal
+                });
+            } else if (typeof window !== 'undefined' && 'pagehide' in window) {
+                // pagehide事件在现代浏览器中得到良好支持
+                window.addEventListener('pagehide', () => {
+                    UniAppEventBus.emit('onAppHide', {});
+                }, {
+                    signal: this.abortController.signal
+                });
+            }
+
+            // 添加beforeunload事件监听器，确保在页面刷新前上报缓存日志
+            window.addEventListener('beforeunload', () => {
+                UniAppEventBus.emit('onAppHide', {});
+            }, {
+                signal: this.abortController.signal
+            });
+        } catch (error) {
+
+        }
+    }
+    private rewriteRouter() {
+        try {
+            const that = this;
+            const originUni = { ...uni };
+            UniNavMethods.forEach(item => {
+                uni[item] = function (obj) {
+                    originUni[item] && originUni[item]({
+                        ...obj, success: function (res) {
+                            UniNavEventBus.emit(item, obj);
+                            obj.success && obj.success(res);
+                        }
+                    });
+                };
+            });
+        } catch (error) {
+
+        }
     }
     reportAllLog(): void {
         this.reportCacheLog();
@@ -136,7 +195,11 @@ class UniAppMonitor implements UniAppMonitorBase {
      * 销毁监控实例
      */
     destroy(): void {
-
+        // 使用abort controller一次性取消所有事件监听器
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
         // 销毁所有插件
         this.plugins.forEach(plugin => {
             if (typeof plugin.destroy === 'function') {

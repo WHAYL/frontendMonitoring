@@ -1,14 +1,17 @@
 import { ReportingLevel } from '@whayl/monitor-core';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin } from './type';
-export { monitorEventBus } from './eventBus';
 declare class UniAppMonitor implements UniAppMonitorBase {
     private plugins;
     private monitor;
     private config;
+    private abortController;
     private isOnline;
     private cacheLog;
     constructor(config: UniAppMonitorConfig);
     private init;
+    private appHide;
+    private h5Hide;
+    private rewriteRouter;
     reportAllLog(): void;
     private reportCacheLog;
     private setupNetworkListener;

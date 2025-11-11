@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.AiyMonitorUniapp = {}));
-})(this, (function (exports) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.AiyMonitorUniapp = factory());
+})(this, (function () { 'use strict';
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -1309,91 +1309,6 @@
         return ErrorPlugin;
     }());
 
-    var RouterPlugin = (function () {
-        function RouterPlugin() {
-            this.name = 'router';
-            this.monitor = null;
-            this.routerList = [];
-            this.name = 'router';
-        }
-        RouterPlugin.prototype.init = function (monitor) {
-            var _this = this;
-            this.monitor = monitor;
-            getDeviceInfo().then(function (res) {
-                switch (res.uniPlatform) {
-                    case 'web':
-                        _this.rewriteRouter();
-                        break;
-                    case 'mp-weixin':
-                        break;
-                    default: _this.rewriteRouter();
-                }
-            });
-            uni.onAppHide(function () {
-                _this.monitor && _this.monitor.reportInfo('INFO', {
-                    logCategory: LogCategoryKeyValue.pageLifecycle,
-                    pluginName: _this.name,
-                    message: 'uni.onAppHide',
-                    url: getUniCurrentPages().page,
-                    extraData: _this.routerList,
-                    timestamp: getTimestamp(),
-                    date: formatTimestamp()
-                });
-                _this.routerList = [];
-            });
-        };
-        RouterPlugin.prototype.rewriteRouter = function () {
-            try {
-                if (!uni) {
-                    return;
-                }
-                var that_1 = this;
-                setTimeout(function () {
-                    var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
-                    that_1.routerList.push({
-                        page: page,
-                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                    });
-                }, 400);
-                var originUni_1 = __assign$1({}, uni);
-                var originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
-                originRouter.forEach(function (item) {
-                    uni[item] = function (obj) {
-                        originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {
-                                obj.success && obj.success(res);
-                                if (item === 'navigateBack') {
-                                    setTimeout(function () {
-                                        var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
-                                        that_1.routerList.push({
-                                            page: page,
-                                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                        });
-                                    }, 40);
-                                }
-                                else {
-                                    that_1.routerList.push({
-                                        page: obj.url,
-                                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                    });
-                                }
-                            } }));
-                        var ur = '';
-                        that_1.routerList.forEach(function (item, index) {
-                            ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
-                        });
-                    };
-                });
-            }
-            catch (error) {
-                console.error(error);
-            }
-        };
-        RouterPlugin.prototype.destroy = function () {
-            this.monitor = null;
-        };
-        return RouterPlugin;
-    }());
-
     function t(e, r, t, n) {
       return new (t || (t = Promise))(function (i, o) {
         function a(e) {
@@ -2090,14 +2005,88 @@
       });
     });
 
-    var arr = ['monitorRouteChange'];
-    var monitorEventBus = u(arr);
+    var UniNavMethods = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
+    var UniNavEventBus = u(UniNavMethods);
+    var UniAppMethods = ['onAppHide'];
+    var UniAppEventBus = u(UniAppMethods);
+
+    var RouterPlugin = (function () {
+        function RouterPlugin() {
+            this.name = 'router';
+            this.monitor = null;
+            this.routerList = [];
+            this.onAppHideHandel = function () { };
+            this.name = 'router';
+        }
+        RouterPlugin.prototype.init = function (monitor) {
+            var _this = this;
+            this.monitor = monitor;
+            getDeviceInfo().then(function (res) {
+                switch (res.uniPlatform) {
+                    case 'web':
+                        _this.rewriteRouter();
+                        break;
+                    case 'mp-weixin':
+                        break;
+                    default: _this.rewriteRouter();
+                }
+            });
+            this.onAppHideHandel = function () {
+                console.log('app hide', _this.routerList);
+            };
+            UniAppEventBus.on('onAppHide', this.onAppHideHandel);
+        };
+        RouterPlugin.prototype.rewriteRouter = function () {
+            try {
+                if (!uni) {
+                    return;
+                }
+                var that_1 = this;
+                setTimeout(function () {
+                    var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
+                    that_1.routerList.push({
+                        page: page,
+                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                    });
+                }, 400);
+                UniNavMethods.forEach(function (item) {
+                    UniNavEventBus.on(item, function (options) {
+                        if (item !== 'navigateBack') {
+                            var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
+                            that_1.routerList.push({
+                                page: options.url,
+                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            });
+                        }
+                        else {
+                            setTimeout(function () {
+                                var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
+                                that_1.routerList.push({
+                                    page: page,
+                                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                });
+                            }, 40);
+                        }
+                        console.log('router', item, that_1.routerList);
+                    });
+                });
+            }
+            catch (error) {
+                console.error(error);
+            }
+        };
+        RouterPlugin.prototype.destroy = function () {
+            this.monitor = null;
+        };
+        return RouterPlugin;
+    }());
 
     var UniAppMonitor = (function () {
         function UniAppMonitor(config) {
             var _this = this;
             this.plugins = [];
             this.monitor = new FrontendMonitor();
+            this.abortController = null;
             this.isOnline = true;
             this.cacheLog = [];
             this.config = config;
@@ -2116,6 +2105,58 @@
             this.setupNetworkListener();
         }
         UniAppMonitor.prototype.init = function () {
+            this.rewriteRouter();
+            this.appHide();
+        };
+        UniAppMonitor.prototype.appHide = function () {
+            uni.onAppHide(function () {
+                UniAppEventBus.emit('onAppHide', {});
+            });
+            this.h5Hide();
+        };
+        UniAppMonitor.prototype.h5Hide = function () {
+            try {
+                this.abortController = new AbortController();
+                if (typeof document !== 'undefined' && 'hidden' in document) {
+                    document.addEventListener('visibilitychange', function () {
+                        if (document.visibilityState === 'hidden') {
+                            UniAppEventBus.emit('onAppHide', {});
+                        }
+                    }, {
+                        signal: this.abortController.signal
+                    });
+                }
+                else if (typeof window !== 'undefined' && 'pagehide' in window) {
+                    window.addEventListener('pagehide', function () {
+                        UniAppEventBus.emit('onAppHide', {});
+                    }, {
+                        signal: this.abortController.signal
+                    });
+                }
+                window.addEventListener('beforeunload', function () {
+                    UniAppEventBus.emit('onAppHide', {});
+                }, {
+                    signal: this.abortController.signal
+                });
+            }
+            catch (error) {
+            }
+        };
+        UniAppMonitor.prototype.rewriteRouter = function () {
+            try {
+                var that = this;
+                var originUni_1 = __assign$1({}, uni);
+                UniNavMethods.forEach(function (item) {
+                    uni[item] = function (obj) {
+                        originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {
+                                UniNavEventBus.emit(item, obj);
+                                obj.success && obj.success(res);
+                            } }));
+                    };
+                });
+            }
+            catch (error) {
+            }
         };
         UniAppMonitor.prototype.reportAllLog = function () {
             this.reportCacheLog();
@@ -2215,6 +2256,10 @@
             plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
         };
         UniAppMonitor.prototype.destroy = function () {
+            if (this.abortController) {
+                this.abortController.abort();
+                this.abortController = null;
+            }
             this.plugins.forEach(function (plugin) {
                 if (typeof plugin.destroy === 'function') {
                     plugin.destroy();
@@ -2225,9 +2270,6 @@
         return UniAppMonitor;
     }());
 
-    exports.default = UniAppMonitor;
-    exports.monitorEventBus = monitorEventBus;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
+    return UniAppMonitor;
 
 }));

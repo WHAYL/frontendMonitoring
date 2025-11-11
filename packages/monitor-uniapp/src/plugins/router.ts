@@ -2,11 +2,13 @@ import { getTimestamp, formatTimestamp, getUniCurrentPages, getQueryString, getD
 import type { UniAppMonitorPlugin, UniAppMonitorPluginInitArg } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
+import { UniNavEventBus, UniNavMethods, UniAppEventBus } from '../eventBus';
 
 export class RouterPlugin implements UniAppMonitorPlugin {
     name = 'router';
     private monitor: UniAppMonitorPluginInitArg | null = null;
     private routerList: { page: string, timestamp: string }[] = [];
+    private onAppHideHandel = () => { };
     constructor() {
         this.name = 'router';
     }
@@ -24,19 +26,10 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                 default: this.rewriteRouter();
             }
         });
-        uni.onAppHide(() => {
-            this.monitor && this.monitor.reportInfo('INFO', {
-                logCategory: LogCategoryKeyValue.pageLifecycle,
-                pluginName: this.name,
-                message: 'uni.onAppHide',
-                url: getUniCurrentPages().page,
-                extraData: this.routerList,
-                timestamp: getTimestamp(),
-                date: formatTimestamp()
-            });
-            this.routerList = [];
-        });
-
+        this.onAppHideHandel = () => {
+            console.log('app hide', this.routerList);
+        };
+        UniAppEventBus.on('onAppHide', this.onAppHideHandel);
     }
     private rewriteRouter() {
         try {
@@ -51,44 +44,31 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                 });
             }, 400);
-            const originUni = { ...uni };
-            const originRouter = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navigateBack"];
-            originRouter.forEach(item => {
-                uni[item] = function (obj) {
-
-                    originUni[item] && originUni[item]({
-                        ...obj, success: function (res) {
-                            obj.success && obj.success(res);
-                            if (item === 'navigateBack') {
-                                setTimeout(() => {
-                                    const { pages, page } = getUniCurrentPages();
-                                    that.routerList.push({
-                                        page: page,
-                                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                    });
-                                }, 40);
-
-                            } else {
-                                that.routerList.push({
-                                    page: obj.url,
-                                    timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                });
-                            }
-                        }
-                    });
-
-                    let ur = '';
-                    that.routerList.forEach((item, index) => {
-                        ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
-                    });
-                };
+            UniNavMethods.forEach(item => {
+                UniNavEventBus.on(item, (options) => {
+                    if (item !== 'navigateBack') {
+                        const { pages, page } = getUniCurrentPages();
+                        that.routerList.push({
+                            page: options.url,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                        });
+                    } else {
+                        setTimeout(() => {
+                            const { pages, page } = getUniCurrentPages();
+                            that.routerList.push({
+                                page: page,
+                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            });
+                        }, 40);
+                    }
+                    console.log('router', item, that.routerList);
+                });
             });
         } catch (error) {
             console.error(error);
         }
 
     }
-
     destroy(): void {
 
         this.monitor = null;
