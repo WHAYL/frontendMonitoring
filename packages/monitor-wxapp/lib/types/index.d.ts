@@ -1,6 +1,6 @@
 import { ReportingLevel } from '@whayl/monitor-core';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin } from './type';
-export { monitorEventBus } from './eventBus';
+export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
 declare class WxAppMonitor implements WxAppMonitorBase {
     private plugins;
     private monitor;
@@ -9,6 +9,9 @@ declare class WxAppMonitor implements WxAppMonitorBase {
     private cacheLog;
     constructor(config: WxAppMonitorConfig);
     private init;
+    private uniWxCreatePage;
+    private wxPage;
+    private rewriteWxApp;
     reportAllLog(): void;
     private reportCacheLog;
     private setupNetworkListener;

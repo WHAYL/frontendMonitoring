@@ -1,9 +1,38 @@
 import { EventEmitter } from "aiy-utils";
 // 定义事件类型映射
-type EventMap = {
-    "monitorRouteChange": (data: any) => void;
+type WxAppEventMap = {
+    "onLaunch": (data: any) => void;
+    "onHide": (data: any) => void;
+    "onShow": (data: any) => void;
+    "onError": (data: any) => void;
+    "onUnhandledRejection": (data: any) => void;
+    "onPageNotFound": (data: any) => void;
     // 可以添加更多的事件类型
 };
-const arr = ['monitorRouteChange'] as const;
-const monitorEventBus = EventEmitter<EventMap>(arr);
-export { monitorEventBus };
+export const wxAppMethods = ['onLaunch', 'onHide', 'onShow', 'onError', 'onUnhandledRejection', 'onPageNotFound'] as const;
+const WxAppEventBus = EventEmitter<WxAppEventMap>(wxAppMethods);
+
+// 定义事件类型映射
+type WxPageEventMap = {
+    "onLoad": (data: any) => void;
+    "onHide": (data: any) => void;
+    "onShow": (data: any) => void;
+    "onReady": (data: any) => void;
+    "onUnload": (data: any) => void;
+    // 可以添加更多的事件类型
+};
+export const wxPageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'] as const;
+const WxPageEventBus = EventEmitter<WxPageEventMap>(wxPageMethods);
+
+// 定义事件类型映射
+type UniCreatePageEventMap = {
+    "onLoad": (data: any) => void;
+    "onHide": (data: any) => void;
+    "onShow": (data: any) => void;
+    "onReady": (data: any) => void;
+    "onUnload": (data: any) => void;
+    // 可以添加更多的事件类型
+};
+export const UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'] as const;
+const UniCreatePageEventBus = EventEmitter<UniCreatePageEventMap>(UniCreatePageMethods);
+export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus };

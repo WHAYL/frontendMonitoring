@@ -1,12 +1,12 @@
 import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
-import { RouterPlugin } from './plugins/router';
+import { RouterPlugin, UniCreatePageEventBus } from './plugins/router';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-export { monitorEventBus } from './eventBus';
+export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
 /**
  * wxapp监控类
  */
@@ -51,6 +51,79 @@ class WxAppMonitor implements WxAppMonitorBase {
     }
 
     private init(): void {
+        this.rewriteWxApp();
+        this.wxPage();
+        this.uniWxCreatePage();
+    }
+    /** 拦截 uniapp wx.createPage */
+    private uniWxCreatePage() {
+        try {
+            if (!wx) {
+                return;
+            }
+            const wxC = wx.createPage;
+            const load = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
+            const that = this;
+            wx.createPage = function (options) {
+                load.forEach(methodName => {
+                    const userDefinedMethod = options[methodName]; // 暂存用户定义的方法
+                    options[methodName] = function (options) {
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return wxC(options);
+            };
+        } catch (error) {
+
+        }
+    }
+    /** 拦截 微信 Page */
+    private wxPage() {
+        try {
+            if (!Page) {
+                return;
+            }
+            const originPage = Page;
+            const that = this;
+            const load = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
+            Page = function (prams) {
+                // 合并方法，插入记录脚本
+                [...load].forEach((methodName) => {
+                    const userDefinedMethod = prams[methodName]; // 暂存用户定义的方法
+                    prams[methodName] = function (options) {
+
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originPage(prams);
+            };
+        } catch (error) {
+
+        }
+    }
+    /** 拦截 微信 App */
+    private rewriteWxApp() {
+        try {
+            if (!App) {
+                return;
+            }
+            const originApp = App;
+            const that = this;
+            const load = ['onLaunch', 'onHide', 'onShow'];
+            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+            App = function (app) {
+                // 合并方法，插入记录脚本
+                [...load, ...err].forEach((methodName) => {
+                    const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
+                    app[methodName] = function (options) {
+                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                    };
+                });
+                return originApp(app);
+            };
+        } catch (error) {
+
+        }
 
     }
     reportAllLog(): void {
