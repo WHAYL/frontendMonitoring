@@ -1231,15 +1231,18 @@
         ErrorPlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
             var that = this;
-            uni.onError(function (err) {
-                that.monitor && that.monitor.reportInfo('ERROR', {
-                    logCategory: LogCategoryKeyValue.error,
-                    pluginName: that.name,
-                    message: err,
-                    url: getUniCurrentPages().page,
-                    extraData: err,
-                    timestamp: getTimestamp(),
-                    date: formatTimestamp()
+            var methods = ['onError', 'onPageNotFound'];
+            methods.forEach(function (methodName) {
+                uni[methodName](function (err) {
+                    that.monitor && that.monitor.reportInfo('ERROR', {
+                        logCategory: LogCategoryKeyValue.error,
+                        pluginName: that.name,
+                        message: 'uni.' + methodName,
+                        url: getUniCurrentPages().page,
+                        extraData: err,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
                 });
             });
         };
@@ -1269,6 +1272,18 @@
                         break;
                     default: _this.rewriteRouter();
                 }
+            });
+            uni.onAppHide(function () {
+                _this.monitor && _this.monitor.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pageLifecycle,
+                    pluginName: _this.name,
+                    message: 'uni.onAppHide',
+                    url: getUniCurrentPages().page,
+                    extraData: _this.routerList,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
+                _this.routerList = [];
             });
         };
         RouterPlugin.prototype.rewriteRouter = function () {

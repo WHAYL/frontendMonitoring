@@ -1235,18 +1235,39 @@ define(['exports'], (function (exports) { 'use strict';
         }
         ErrorPlugin.prototype.init = function (monitor) {
             this.monitor = monitor;
-            var that = this;
-            wx.onError(function (err) {
-                that.monitor && that.monitor.reportInfo('ERROR', {
-                    logCategory: LogCategoryKeyValue.error,
-                    pluginName: that.name,
-                    message: err,
-                    url: getWxCurrentPages().page,
-                    extraData: err,
-                    timestamp: getTimestamp(),
-                    date: formatTimestamp()
-                });
-            });
+            this.rewriteWxApp();
+        };
+        ErrorPlugin.prototype.rewriteWxApp = function () {
+            try {
+                console.log('rewrite--App', App);
+                if (!App) {
+                    return;
+                }
+                var originApp_1 = App;
+                var that_1 = this;
+                var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+                App = function (app) {
+                    __spreadArray([], err_1, true).forEach(function (methodName) {
+                        var userDefinedMethod = app[methodName];
+                        app[methodName] = function (options) {
+                            var _a;
+                            (_a = that_1.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('ERROR', {
+                                logCategory: LogCategoryKeyValue.error,
+                                pluginName: that_1.name,
+                                message: 'wxapp ' + methodName,
+                                url: getWxCurrentPages().page,
+                                extraData: options,
+                                timestamp: getTimestamp(),
+                                date: formatTimestamp()
+                            });
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    });
+                    return originApp_1(app);
+                };
+            }
+            catch (error) {
+            }
         };
         ErrorPlugin.prototype.destroy = function () {
             this.monitor = null;
@@ -1351,14 +1372,22 @@ define(['exports'], (function (exports) { 'use strict';
                     return;
                 }
                 var originApp_1 = App;
-                var that = this;
-                var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-                var load_3 = ['onLaunch', 'onShow', 'onHide'];
+                var that_3 = this;
+                var load_3 = ['onHide'];
                 App = function (app) {
-                    __spreadArray(__spreadArray([], err_1, true), load_3, true).forEach(function (methodName) {
+                    __spreadArray([], load_3, true).forEach(function (methodName) {
                         var userDefinedMethod = app[methodName];
                         app[methodName] = function (options) {
-                            console.log('[rewrite--App]', methodName, options);
+                            that_3.monitor && that_3.monitor.reportInfo('INFO', {
+                                logCategory: LogCategoryKeyValue.pageLifecycle,
+                                pluginName: that_3.name,
+                                message: 'wx.onHide',
+                                url: getWxCurrentPages().page,
+                                extraData: that_3.getRouterList(),
+                                timestamp: getTimestamp(),
+                                date: formatTimestamp()
+                            });
+                            that_3.routerList = [];
                             return userDefinedMethod && userDefinedMethod.call(this, options);
                         };
                     });

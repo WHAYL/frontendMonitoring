@@ -1,4 +1,4 @@
-import type { WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
+import type { PageRouterData, WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
 export declare class RouterPlugin implements WxAppMonitorPlugin {
     name: string;
     private monitor;
@@ -6,11 +6,7 @@ export declare class RouterPlugin implements WxAppMonitorPlugin {
     private showIndex;
     constructor();
     init(monitor: WxAppMonitorPluginInitArg): void;
-    getRouterList(): {
-        page: string;
-        timestamp: string;
-        routeEventId: string;
-    }[];
+    getRouterList(): PageRouterData[];
     private uniWxCreatePage;
     private wxPage;
     private rewriteWXRouter;

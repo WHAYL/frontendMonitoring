@@ -21,7 +21,11 @@ export interface WxAppMonitorConfig {
     consolePluginConfig?: ConsolePluginConfig;
 
 }
-
+export interface PageRouterData {
+    page: string;
+    timestamp: string;
+    routeEventId: string;
+}
 // 定义需要的 Navigator 字段子集
 export interface PartialNavigator {
     userAgent: string;
@@ -66,6 +70,10 @@ export interface WxAppMonitorBase {
 export interface ConsoleExtraData {
     args: any[];
     stack: string | undefined;
+}
+// Router 插件的 ExtraData 类型
+export interface RouterExtraData {
+    pages: PageRouterData[];
 }
 
 export interface WxSystemInfo {

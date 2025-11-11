@@ -25,6 +25,18 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                 default: this.rewriteRouter();
             }
         });
+        uni.onAppHide(() => {
+            this.monitor && this.monitor.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.pageLifecycle,
+                pluginName: this.name,
+                message: 'uni.onAppHide',
+                url: getUniCurrentPages().page,
+                extraData: this.routerList,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
+            this.routerList = [];
+        });
 
     }
     private rewriteRouter() {

@@ -16,6 +16,11 @@ export interface WxAppMonitorConfig {
     };
     consolePluginConfig?: ConsolePluginConfig;
 }
+export interface PageRouterData {
+    page: string;
+    timestamp: string;
+    routeEventId: string;
+}
 export interface PartialNavigator {
     userAgent: string;
     platform: string;
@@ -47,6 +52,9 @@ export interface WxAppMonitorBase {
 export interface ConsoleExtraData {
     args: any[];
     stack: string | undefined;
+}
+export interface RouterExtraData {
+    pages: PageRouterData[];
 }
 export interface WxSystemInfo {
     brand: string;

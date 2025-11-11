@@ -11,15 +11,18 @@ export class ErrorPlugin implements UniAppMonitorPlugin {
     init(monitor: UniAppMonitorPluginInitArg): void {
         this.monitor = monitor;
         const that = this;
-        uni.onError(function (err) {
-            that.monitor && that.monitor.reportInfo('ERROR', {
-                logCategory: LogCategoryKeyValue.error,
-                pluginName: that.name,
-                message: err,
-                url: getUniCurrentPages().page,
-                extraData: err,
-                timestamp: getTimestamp(),
-                date: formatTimestamp()
+        const methods = ['onError', 'onPageNotFound'];
+        methods.forEach((methodName) => {
+            uni[methodName](function (err) {
+                that.monitor && that.monitor.reportInfo('ERROR', {
+                    logCategory: LogCategoryKeyValue.error,
+                    pluginName: that.name,
+                    message: 'uni.' + methodName,
+                    url: getUniCurrentPages().page,
+                    extraData: err,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             });
         });
     }

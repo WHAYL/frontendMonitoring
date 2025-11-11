@@ -1,12 +1,12 @@
 import { getTimestamp, formatTimestamp, getWxCurrentPages, getQueryString } from '../utils';
-import type { WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
+import type { PageRouterData, RouterExtraData, WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
 import { debounce } from 'aiy-utils';
 
 export class RouterPlugin implements WxAppMonitorPlugin {
     name = 'router';
     private monitor: WxAppMonitorPluginInitArg | null = null;
-    private routerList: { page: string, timestamp: string, routeEventId: string }[] = [];
+    private routerList: PageRouterData[] = [];
     private showIndex = 0;
     constructor() {
         this.name = 'router';
@@ -48,7 +48,7 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     // }
     getRouterList() {
         // 根据routeEventId去重，保留重复项的最后一条数据
-        const uniqueMap = new Map<string, { page: string, timestamp: string, routeEventId: string }>();
+        const uniqueMap = new Map<string, PageRouterData>();
         this.routerList.forEach(item => {
             uniqueMap.set(item.routeEventId, item);
         });
@@ -166,14 +166,22 @@ export class RouterPlugin implements WxAppMonitorPlugin {
             }
             const originApp = App;
             const that = this;
-            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            const load = ['onLaunch', 'onShow', 'onHide'];
+            const load = ['onHide'];
             App = function (app) {
                 // 合并方法，插入记录脚本
-                [...err, ...load].forEach((methodName) => {
+                [...load].forEach((methodName) => {
                     const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
                     app[methodName] = function (options) {
-                        console.log('[rewrite--App]', methodName, options);
+                        that.monitor && that.monitor.reportInfo('INFO', {
+                            logCategory: LogCategoryKeyValue.pageLifecycle,
+                            pluginName: that.name,
+                            message: 'wx.onHide',
+                            url: getWxCurrentPages().page,
+                            extraData: that.getRouterList(),
+                            timestamp: getTimestamp(),
+                            date: formatTimestamp()
+                        });
+                        that.routerList = [];
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });

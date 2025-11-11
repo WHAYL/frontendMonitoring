@@ -4,5 +4,6 @@ export declare class ErrorPlugin implements WxAppMonitorPlugin {
     private monitor;
     constructor();
     init(monitor: WxAppMonitorPluginInitArg): void;
+    private rewriteWxApp;
     destroy(): void;
 }
