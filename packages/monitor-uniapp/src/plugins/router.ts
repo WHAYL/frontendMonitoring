@@ -14,7 +14,6 @@ export class RouterPlugin implements UniAppMonitorPlugin {
         this.monitor = monitor;
 
         getDeviceInfo().then((res) => {
-            console.log('rewrite--init', res.uniPlatform);
             switch (res.uniPlatform) {
                 case 'web':
                     this.rewriteRouter();
@@ -82,7 +81,6 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                     that.routerList.forEach((item, index) => {
                         ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
                     });
-                    console.log('rewrite--router', item, ur, that.routerList);
                 };
             });
         } catch (error) {

@@ -72,7 +72,6 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                             routeEventId: "show-" + (++that.showIndex)
                         });
-                        console.log('[rewrite--createPage]', methodName, that.getRouterList());
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -84,7 +83,6 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     }
     private wxPage() {
         try {
-            console.log('rewrite--Page', Page);
             if (!Page) {
                 return;
             }
@@ -102,7 +100,6 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                             routeEventId: "show-" + (++that.showIndex)
                         });
-                        console.log('[rewrite--Page]', methodName, that.getRouterList());
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -160,7 +157,6 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     /** 拦截 微信 App */
     private rewriteWxApp() {
         try {
-            console.log('rewrite--App', App);
             if (!App) {
                 return;
             }

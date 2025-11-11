@@ -1318,7 +1318,6 @@ var RouterPlugin = (function () {
         var _this = this;
         this.monitor = monitor;
         getDeviceInfo().then(function (res) {
-            console.log('rewrite--init', res.uniPlatform);
             switch (res.uniPlatform) {
                 case 'web':
                     _this.rewriteRouter();
@@ -1380,7 +1379,6 @@ var RouterPlugin = (function () {
                     that_1.routerList.forEach(function (item, index) {
                         ur += index + 1 + '----------' + item.page + ':' + item.timestamp + '-----------';
                     });
-                    console.log('rewrite--router', item, ur, that_1.routerList);
                 };
             });
         }

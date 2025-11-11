@@ -1336,7 +1336,6 @@ var RouterPlugin = (function () {
                             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                             routeEventId: "show-" + (++that_1.showIndex)
                         });
-                        console.log('[rewrite--createPage]', methodName, that_1.getRouterList());
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -1348,7 +1347,6 @@ var RouterPlugin = (function () {
     };
     RouterPlugin.prototype.wxPage = function () {
         try {
-            console.log('rewrite--Page', Page);
             if (!Page) {
                 return;
             }
@@ -1365,7 +1363,6 @@ var RouterPlugin = (function () {
                             timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                             routeEventId: "show-" + (++that_2.showIndex)
                         });
-                        console.log('[rewrite--Page]', methodName, that_2.getRouterList());
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
@@ -1390,7 +1387,6 @@ var RouterPlugin = (function () {
     };
     RouterPlugin.prototype.rewriteWxApp = function () {
         try {
-            console.log('rewrite--App', App);
             if (!App) {
                 return;
             }
