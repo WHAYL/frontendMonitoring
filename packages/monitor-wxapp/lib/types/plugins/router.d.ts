@@ -1,5 +1,4 @@
 import type { PageRouterData, WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus } from '../eventBus';
 export declare class RouterPlugin implements WxAppMonitorPlugin {
     name: string;
     private monitor;

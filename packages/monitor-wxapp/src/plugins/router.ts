@@ -1,7 +1,7 @@
 import { getTimestamp, formatTimestamp, getWxCurrentPages, getQueryString } from '../utils';
 import type { PageRouterData, RouterExtraData, WxAppMonitorPlugin, WxAppMonitorPluginInitArg } from '../type';
 import { LogCategoryKeyValue } from '@whayl/monitor-core';
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus } from '../eventBus';
+import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus } from '../eventBus';
 
 export class RouterPlugin implements WxAppMonitorPlugin {
     name = 'router';

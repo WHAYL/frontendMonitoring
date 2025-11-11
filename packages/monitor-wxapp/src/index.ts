@@ -1,12 +1,12 @@
 import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfig, ReportingLevel } from '@whayl/monitor-core';
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
-import { RouterPlugin, UniCreatePageEventBus } from './plugins/router';
+import { RouterPlugin } from './plugins/router';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
+import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
 /**
  * wxapp监控类
  */
@@ -62,10 +62,9 @@ class WxAppMonitor implements WxAppMonitorBase {
                 return;
             }
             const wxC = wx.createPage;
-            const load = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
             const that = this;
             wx.createPage = function (options) {
-                load.forEach(methodName => {
+                UniCreatePageMethods.forEach(methodName => {
                     const userDefinedMethod = options[methodName]; // 暂存用户定义的方法
                     options[methodName] = function (options) {
                         return userDefinedMethod && userDefinedMethod.call(this, options);
@@ -85,10 +84,9 @@ class WxAppMonitor implements WxAppMonitorBase {
             }
             const originPage = Page;
             const that = this;
-            const load = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
             Page = function (prams) {
                 // 合并方法，插入记录脚本
-                [...load].forEach((methodName) => {
+                [...wxPageMethods].forEach((methodName) => {
                     const userDefinedMethod = prams[methodName]; // 暂存用户定义的方法
                     prams[methodName] = function (options) {
 
@@ -109,11 +107,9 @@ class WxAppMonitor implements WxAppMonitorBase {
             }
             const originApp = App;
             const that = this;
-            const load = ['onLaunch', 'onHide', 'onShow'];
-            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
             App = function (app) {
                 // 合并方法，插入记录脚本
-                [...load, ...err].forEach((methodName) => {
+                wxAppMethods.forEach((methodName) => {
                     const userDefinedMethod = app[methodName]; // 暂存用户定义的方法
                     app[methodName] = function (options) {
                         return userDefinedMethod && userDefinedMethod.call(this, options);

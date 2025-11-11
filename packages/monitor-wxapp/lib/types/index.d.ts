@@ -1,6 +1,5 @@
 import { ReportingLevel } from '@whayl/monitor-core';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin } from './type';
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
 declare class WxAppMonitor implements WxAppMonitorBase {
     private plugins;
     private monitor;

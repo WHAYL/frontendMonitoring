@@ -1,4 +1,4 @@
-define(['exports'], (function (exports) { 'use strict';
+define((function () { 'use strict';
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -1300,6 +1300,130 @@ define(['exports'], (function (exports) { 'use strict';
         return ErrorPlugin;
     }());
 
+    var RouterPlugin = (function () {
+        function RouterPlugin() {
+            this.name = 'router';
+            this.monitor = null;
+            this.routerList = [];
+            this.showIndex = 0;
+            this.name = 'router';
+        }
+        RouterPlugin.prototype.init = function (monitor) {
+            this.monitor = monitor;
+            this.rewriteWxApp();
+            this.rewriteWXRouter();
+        };
+        RouterPlugin.prototype.getRouterList = function () {
+            var uniqueMap = new Map();
+            this.routerList.forEach(function (item) {
+                uniqueMap.set(item.routeEventId, item);
+            });
+            return Array.from(uniqueMap.values());
+        };
+        RouterPlugin.prototype.uniWxCreatePage = function () {
+            try {
+                if (!wx) {
+                    return;
+                }
+                var wxC_1 = wx.createPage;
+                var load_1 = ['onShow'];
+                var that_1 = this;
+                wx.createPage = function (options) {
+                    load_1.forEach(function (methodName) {
+                        var userDefinedMethod = options[methodName];
+                        options[methodName] = function (options) {
+                            var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                            that_1.routerList.push({
+                                page: page,
+                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                routeEventId: "show-" + (++that_1.showIndex)
+                            });
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    });
+                    return wxC_1(options);
+                };
+            }
+            catch (error) {
+            }
+        };
+        RouterPlugin.prototype.wxPage = function () {
+            try {
+                if (!Page) {
+                    return;
+                }
+                var originPage_1 = Page;
+                var that_2 = this;
+                var load_2 = ['onShow'];
+                Page = function (prams) {
+                    __spreadArray([], load_2, true).forEach(function (methodName) {
+                        var userDefinedMethod = prams[methodName];
+                        prams[methodName] = function (options) {
+                            var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
+                            that_2.routerList.push({
+                                page: page,
+                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                                routeEventId: "show-" + (++that_2.showIndex)
+                            });
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    });
+                    return originPage_1(prams);
+                };
+            }
+            catch (error) {
+            }
+        };
+        RouterPlugin.prototype.rewriteWXRouter = function () {
+            try {
+                if (!wx) {
+                    return;
+                }
+                this.wxPage();
+                this.uniWxCreatePage();
+                return;
+            }
+            catch (error) {
+                console.log('rewrite--cs error', error);
+            }
+        };
+        RouterPlugin.prototype.rewriteWxApp = function () {
+            try {
+                if (!App) {
+                    return;
+                }
+                var originApp_1 = App;
+                var that_3 = this;
+                var load_3 = ['onHide'];
+                App = function (app) {
+                    __spreadArray([], load_3, true).forEach(function (methodName) {
+                        var userDefinedMethod = app[methodName];
+                        app[methodName] = function (options) {
+                            that_3.monitor && that_3.monitor.reportInfo('INFO', {
+                                logCategory: LogCategoryKeyValue.pageLifecycle,
+                                pluginName: that_3.name,
+                                message: 'wx.onHide',
+                                url: getWxCurrentPages().page,
+                                extraData: that_3.getRouterList(),
+                                timestamp: getTimestamp(),
+                                date: formatTimestamp()
+                            });
+                            that_3.routerList = [];
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    });
+                    return originApp_1(app);
+                };
+            }
+            catch (error) {
+            }
+        };
+        RouterPlugin.prototype.destroy = function () {
+            this.monitor = null;
+        };
+        return RouterPlugin;
+    }());
+
     function t(e, r, t, n) {
       return new (t || (t = Promise))(function (i, o) {
         function a(e) {
@@ -1997,135 +2121,11 @@ define(['exports'], (function (exports) { 'use strict';
     });
 
     var wxAppMethods = ['onLaunch', 'onHide', 'onShow', 'onError', 'onUnhandledRejection', 'onPageNotFound'];
-    var WxAppEventBus = u(wxAppMethods);
+    u(wxAppMethods);
     var wxPageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
-    var WxPageEventBus = u(wxPageMethods);
+    u(wxPageMethods);
     var UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
-    var UniCreatePageEventBus = u(UniCreatePageMethods);
-
-    var RouterPlugin = (function () {
-        function RouterPlugin() {
-            this.name = 'router';
-            this.monitor = null;
-            this.routerList = [];
-            this.showIndex = 0;
-            this.name = 'router';
-        }
-        RouterPlugin.prototype.init = function (monitor) {
-            this.monitor = monitor;
-            this.rewriteWxApp();
-            this.rewriteWXRouter();
-        };
-        RouterPlugin.prototype.getRouterList = function () {
-            var uniqueMap = new Map();
-            this.routerList.forEach(function (item) {
-                uniqueMap.set(item.routeEventId, item);
-            });
-            return Array.from(uniqueMap.values());
-        };
-        RouterPlugin.prototype.uniWxCreatePage = function () {
-            try {
-                if (!wx) {
-                    return;
-                }
-                var wxC_1 = wx.createPage;
-                var load_1 = ['onShow'];
-                var that_1 = this;
-                wx.createPage = function (options) {
-                    load_1.forEach(function (methodName) {
-                        var userDefinedMethod = options[methodName];
-                        options[methodName] = function (options) {
-                            var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                            that_1.routerList.push({
-                                page: page,
-                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                routeEventId: "show-" + (++that_1.showIndex)
-                            });
-                            return userDefinedMethod && userDefinedMethod.call(this, options);
-                        };
-                    });
-                    return wxC_1(options);
-                };
-            }
-            catch (error) {
-            }
-        };
-        RouterPlugin.prototype.wxPage = function () {
-            try {
-                if (!Page) {
-                    return;
-                }
-                var originPage_1 = Page;
-                var that_2 = this;
-                var load_2 = ['onShow'];
-                Page = function (prams) {
-                    __spreadArray([], load_2, true).forEach(function (methodName) {
-                        var userDefinedMethod = prams[methodName];
-                        prams[methodName] = function (options) {
-                            var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
-                            that_2.routerList.push({
-                                page: page,
-                                timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
-                                routeEventId: "show-" + (++that_2.showIndex)
-                            });
-                            return userDefinedMethod && userDefinedMethod.call(this, options);
-                        };
-                    });
-                    return originPage_1(prams);
-                };
-            }
-            catch (error) {
-            }
-        };
-        RouterPlugin.prototype.rewriteWXRouter = function () {
-            try {
-                if (!wx) {
-                    return;
-                }
-                this.wxPage();
-                this.uniWxCreatePage();
-                return;
-            }
-            catch (error) {
-                console.log('rewrite--cs error', error);
-            }
-        };
-        RouterPlugin.prototype.rewriteWxApp = function () {
-            try {
-                if (!App) {
-                    return;
-                }
-                var originApp_1 = App;
-                var that_3 = this;
-                var load_3 = ['onHide'];
-                App = function (app) {
-                    __spreadArray([], load_3, true).forEach(function (methodName) {
-                        var userDefinedMethod = app[methodName];
-                        app[methodName] = function (options) {
-                            that_3.monitor && that_3.monitor.reportInfo('INFO', {
-                                logCategory: LogCategoryKeyValue.pageLifecycle,
-                                pluginName: that_3.name,
-                                message: 'wx.onHide',
-                                url: getWxCurrentPages().page,
-                                extraData: that_3.getRouterList(),
-                                timestamp: getTimestamp(),
-                                date: formatTimestamp()
-                            });
-                            that_3.routerList = [];
-                            return userDefinedMethod && userDefinedMethod.call(this, options);
-                        };
-                    });
-                    return originApp_1(app);
-                };
-            }
-            catch (error) {
-            }
-        };
-        RouterPlugin.prototype.destroy = function () {
-            this.monitor = null;
-        };
-        return RouterPlugin;
-    }());
+    u(UniCreatePageMethods);
 
     var WxAppMonitor = (function () {
         function WxAppMonitor(config) {
@@ -2160,10 +2160,9 @@ define(['exports'], (function (exports) { 'use strict';
                     return;
                 }
                 var wxC_1 = wx.createPage;
-                var load_1 = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
                 var that = this;
                 wx.createPage = function (options) {
-                    load_1.forEach(function (methodName) {
+                    UniCreatePageMethods.forEach(function (methodName) {
                         var userDefinedMethod = options[methodName];
                         options[methodName] = function (options) {
                             return userDefinedMethod && userDefinedMethod.call(this, options);
@@ -2182,9 +2181,8 @@ define(['exports'], (function (exports) { 'use strict';
                 }
                 var originPage_1 = Page;
                 var that = this;
-                var load_2 = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
                 Page = function (prams) {
-                    __spreadArray([], load_2, true).forEach(function (methodName) {
+                    __spreadArray([], wxPageMethods, true).forEach(function (methodName) {
                         var userDefinedMethod = prams[methodName];
                         prams[methodName] = function (options) {
                             return userDefinedMethod && userDefinedMethod.call(this, options);
@@ -2203,10 +2201,8 @@ define(['exports'], (function (exports) { 'use strict';
                 }
                 var originApp_1 = App;
                 var that = this;
-                var load_3 = ['onLaunch', 'onHide', 'onShow'];
-                var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
                 App = function (app) {
-                    __spreadArray(__spreadArray([], load_3, true), err_1, true).forEach(function (methodName) {
+                    wxAppMethods.forEach(function (methodName) {
                         var userDefinedMethod = app[methodName];
                         app[methodName] = function (options) {
                             return userDefinedMethod && userDefinedMethod.call(this, options);
@@ -2326,14 +2322,6 @@ define(['exports'], (function (exports) { 'use strict';
         return WxAppMonitor;
     }());
 
-    exports.UniCreatePageEventBus = UniCreatePageEventBus;
-    exports.UniCreatePageMethods = UniCreatePageMethods;
-    exports.WxAppEventBus = WxAppEventBus;
-    exports.WxPageEventBus = WxPageEventBus;
-    exports.default = WxAppMonitor;
-    exports.wxAppMethods = wxAppMethods;
-    exports.wxPageMethods = wxPageMethods;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
+    return WxAppMonitor;
 
 }));

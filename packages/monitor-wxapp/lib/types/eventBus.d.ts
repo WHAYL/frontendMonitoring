@@ -6,7 +6,7 @@ type WxAppEventMap = {
     "onUnhandledRejection": (data: any) => void;
     "onPageNotFound": (data: any) => void;
 };
-export declare const wxAppMethods: readonly ["onLaunch", "onHide", "onShow", "onError", "onUnhandledRejection", "onPageNotFound"];
+declare const wxAppMethods: readonly ["onLaunch", "onHide", "onShow", "onError", "onUnhandledRejection", "onPageNotFound"];
 declare const WxAppEventBus: {
     getNames: () => any[];
     clearAll: () => void;
@@ -21,7 +21,7 @@ type WxPageEventMap = {
     "onReady": (data: any) => void;
     "onUnload": (data: any) => void;
 };
-export declare const wxPageMethods: readonly ["onLoad", "onShow", "onReady", "onHide", "onUnload"];
+declare const wxPageMethods: readonly ["onLoad", "onShow", "onReady", "onHide", "onUnload"];
 declare const WxPageEventBus: {
     getNames: () => any[];
     clearAll: () => void;
@@ -36,7 +36,7 @@ type UniCreatePageEventMap = {
     "onReady": (data: any) => void;
     "onUnload": (data: any) => void;
 };
-export declare const UniCreatePageMethods: readonly ["onLoad", "onShow", "onReady", "onHide", "onUnload"];
+declare const UniCreatePageMethods: readonly ["onLoad", "onShow", "onReady", "onHide", "onUnload"];
 declare const UniCreatePageEventBus: {
     getNames: () => any[];
     clearAll: () => void;
@@ -44,4 +44,4 @@ declare const UniCreatePageEventBus: {
     off: <K_1 extends keyof UniCreatePageEventMap>(eventName: K_1, listener: UniCreatePageEventMap[K_1]) => void;
     emit: <K_2 extends keyof UniCreatePageEventMap>(eventName: K_2, ...args: Parameters<UniCreatePageEventMap[K_2]>) => void;
 };
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus };
+export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, UniCreatePageMethods, wxPageMethods, wxAppMethods };
