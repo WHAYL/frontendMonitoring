@@ -1239,8 +1239,65 @@ var ErrorPlugin = (function () {
                 });
             });
         });
+        this.h5ErrorHandler();
+    };
+    ErrorPlugin.prototype.h5ErrorHandler = function () {
+        var _this = this;
+        try {
+            if (!window || !window.addEventListener) {
+                return;
+            }
+            this.abortController = new AbortController();
+            var signal = this.abortController.signal;
+            window.addEventListener('error', function (event) {
+                var extraData = {
+                    message: event.message,
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno,
+                    error: event.error,
+                };
+                _this.monitor.reportInfo('ERROR', {
+                    logCategory: LogCategoryKeyValue.error,
+                    pluginName: _this.name,
+                    message: "JavaScript Error: ".concat(event.message),
+                    url: window.location.href,
+                    extraData: extraData,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
+            }, { signal: signal });
+            window.addEventListener('unhandledrejection', function (event) {
+                var _a, _b, _c;
+                var extraData = {
+                    type: event.type,
+                    promise: event.promise,
+                    reason: event.reason,
+                    reasonType: typeof event.reason,
+                    isError: event.reason instanceof Error,
+                    errorMessage: (_a = event.reason) === null || _a === void 0 ? void 0 : _a.message,
+                    errorStack: (_b = event.reason) === null || _b === void 0 ? void 0 : _b.stack,
+                    errorName: (_c = event.reason) === null || _c === void 0 ? void 0 : _c.name,
+                };
+                _this.monitor.reportInfo('ERROR', {
+                    logCategory: LogCategoryKeyValue.error,
+                    pluginName: _this.name,
+                    message: "Unhandled Promise Rejection: ".concat(event.reason),
+                    url: window.location.href,
+                    extraData: extraData,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
+            }, { signal: signal });
+        }
+        catch (error) {
+        }
     };
     ErrorPlugin.prototype.destroy = function () {
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
         this.monitor = null;
     };
     return ErrorPlugin;

@@ -1238,6 +1238,31 @@ var ErrorPlugin = (function () {
     ErrorPlugin.prototype.init = function (monitor) {
         this.monitor = monitor;
         this.rewriteWxApp();
+        this.rewriteUniApp();
+    };
+    ErrorPlugin.prototype.rewriteUniApp = function () {
+        try {
+            if (!uni) {
+                return;
+            }
+            var that_1 = this;
+            var methods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+            methods.forEach(function (methodName) {
+                uni[methodName](function (err) {
+                    that_1.monitor && that_1.monitor.reportInfo('ERROR', {
+                        logCategory: LogCategoryKeyValue.error,
+                        pluginName: that_1.name,
+                        message: 'uni.' + methodName,
+                        url: getWxCurrentPages().page,
+                        extraData: err,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
+                });
+            });
+        }
+        catch (error) {
+        }
     };
     ErrorPlugin.prototype.rewriteWxApp = function () {
         try {
@@ -1246,23 +1271,23 @@ var ErrorPlugin = (function () {
                 return;
             }
             var originApp_1 = App;
-            var that_1 = this;
+            var that_2 = this;
             var err_1 = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
             App = function (app) {
                 __spreadArray([], err_1, true).forEach(function (methodName) {
                     var userDefinedMethod = app[methodName];
                     app[methodName] = function (options) {
                         var _a;
-                        (_a = that_1.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('ERROR', {
+                        (_a = that_2.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('ERROR', {
                             logCategory: LogCategoryKeyValue.error,
-                            pluginName: that_1.name,
+                            pluginName: that_2.name,
                             message: 'wxapp ' + methodName,
                             url: getWxCurrentPages().page,
                             extraData: options,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
                         });
-                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                        return userDefinedMethod && userDefinedMethod.call(that_2, options);
                     };
                 });
                 return originApp_1(app);
@@ -2223,7 +2248,7 @@ var WxAppMonitor = (function () {
             return;
         }
         this.plugins.push(plugin);
-        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this), tabbarPage: this.config.tabbarPage });
+        plugin.init({ reportInfo: this.reportInfo.bind(this), getFingerprint: this.getFingerprint.bind(this) });
     };
     WxAppMonitor.prototype.destroy = function () {
         this.plugins.forEach(function (plugin) {

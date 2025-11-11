@@ -67,7 +67,24 @@ export interface ConsoleExtraData {
     args: any[];
     stack: string | undefined;
 }
+export interface DomErrorExtraData {
+    message: string;
+    filename: string;
+    lineno: number;
+    colno: number;
+    error: any;
+}
 
+export interface DomUnhandledRejectionExtraData {
+    type: string;
+    promise: Promise<any>;
+    reason: any;
+    reasonType: string;
+    isError: boolean;
+    errorMessage?: string;
+    errorStack?: string;
+    errorName?: string;
+}
 export interface UniSystemInfo {
     // device 设备信息
     /** 设备 id */

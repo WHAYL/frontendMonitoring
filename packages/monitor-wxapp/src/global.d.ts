@@ -1,5 +1,6 @@
 
 declare let common_vendor: any;
+declare let uni: any;
 declare let wx: any;
 declare let App: (obj: Record<string, any>) => void;//微信小程序
 declare let Page: (obj: Record<string, any>) => void;//微信小程序

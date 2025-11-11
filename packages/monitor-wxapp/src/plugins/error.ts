@@ -11,21 +11,31 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
     init(monitor: WxAppMonitorPluginInitArg): void {
         this.monitor = monitor;
         this.rewriteWxApp();
-        // const that = this;
-        // const methods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-        // methods.forEach((methodName) => {
-        //     wx[methodName](function (err) {
-        //         that.monitor && that.monitor.reportInfo('ERROR', {
-        //             logCategory: LogCategoryKeyValue.error,
-        //             pluginName: that.name,
-        //             message: 'wx.' + methodName,
-        //             url: getWxCurrentPages().page,
-        //             extraData: err,
-        //             timestamp: getTimestamp(),
-        //             date: formatTimestamp()
-        //         });
-        //     })
-        // })
+        this.rewriteUniApp();
+    }
+    private rewriteUniApp() {
+        try {
+            if (!uni) {
+                return;
+            }
+            const that = this;
+            const methods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
+            methods.forEach((methodName) => {
+                uni[methodName](function (err) {
+                    that.monitor && that.monitor.reportInfo('ERROR', {
+                        logCategory: LogCategoryKeyValue.error,
+                        pluginName: that.name,
+                        message: 'uni.' + methodName,
+                        url: getWxCurrentPages().page,
+                        extraData: err,
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp()
+                    });
+                });
+            });
+        } catch (error) {
+
+        }
     }
     /** 拦截 微信 App */
     private rewriteWxApp() {
@@ -51,7 +61,7 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
                         });
-                        return userDefinedMethod && userDefinedMethod.call(this, options);
+                        return userDefinedMethod && userDefinedMethod.call(that, options);
                     };
                 });
                 return originApp(app);
