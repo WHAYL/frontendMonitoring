@@ -6,6 +6,8 @@ import { WxAppEventBus } from '../eventBus';
 export class ErrorPlugin implements WxAppMonitorPlugin {
     name = 'error';
     private monitor: WxAppMonitorPluginInitArg | null = null;
+    private errorEventHandlers: { [key: string]: (options?: any) => void } = {};
+    private errMethods = ['onError', 'onUnhandledRejection', 'onPageNotFound'] as const;
     constructor() {
         this.name = 'error';
     }
@@ -39,8 +41,7 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
                 return;
             }
             const that = this;
-            const methods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            methods.forEach((methodName) => {
+            this.errMethods.forEach((methodName) => {
                 uni[methodName](function (err) {
                     that.monitor && that.monitor.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.error,
@@ -64,9 +65,9 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
                 return;
             }
             const that = this;
-            const err = ['onError', 'onUnhandledRejection', 'onPageNotFound'] as const;
-            [...err].forEach((methodName) => {
-                WxAppEventBus.on(methodName, function (options) {
+            this.errMethods.forEach((methodName) => {
+                // 创建独立的处理函数并保存引用
+                this.errorEventHandlers[methodName] = (options) => {
                     that.monitor?.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.error,
                         pluginName: that.name,
@@ -76,7 +77,9 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
                         timestamp: getTimestamp(),
                         date: formatTimestamp()
                     });
-                });
+                };
+
+                WxAppEventBus.on(methodName, this.errorEventHandlers[methodName]);
             });
         } catch (error) {
 
@@ -85,6 +88,13 @@ export class ErrorPlugin implements WxAppMonitorPlugin {
     }
 
     destroy(): void {
+        // 注销所有错误事件监听器
+        this.errMethods.forEach((methodName) => {
+            if (this.errorEventHandlers[methodName]) {
+                WxAppEventBus.off(methodName, this.errorEventHandlers[methodName]);
+                delete this.errorEventHandlers[methodName];
+            }
+        });
 
         this.monitor = null;
     }

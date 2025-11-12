@@ -4,6 +4,7 @@ export declare class RouterPlugin implements WxAppMonitorPlugin {
     private monitor;
     private routerList;
     private showIndex;
+    private eventHandlers;
     constructor();
     init(monitor: WxAppMonitorPluginInitArg): void;
     getRouterList(): PageRouterData[];

@@ -1932,6 +1932,8 @@ var ErrorPlugin = (function () {
     function ErrorPlugin() {
         this.name = 'error';
         this.monitor = null;
+        this.errorEventHandlers = {};
+        this.errMethods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
         this.name = 'error';
     }
     ErrorPlugin.prototype.init = function (monitor) {
@@ -1962,8 +1964,7 @@ var ErrorPlugin = (function () {
                 return;
             }
             var that_1 = this;
-            var methods = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            methods.forEach(function (methodName) {
+            this.errMethods.forEach(function (methodName) {
                 uni[methodName](function (err) {
                     that_1.monitor && that_1.monitor.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.error,
@@ -1981,14 +1982,14 @@ var ErrorPlugin = (function () {
         }
     };
     ErrorPlugin.prototype.rewriteWxApp = function () {
+        var _this = this;
         try {
             if (!App) {
                 return;
             }
             var that_2 = this;
-            var err = ['onError', 'onUnhandledRejection', 'onPageNotFound'];
-            __spreadArray([], err, true).forEach(function (methodName) {
-                WxAppEventBus.on(methodName, function (options) {
+            this.errMethods.forEach(function (methodName) {
+                _this.errorEventHandlers[methodName] = function (options) {
                     var _a;
                     (_a = that_2.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('ERROR', {
                         logCategory: LogCategoryKeyValue.error,
@@ -1999,13 +2000,21 @@ var ErrorPlugin = (function () {
                         timestamp: getTimestamp(),
                         date: formatTimestamp()
                     });
-                });
+                };
+                WxAppEventBus.on(methodName, _this.errorEventHandlers[methodName]);
             });
         }
         catch (error) {
         }
     };
     ErrorPlugin.prototype.destroy = function () {
+        var _this = this;
+        this.errMethods.forEach(function (methodName) {
+            if (_this.errorEventHandlers[methodName]) {
+                WxAppEventBus.off(methodName, _this.errorEventHandlers[methodName]);
+                delete _this.errorEventHandlers[methodName];
+            }
+        });
         this.monitor = null;
     };
     return ErrorPlugin;
@@ -2017,6 +2026,7 @@ var RouterPlugin = (function () {
         this.monitor = null;
         this.routerList = [];
         this.showIndex = 0;
+        this.eventHandlers = {};
         this.name = 'router';
     }
     RouterPlugin.prototype.init = function (monitor) {
@@ -2037,14 +2047,15 @@ var RouterPlugin = (function () {
                 return;
             }
             var that_1 = this;
-            UniCreatePageEventBus.on('onShow', function (options) {
+            this.eventHandlers['uniCreatePageOnShow'] = function (options) {
                 var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
                 that_1.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                     routeEventId: "show-" + (++that_1.showIndex)
                 });
-            });
+            };
+            UniCreatePageEventBus.on('onShow', this.eventHandlers['uniCreatePageOnShow']);
         }
         catch (error) {
         }
@@ -2055,14 +2066,15 @@ var RouterPlugin = (function () {
                 return;
             }
             var that_2 = this;
-            WxPageEventBus.on('onShow', function (options) {
+            this.eventHandlers['wxPageOnShow'] = function (options) {
                 var _a = getWxCurrentPages(), pages = _a.pages, page = _a.page;
                 that_2.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                     routeEventId: "show-" + (++that_2.showIndex)
                 });
-            });
+            };
+            WxPageEventBus.on('onShow', this.eventHandlers['wxPageOnShow']);
         }
         catch (error) {
         }
@@ -2086,7 +2098,7 @@ var RouterPlugin = (function () {
                 return;
             }
             var that_3 = this;
-            WxAppEventBus.on('onHide', function (options) {
+            this.eventHandlers['wxAppOnHide'] = function (options) {
                 that_3.monitor && that_3.monitor.reportInfo('INFO', {
                     logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: that_3.name,
@@ -2097,12 +2109,25 @@ var RouterPlugin = (function () {
                     date: formatTimestamp()
                 });
                 that_3.routerList = [];
-            });
+            };
+            WxAppEventBus.on('onHide', this.eventHandlers['wxAppOnHide']);
         }
         catch (error) {
         }
     };
     RouterPlugin.prototype.destroy = function () {
+        if (this.eventHandlers['uniCreatePageOnShow']) {
+            UniCreatePageEventBus.off('onShow', this.eventHandlers['uniCreatePageOnShow']);
+            delete this.eventHandlers['uniCreatePageOnShow'];
+        }
+        if (this.eventHandlers['wxPageOnShow']) {
+            WxPageEventBus.off('onShow', this.eventHandlers['wxPageOnShow']);
+            delete this.eventHandlers['wxPageOnShow'];
+        }
+        if (this.eventHandlers['wxAppOnHide']) {
+            WxAppEventBus.off('onHide', this.eventHandlers['wxAppOnHide']);
+            delete this.eventHandlers['wxAppOnHide'];
+        }
         this.monitor = null;
     };
     return RouterPlugin;

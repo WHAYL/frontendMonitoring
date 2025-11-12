@@ -4,6 +4,7 @@ export declare class RouterPlugin implements UniAppMonitorPlugin {
     private monitor;
     private routerList;
     private onAppHideHandel;
+    private navEventHandlers;
     constructor();
     init(monitor: UniAppMonitorPluginInitArg): void;
     private rewriteRouter;

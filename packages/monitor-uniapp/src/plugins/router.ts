@@ -9,6 +9,7 @@ export class RouterPlugin implements UniAppMonitorPlugin {
     private monitor: UniAppMonitorPluginInitArg | null = null;
     private routerList: { page: string, timestamp: string }[] = [];
     private onAppHideHandel = () => { };
+    private navEventHandlers: { [key: string]: (options?: any) => void } = {};
     constructor() {
         this.name = 'router';
     }
@@ -44,8 +45,10 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                 });
             }, 400);
+
+            // 为每个导航方法创建独立的处理函数
             UniNavMethods.forEach(item => {
-                UniNavEventBus.on(item, (options) => {
+                this.navEventHandlers[item] = (options) => {
                     if (item !== 'navigateBack') {
                         const { pages, page } = getUniCurrentPages();
                         that.routerList.push({
@@ -62,7 +65,9 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                         }, 40);
                     }
                     console.log('router', item, that.routerList);
-                });
+                };
+
+                UniNavEventBus.on(item, this.navEventHandlers[item]);
             });
         } catch (error) {
             console.error(error);
@@ -70,6 +75,15 @@ export class RouterPlugin implements UniAppMonitorPlugin {
 
     }
     destroy(): void {
+        UniAppEventBus.off('onAppHide', this.onAppHideHandel);
+
+        // 注销所有导航事件监听器
+        UniNavMethods.forEach(item => {
+            if (this.navEventHandlers[item]) {
+                UniNavEventBus.off(item, this.navEventHandlers[item]);
+                delete this.navEventHandlers[item];
+            }
+        });
 
         this.monitor = null;
     }

@@ -8,6 +8,7 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     private monitor: WxAppMonitorPluginInitArg | null = null;
     private routerList: PageRouterData[] = [];
     private showIndex = 0;
+    private eventHandlers: { [key: string]: (options: any) => void } = {};
     constructor() {
         this.name = 'router';
     }
@@ -31,14 +32,17 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                 return;
             }
             const that = this;
-            UniCreatePageEventBus.on('onShow', function (options) {
+            // 创建独立的处理函数并保存引用
+            this.eventHandlers['uniCreatePageOnShow'] = function (options) {
                 const { pages, page } = getWxCurrentPages();
                 that.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                     routeEventId: "show-" + (++that.showIndex)
                 });
-            });
+            };
+
+            UniCreatePageEventBus.on('onShow', this.eventHandlers['uniCreatePageOnShow']);
         } catch (error) {
 
         }
@@ -49,14 +53,17 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                 return;
             }
             const that = this;
-            WxPageEventBus.on('onShow', function (options) {
+            // 创建独立的处理函数并保存引用
+            this.eventHandlers['wxPageOnShow'] = function (options) {
                 const { pages, page } = getWxCurrentPages();
                 that.routerList.push({
                     page: page,
                     timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
                     routeEventId: "show-" + (++that.showIndex)
                 });
-            });
+            };
+
+            WxPageEventBus.on('onShow', this.eventHandlers['wxPageOnShow']);
         } catch (error) {
 
         }
@@ -113,7 +120,8 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                 return;
             }
             const that = this;
-            WxAppEventBus.on('onHide', function (options) {
+            // 创建独立的处理函数并保存引用
+            this.eventHandlers['wxAppOnHide'] = function (options) {
                 that.monitor && that.monitor.reportInfo('INFO', {
                     logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: that.name,
@@ -124,7 +132,9 @@ export class RouterPlugin implements WxAppMonitorPlugin {
                     date: formatTimestamp()
                 });
                 that.routerList = [];
-            });
+            };
+
+            WxAppEventBus.on('onHide', this.eventHandlers['wxAppOnHide']);
         } catch (error) {
 
         }
@@ -132,6 +142,21 @@ export class RouterPlugin implements WxAppMonitorPlugin {
     }
 
     destroy(): void {
+        // 注销所有事件监听器
+        if (this.eventHandlers['uniCreatePageOnShow']) {
+            UniCreatePageEventBus.off('onShow', this.eventHandlers['uniCreatePageOnShow']);
+            delete this.eventHandlers['uniCreatePageOnShow'];
+        }
+
+        if (this.eventHandlers['wxPageOnShow']) {
+            WxPageEventBus.off('onShow', this.eventHandlers['wxPageOnShow']);
+            delete this.eventHandlers['wxPageOnShow'];
+        }
+
+        if (this.eventHandlers['wxAppOnHide']) {
+            WxAppEventBus.off('onHide', this.eventHandlers['wxAppOnHide']);
+            delete this.eventHandlers['wxAppOnHide'];
+        }
 
         this.monitor = null;
     }

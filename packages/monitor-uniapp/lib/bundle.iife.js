@@ -2013,6 +2013,7 @@ var AiyMonitorUniapp = (function () {
             this.monitor = null;
             this.routerList = [];
             this.onAppHideHandel = function () { };
+            this.navEventHandlers = {};
             this.name = 'router';
         }
         RouterPlugin.prototype.init = function (monitor) {
@@ -2034,6 +2035,7 @@ var AiyMonitorUniapp = (function () {
             UniAppEventBus.on('onAppHide', this.onAppHideHandel);
         };
         RouterPlugin.prototype.rewriteRouter = function () {
+            var _this = this;
             try {
                 if (!uni) {
                     return;
@@ -2047,7 +2049,7 @@ var AiyMonitorUniapp = (function () {
                     });
                 }, 400);
                 UniNavMethods.forEach(function (item) {
-                    UniNavEventBus.on(item, function (options) {
+                    _this.navEventHandlers[item] = function (options) {
                         if (item !== 'navigateBack') {
                             var _a = getUniCurrentPages(), pages = _a.pages, page = _a.page;
                             that_1.routerList.push({
@@ -2065,7 +2067,8 @@ var AiyMonitorUniapp = (function () {
                             }, 40);
                         }
                         console.log('router', item, that_1.routerList);
-                    });
+                    };
+                    UniNavEventBus.on(item, _this.navEventHandlers[item]);
                 });
             }
             catch (error) {
@@ -2073,6 +2076,14 @@ var AiyMonitorUniapp = (function () {
             }
         };
         RouterPlugin.prototype.destroy = function () {
+            var _this = this;
+            UniAppEventBus.off('onAppHide', this.onAppHideHandel);
+            UniNavMethods.forEach(function (item) {
+                if (_this.navEventHandlers[item]) {
+                    UniNavEventBus.off(item, _this.navEventHandlers[item]);
+                    delete _this.navEventHandlers[item];
+                }
+            });
             this.monitor = null;
         };
         return RouterPlugin;
@@ -2142,7 +2153,7 @@ var AiyMonitorUniapp = (function () {
         UniAppMonitor.prototype.rewriteRouter = function () {
             try {
                 var that = this;
-                var originUni_1 = __assign$1({}, uni);
+                var originUni_1 = __assign$1({}, (wx || uni));
                 UniNavMethods.forEach(function (item) {
                     uni[item] = function (obj) {
                         originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {

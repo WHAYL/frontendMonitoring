@@ -97,7 +97,7 @@ class UniAppMonitor implements UniAppMonitorBase {
     private rewriteRouter() {
         try {
             const that = this;
-            const originUni = { ...uni };
+            const originUni = { ...(wx || uni) };
             UniNavMethods.forEach(item => {
                 uni[item] = function (obj) {
                     originUni[item] && originUni[item]({
