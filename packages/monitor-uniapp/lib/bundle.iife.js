@@ -2089,6 +2089,44 @@ var AiyMonitorUniapp = (function () {
         return RouterPlugin;
     }());
 
+    var RequestPlugin = (function () {
+        function RequestPlugin() {
+            this.name = 'request';
+            this.monitor = null;
+            this.name = 'request';
+        }
+        RequestPlugin.prototype.init = function (monitor) {
+            this.monitor = monitor;
+            this.rewriteHttpRequest();
+        };
+        RequestPlugin.prototype.rewriteHttpRequest = function () {
+            try {
+                var originalRequest_1 = uni.request;
+                var self_1 = this;
+                uni.request = function (param) {
+                    originalRequest_1(__assign$1(__assign$1({}, param), { fail: function (err) {
+                            self_1.monitor.reportInfo('ERROR', {
+                                extraData: { param: param, err: err },
+                                logCategory: LogCategoryKeyValue.xhrFetch,
+                                pluginName: self_1.name,
+                                message: 'uni.request error',
+                                url: getUniCurrentPages().page,
+                                timestamp: getTimestamp(),
+                                date: formatTimestamp()
+                            });
+                            param.fail && param.fail.call(this, err);
+                        } }));
+                };
+            }
+            catch (error) {
+            }
+        };
+        RequestPlugin.prototype.destroy = function () {
+            this.monitor = null;
+        };
+        return RequestPlugin;
+    }());
+
     var UniAppMonitor = (function () {
         function UniAppMonitor(config) {
             var _this = this;
@@ -2099,12 +2137,13 @@ var AiyMonitorUniapp = (function () {
             this.cacheLog = [];
             this.config = config;
             getDeviceInfo();
-            var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d;
+            var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d, _e = _a.requestPluginEnabled, requestPluginEnabled = _e === void 0 ? true : _e;
             this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
             var pluginsToRegister = [
                 consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consolePluginConfig) || {}); } },
                 errorPluginEnabled && { name: 'ErrorPlugin', creator: function () { return new ErrorPlugin(); } },
                 routerPluginEnabled && { name: 'RouterPlugin', creator: function () { return new RouterPlugin(); } },
+                requestPluginEnabled && { name: 'RequestPlugin', creator: function () { return new RequestPlugin(); } },
             ].filter(Boolean);
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());
@@ -2158,7 +2197,7 @@ var AiyMonitorUniapp = (function () {
                     uni[item] = function (obj) {
                         originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {
                                 UniNavEventBus.emit(item, obj);
-                                obj.success && obj.success(res);
+                                obj.success && obj.success.call(this, res);
                             } }));
                     };
                 });

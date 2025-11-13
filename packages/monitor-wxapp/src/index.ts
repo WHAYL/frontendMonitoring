@@ -7,6 +7,7 @@ import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
 import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
+import { RequestPlugin } from './plugins/request';
 /**
  * wxapp监控类
  */
@@ -29,6 +30,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             consolePluginEnabled = true,
             errorPluginEnabled = true,
             routerPluginEnabled = true,
+            requestPluginEnabled = true,
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -39,6 +41,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consolePluginConfig || {}) },
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
+            requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

@@ -2,6 +2,7 @@ import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfi
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
+import { RequestPlugin } from './plugins/request';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo, getUniCurrentPages } from './utils';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
@@ -30,6 +31,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             consolePluginEnabled = true,
             errorPluginEnabled = true,
             routerPluginEnabled = true,
+            requestPluginEnabled = true,
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -40,6 +42,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             consolePluginEnabled && { name: 'ConsolePlugin', creator: () => new ConsolePlugin(config?.consolePluginConfig || {}) },
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
+            requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -103,7 +106,7 @@ class UniAppMonitor implements UniAppMonitorBase {
                     originUni[item] && originUni[item]({
                         ...obj, success: function (res) {
                             UniNavEventBus.emit(item, obj);
-                            obj.success && obj.success(res);
+                            obj.success && obj.success.call(this, res);
                         }
                     });
                 };

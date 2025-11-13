@@ -13,6 +13,7 @@ export interface UniAppMonitorConfig {
         consolePluginEnabled?: boolean;
         errorPluginEnabled?: boolean;
         routerPluginEnabled?: boolean;
+        requestPluginEnabled?: boolean;
     };
     consolePluginConfig?: ConsolePluginConfig;
 }
