@@ -1,30 +1,30 @@
-# monitor-uniapp
+# monitor-wxapp
 
-UniApp 应用监控 SDK，专为 UniApp 应用设计的监控解决方案，提供对 UniApp 应用中各种指标的监控，包括：控制台日志、错误异常、路由变化、请求信息等。
+微信小程序监控 SDK，专为微信小程序设计的监控解决方案，提供对微信小程序中各种指标的监控，包括：控制台日志、错误异常、路由变化、请求信息等。
 
 ## 功能特性
 
-monitor-uniapp 提供以下监控功能：
+monitor-wxapp 提供以下监控功能：
 
 1. **控制台日志监控** - 监控 console.error 和 console.warn 输出
 2. **错误异常监控** - 监控 JavaScript 错误和未捕获的 Promise 异常
 3. **路由变化监控** - 监控页面路由的变化历史
-4. **请求信息监控** - 监控 uni.request 等网络请求的成功与失败情况
+4. **请求信息监控** - 监控 wx.request 等网络请求的成功与失败情况
 
 ## 安装
 
 ```bash
-npm install @whayl/monitor-uniapp
+npm install @whayl/monitor-wxapp
 ```
 
 ## 配置项
 
-### UniAppMonitorConfig
+### WxAppMonitorConfig
 
-创建 [UniAppMonitor](#uniappmonitor) 实例时需要传入配置对象：
+创建 [WxAppMonitor](#wxappmonitor) 实例时需要传入配置对象：
 
 ```typescript
-interface UniAppMonitorConfig {
+interface WxAppMonitorConfig {
   monitorConfig: MonitorConfig;
   pluginsUse?: {
     consolePluginEnabled?: boolean;  // 启用控制台插件，默认: true
@@ -53,7 +53,7 @@ interface ConsolePluginConfig {
 
 ```typescript
 interface MonitorConfig {
-  platform: string;                     // 平台名称，如 'uniapp'
+  platform: string;                     // 平台名称，如 'wxapp'
   reportLevel: ReportingLevel;          // 上报等级 ('ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'OFF')
   enabled: boolean;                     // 是否启用监控，默认: true
   uploadHandler: (data: ErrorInfo | ErrorInfo[]) => void; // 自定义上传处理函数
@@ -67,18 +67,18 @@ interface MonitorConfig {
 ### 基本使用
 
 ```javascript
-import UniAppMonitor from '@whayl/monitor-uniapp';
+import WxAppMonitor from '@whayl/monitor-wxapp';
 
-const monitor = new UniAppMonitor({
+const monitor = new WxAppMonitor({
   monitorConfig: {
-    platform: 'uniapp',
+    platform: 'wxapp',
     reportLevel: 'INFO',
     enabled: true,
     uploadHandler: (data) => {
       // 自定义上报逻辑
       console.log('上报数据:', data);
       // 例如发送到服务器
-      // fetch('/api/report', { method: 'POST', body: JSON.stringify(data) });
+      // wx.request({ url: '/api/report', method: 'POST', data: JSON.stringify(data) });
     }
   },
   pluginsUse: {
@@ -127,11 +127,11 @@ monitor.destroy();
 
 ## API 参考
 
-### UniAppMonitor
+### WxAppMonitor
 
-UniApp 监控主类。
+微信小程序监控主类。
 
-#### constructor(config: UniAppMonitorConfig)
+#### constructor(config: WxAppMonitorConfig)
 
 创建一个新的监控实例。
 
@@ -143,11 +143,11 @@ UniApp 监控主类。
 
 获取当前浏览器指纹。
 
-#### use(plugin: UniAppMonitorPlugin)
+#### use(plugin: WxAppMonitorPlugin)
 
 添加一个插件。
 
-#### reportInfo(type: ReportingLevel, data: UniAppLogData)
+#### reportInfo(type: ReportingLevel, data: WxAppLogData)
 
 手动上报日志信息。
 
@@ -196,16 +196,17 @@ interface LogData {
 }
 ```
 
-## 平台适配
+## 微信小程序适配
 
-monitor-uniapp 适配了多种平台：
+monitor-wxapp 针对微信小程序环境进行了专门适配：
 
-1. **App** - 支持 Android 和 iOS 原生应用
-2. **H5** - 支持浏览器环境
-3. **小程序** - 支持微信小程序、支付宝小程序等主流小程序平台
+1. **API 拦截** - 拦截 App、Page 等微信小程序核心 API 来收集生命周期信息
+2. **设备信息获取** - 通过 wx.getSystemInfoSync 获取设备信息
+3. **路由监控** - 监控微信小程序的路由跳转
+4. **网络请求监控** - 监控 wx.request 等网络请求
 
 ## 注意事项
 
-1. 在小程序环境中，部分浏览器 API 可能不可用
-2. 由于平台差异，获取设备信息的方式可能不同
-3. 网络状态监听在不同平台可能有不同的实现方式
+1. 微信小程序环境中部分浏览器 API 不可用
+2. 需要在 app.js 中尽早初始化监控实例以捕获完整信息
+3. 由于微信小程序的限制，部分功能可能与浏览器环境有所不同
