@@ -1,6 +1,6 @@
 {
   "name": "@whayl/monitor-uniApp",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "uniApp端监控SDK，包含各种监控插件",
   "type": "module",
   "main": "lib/bundle.cjs.js",
