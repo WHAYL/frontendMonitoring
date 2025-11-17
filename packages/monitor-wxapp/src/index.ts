@@ -74,6 +74,17 @@ class WxAppMonitor implements WxAppMonitorBase {
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(key => {
+                        if (typeof options.methods[key] === 'function' && !UniCreatePageMethods.includes(key as any)) {
+                            const userDefinedMethod = options.methods[key]; // 暂存用户定义的方法
+                            options.methods[key] = function (...args) {
+                                console.log("uniappMethods", this, this.$event, key, args);
+                                return userDefinedMethod && userDefinedMethod.call(this, ...args);
+                            };
+                        }
+                    });
+                }
                 return wxC(options);
             };
         } catch (error) {

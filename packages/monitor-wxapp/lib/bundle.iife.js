@@ -2219,6 +2219,21 @@ var AiyMonitorWxapp = (function () {
                             return userDefinedMethod && userDefinedMethod.call(this, options);
                         };
                     });
+                    if (options.methods) {
+                        Object.keys(options.methods).forEach(function (key) {
+                            if (typeof options.methods[key] === 'function' && !UniCreatePageMethods.includes(key)) {
+                                var userDefinedMethod_1 = options.methods[key];
+                                options.methods[key] = function () {
+                                    var args = [];
+                                    for (var _i = 0; _i < arguments.length; _i++) {
+                                        args[_i] = arguments[_i];
+                                    }
+                                    console.log("uniappMethods", this, this.$event, key, args);
+                                    return userDefinedMethod_1 && userDefinedMethod_1.call.apply(userDefinedMethod_1, __spreadArray([this], args, false));
+                                };
+                            }
+                        });
+                    }
                     return wxC_1(options);
                 };
             }
@@ -2242,14 +2257,14 @@ var AiyMonitorWxapp = (function () {
                     });
                     Object.keys(prams).forEach(function (key) {
                         if (typeof prams[key] === 'function' && !wxPageMethods.includes(key)) {
-                            var userDefinedMethod_1 = prams[key];
+                            var userDefinedMethod_2 = prams[key];
                             prams[key] = function (options) {
                                 var type = options.type;
                                 if (wxPageBindMethods.includes(type)) {
                                     console.log("我是来说", key, options);
                                     WxPageBindEventBus.emit(type, options);
                                 }
-                                return userDefinedMethod_1 && userDefinedMethod_1.call(this, options);
+                                return userDefinedMethod_2 && userDefinedMethod_2.call(this, options);
                             };
                         }
                     });
