@@ -44,4 +44,17 @@ declare const UniCreatePageEventBus: {
     off: <K_1 extends keyof UniCreatePageEventMap>(eventName: K_1, listener: UniCreatePageEventMap[K_1]) => void;
     emit: <K_2 extends keyof UniCreatePageEventMap>(eventName: K_2, ...args: Parameters<UniCreatePageEventMap[K_2]>) => void;
 };
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, UniCreatePageMethods, wxPageMethods, wxAppMethods };
+type WxPageBindEventMap = {
+    "tap": (data: any) => void;
+    "touchend": (data: any) => void;
+    "longtap": (data: any) => void;
+};
+declare const wxPageBindMethods: readonly ["tap", "touchend", "longtap"];
+declare const WxPageBindEventBus: {
+    getNames: () => any[];
+    clearAll: () => void;
+    on: <K extends keyof WxPageBindEventMap>(eventName: K, listener: WxPageBindEventMap[K]) => void;
+    off: <K_1 extends keyof WxPageBindEventMap>(eventName: K_1, listener: WxPageBindEventMap[K_1]) => void;
+    emit: <K_2 extends keyof WxPageBindEventMap>(eventName: K_2, ...args: Parameters<WxPageBindEventMap[K_2]>) => void;
+};
+export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, UniCreatePageMethods, wxPageMethods, wxAppMethods, WxPageBindEventBus, wxPageBindMethods };

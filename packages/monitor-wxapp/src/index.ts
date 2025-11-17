@@ -6,7 +6,7 @@ import { RouterPlugin } from './plugins/router';
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
+import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods, wxPageBindMethods, WxPageBindEventBus } from './eventBus';
 import { RequestPlugin } from './plugins/request';
 /**
  * wxapp监控类
@@ -96,6 +96,20 @@ class WxAppMonitor implements WxAppMonitorBase {
                         WxPageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
+                });
+                Object.keys(prams).forEach(key => {
+                    if (typeof prams[key] === 'function' && !wxPageMethods.includes(key as any)) {
+                        const userDefinedMethod = prams[key]; // 暂存用户定义的方法
+                        prams[key] = function (options) {
+
+                            const type = options.type;
+                            if (wxPageBindMethods.includes(type)) {
+                                console.log("我是来说", key, options);
+                                WxPageBindEventBus.emit(type, options);
+                            }
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    }
                 });
                 return originPage(prams);
             };

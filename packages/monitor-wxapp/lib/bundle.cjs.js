@@ -1929,6 +1929,8 @@ var wxPageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var WxPageEventBus = u(wxPageMethods);
 var UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var UniCreatePageEventBus = u(UniCreatePageMethods);
+var wxPageBindMethods = ['tap', 'touchend', 'longtap'];
+var WxPageBindEventBus = u(wxPageBindMethods);
 
 var ErrorPlugin = (function () {
     function ErrorPlugin() {
@@ -2155,7 +2157,7 @@ var RequestPlugin = (function () {
                             extraData: { param: param, err: err },
                             logCategory: LogCategoryKeyValue.xhrFetch,
                             pluginName: self_1.name,
-                            message: 'uni.request error',
+                            message: 'wx.request error',
                             url: getWxCurrentPages().page,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
@@ -2236,6 +2238,19 @@ var WxAppMonitor = (function () {
                         WxPageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
+                });
+                Object.keys(prams).forEach(function (key) {
+                    if (typeof prams[key] === 'function' && !wxPageMethods.includes(key)) {
+                        var userDefinedMethod_1 = prams[key];
+                        prams[key] = function (options) {
+                            var type = options.type;
+                            if (wxPageBindMethods.includes(type)) {
+                                console.log("我是来说", key, options);
+                                WxPageBindEventBus.emit(type, options);
+                            }
+                            return userDefinedMethod_1 && userDefinedMethod_1.call(this, options);
+                        };
+                    }
                 });
                 return originPage_1(prams);
             };
