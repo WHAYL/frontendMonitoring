@@ -2199,6 +2199,7 @@ var WxAppMonitor = (function () {
     WxAppMonitor.prototype.init = function () {
         this.rewriteWxApp();
         this.wxPage();
+        this.wxComponent();
         this.uniWxCreatePage();
     };
     WxAppMonitor.prototype.uniWxCreatePage = function () {
@@ -2225,13 +2226,53 @@ var WxAppMonitor = (function () {
                                 for (var _i = 0; _i < arguments.length; _i++) {
                                     args[_i] = arguments[_i];
                                 }
-                                console.log("uniappMethods", this, this.$event, key, args);
+                                var detail = args[args.length - 1] || (args === null || args === void 0 ? void 0 : args[0]);
+                                if (wxPageBindMethods.includes(detail === null || detail === void 0 ? void 0 : detail.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail: detail
+                                    });
+                                }
                                 return userDefinedMethod_1 && userDefinedMethod_1.call.apply(userDefinedMethod_1, __spreadArray([this], args, false));
                             };
                         }
                     });
                 }
                 return wxC_1(options);
+            };
+        }
+        catch (error) {
+        }
+    };
+    WxAppMonitor.prototype.wxComponent = function () {
+        try {
+            if (!Component) {
+                return;
+            }
+            var originComponent_1 = Component;
+            Component = function (options) {
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(function (key) {
+                        if (typeof options.methods[key] === 'function') {
+                            var userDefinedMethod_2 = options.methods[key];
+                            options.methods[key] = function () {
+                                var args = [];
+                                for (var _i = 0; _i < arguments.length; _i++) {
+                                    args[_i] = arguments[_i];
+                                }
+                                var detail = args[args.length - 1] || (args === null || args === void 0 ? void 0 : args[0]);
+                                if (wxPageBindMethods.includes(detail === null || detail === void 0 ? void 0 : detail.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail: detail
+                                    });
+                                }
+                                return userDefinedMethod_2 && userDefinedMethod_2.call.apply(userDefinedMethod_2, __spreadArray([this], args, false));
+                            };
+                        }
+                    });
+                }
+                return originComponent_1(options);
             };
         }
         catch (error) {
@@ -2254,14 +2295,13 @@ var WxAppMonitor = (function () {
                 });
                 Object.keys(prams).forEach(function (key) {
                     if (typeof prams[key] === 'function' && !wxPageMethods.includes(key)) {
-                        var userDefinedMethod_2 = prams[key];
+                        var userDefinedMethod_3 = prams[key];
                         prams[key] = function (options) {
-                            var type = options.type;
+                            var type = options === null || options === void 0 ? void 0 : options.type;
                             if (wxPageBindMethods.includes(type)) {
-                                console.log("我是来说", key, options);
-                                WxPageBindEventBus.emit(type, options);
+                                WxPageBindEventBus.emit(type, { methods: key, detail: options });
                             }
-                            return userDefinedMethod_2 && userDefinedMethod_2.call(this, options);
+                            return userDefinedMethod_3 && userDefinedMethod_3.call(this, options);
                         };
                     }
                 });

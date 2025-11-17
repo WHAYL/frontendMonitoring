@@ -56,6 +56,7 @@ class WxAppMonitor implements WxAppMonitorBase {
     private init(): void {
         this.rewriteWxApp();
         this.wxPage();
+        this.wxComponent();
         this.uniWxCreatePage();
     }
     /** 拦截 uniapp wx.createPage */
@@ -79,13 +80,50 @@ class WxAppMonitor implements WxAppMonitorBase {
                         if (typeof options.methods[key] === 'function' && !UniCreatePageMethods.includes(key as any)) {
                             const userDefinedMethod = options.methods[key]; // 暂存用户定义的方法
                             options.methods[key] = function (...args) {
-                                console.log("uniappMethods", this, this.$event, key, args);
+                                const detail = args[args.length - 1] || args?.[0];//uniapp 事件方法传参 最后或者第一个参数是事件对象$event
+                                if (wxPageBindMethods.includes(detail?.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail
+                                    });
+                                }
                                 return userDefinedMethod && userDefinedMethod.call(this, ...args);
                             };
                         }
                     });
                 }
                 return wxC(options);
+            };
+        } catch (error) {
+        }
+    }
+    /** 拦截 微信 Component */
+    private wxComponent() {
+        try {
+            if (!Component) {
+                return;
+            }
+            const originComponent = Component;
+            Component = function (options) {
+                // 拦截组件方法
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(key => {
+                        if (typeof options.methods[key] === 'function') {
+                            const userDefinedMethod = options.methods[key]; // 暂存用户定义的方法
+                            options.methods[key] = function (...args) {
+                                const detail = args[args.length - 1] || args?.[0];
+                                if (wxPageBindMethods.includes(detail?.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail
+                                    });
+                                }
+                                return userDefinedMethod && userDefinedMethod.call(this, ...args);
+                            };
+                        }
+                    });
+                }
+                return originComponent(options);
             };
         } catch (error) {
 
@@ -112,11 +150,9 @@ class WxAppMonitor implements WxAppMonitorBase {
                     if (typeof prams[key] === 'function' && !wxPageMethods.includes(key as any)) {
                         const userDefinedMethod = prams[key]; // 暂存用户定义的方法
                         prams[key] = function (options) {
-
-                            const type = options.type;
+                            const type = options?.type;
                             if (wxPageBindMethods.includes(type)) {
-                                console.log("我是来说", key, options);
-                                WxPageBindEventBus.emit(type, options);
+                                WxPageBindEventBus.emit(type, { methods: key, detail: options });
                             }
                             return userDefinedMethod && userDefinedMethod.call(this, options);
                         };
