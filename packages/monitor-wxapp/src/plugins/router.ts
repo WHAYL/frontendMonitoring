@@ -122,6 +122,9 @@ export class RouterPlugin implements WxAppMonitorPlugin {
             const that = this;
             // 创建独立的处理函数并保存引用
             this.eventHandlers['wxAppOnHide'] = function (options) {
+                if (!that.getRouterList().length) {
+                    return;
+                }
                 that.monitor && that.monitor.reportInfo('INFO', {
                     logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: that.name,

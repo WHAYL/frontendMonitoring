@@ -28,6 +28,9 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             }
         });
         this.onAppHideHandel = () => {
+            if (!this.routerList.length) {
+                return;
+            }
             this.monitor?.reportInfo('INFO', {
                 logCategory: LogCategoryKeyValue.pageLifecycle,
                 pluginName: this.name,
@@ -37,6 +40,7 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                 timestamp: getTimestamp(),
                 date: formatTimestamp()
             });
+            this.routerList = [];
         };
         UniAppEventBus.on('onAppHide', this.onAppHideHandel);
     }

@@ -2036,6 +2036,9 @@
             });
             this.onAppHideHandel = function () {
                 var _a;
+                if (!_this.routerList.length) {
+                    return;
+                }
                 (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
                     logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: _this.name,
@@ -2045,6 +2048,7 @@
                     timestamp: getTimestamp(),
                     date: formatTimestamp()
                 });
+                _this.routerList = [];
             };
             UniAppEventBus.on('onAppHide', this.onAppHideHandel);
         };

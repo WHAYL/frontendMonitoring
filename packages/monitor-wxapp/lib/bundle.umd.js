@@ -2107,6 +2107,9 @@
                 }
                 var that_3 = this;
                 this.eventHandlers['wxAppOnHide'] = function (options) {
+                    if (!that_3.getRouterList().length) {
+                        return;
+                    }
                     that_3.monitor && that_3.monitor.reportInfo('INFO', {
                         logCategory: LogCategoryKeyValue.pageLifecycle,
                         pluginName: that_3.name,
