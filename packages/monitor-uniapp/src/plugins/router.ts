@@ -64,7 +64,6 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                             });
                         }, 40);
                     }
-                    console.log('router', item, that.routerList);
                 };
 
                 UniNavEventBus.on(item, this.navEventHandlers[item]);

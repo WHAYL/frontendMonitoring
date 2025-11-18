@@ -2005,6 +2005,8 @@ var UniNavMethods = ["switchTab", "navigateTo", "redirectTo", "reLaunch", "navig
 var UniNavEventBus = u(UniNavMethods);
 var UniAppMethods = ['onAppHide'];
 var UniAppEventBus = u(UniAppMethods);
+var uniPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick'];
+var UniPageBindEventBus = u(uniPageBindMethods);
 
 var RouterPlugin = (function () {
     function RouterPlugin() {
@@ -2065,7 +2067,6 @@ var RouterPlugin = (function () {
                             });
                         }, 40);
                     }
-                    console.log('router', item, that_1.routerList);
                 };
                 UniNavEventBus.on(item, _this.navEventHandlers[item]);
             });
@@ -2153,6 +2154,7 @@ var UniAppMonitor = (function () {
     UniAppMonitor.prototype.init = function () {
         this.rewriteRouter();
         this.appHide();
+        this.rewritePageFunction();
     };
     UniAppMonitor.prototype.appHide = function () {
         uni.onAppHide(function () {
@@ -2188,15 +2190,56 @@ var UniAppMonitor = (function () {
         catch (error) {
         }
     };
+    UniAppMonitor.prototype.rewritePageFunction = function () {
+        try {
+            setTimeout(function () {
+                var pageInfo = getUniCurrentPages();
+                if (pageInfo.pages) {
+                    pageInfo.pages.forEach(function (page) {
+                        if (page.isWritePageFunction) {
+                            return;
+                        }
+                        Object.keys(page).forEach(function (key) {
+                            page.isWritePageFunction = true;
+                            if (typeof page[key] === 'function' && !page[key].isWritePageFunction) {
+                                var originFun_1 = page[key];
+                                page[key] = function () {
+                                    var args = [];
+                                    for (var _i = 0; _i < arguments.length; _i++) {
+                                        args[_i] = arguments[_i];
+                                    }
+                                    var detail = args[args.length - 1] || (args === null || args === void 0 ? void 0 : args[0]);
+                                    if (uniPageBindMethods.includes(detail === null || detail === void 0 ? void 0 : detail.type)) {
+                                        UniPageBindEventBus.emit(detail.type, {
+                                            methods: key,
+                                            detail: detail
+                                        });
+                                    }
+                                    return originFun_1.apply(this, args);
+                                };
+                                page[key].isWritePageFunction = true;
+                            }
+                        });
+                    });
+                }
+            }, 40);
+        }
+        catch (error) {
+            console.log('rewritePageFunction error', error);
+        }
+    };
     UniAppMonitor.prototype.rewriteRouter = function () {
         try {
-            var that = this;
+            var that_1 = this;
             var originUni_1 = __assign$1({}, (wx || uni));
             UniNavMethods.forEach(function (item) {
                 uni[item] = function (obj) {
                     originUni_1[item] && originUni_1[item](__assign$1(__assign$1({}, obj), { success: function (res) {
                             UniNavEventBus.emit(item, obj);
                             obj.success && obj.success.call(this, res);
+                        }, complete: function (res) {
+                            that_1.rewritePageFunction();
+                            obj.complete && obj.complete.call(this, res);
                         } }));
                 };
             });
