@@ -1927,7 +1927,7 @@ var wxPageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var WxPageEventBus = u(wxPageMethods);
 var UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var UniCreatePageEventBus = u(UniCreatePageMethods);
-var wxPageBindMethods = ['tap', 'touchend', 'longtap'];
+var wxPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick'];
 var WxPageBindEventBus = u(wxPageBindMethods);
 
 var ErrorPlugin = (function () {

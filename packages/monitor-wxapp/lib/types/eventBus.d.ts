@@ -48,8 +48,11 @@ type WxPageBindEventMap = {
     "tap": (data: any) => void;
     "touchend": (data: any) => void;
     "longtap": (data: any) => void;
+    "click": (data: any) => void;
+    "dbclick": (data: any) => void;
+    "longclick": (data: any) => void;
 };
-declare const wxPageBindMethods: readonly ["tap", "touchend", "longtap"];
+declare const wxPageBindMethods: readonly ["tap", "touchend", "longtap", "click", "dbclick", "longclick"];
 declare const WxPageBindEventBus: {
     getNames: () => any[];
     clearAll: () => void;
