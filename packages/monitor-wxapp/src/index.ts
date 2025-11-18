@@ -2,6 +2,7 @@ import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfi
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
+import { BehaviorPlugin } from './plugins/behavior';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
@@ -31,6 +32,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             errorPluginEnabled = true,
             routerPluginEnabled = true,
             requestPluginEnabled = true,
+            behaviorPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -42,6 +44,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
             requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
+            behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: () => new BehaviorPlugin() }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件

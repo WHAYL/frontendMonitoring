@@ -31,8 +31,14 @@ type UniPageBindEventMap = {
     "click": (data: any) => void;
     "dbclick": (data: any) => void;
     "longclick": (data: any) => void;
+    "onClick": (data: any) => void;
+    "onTap": (data: any) => void;
+    "onDbclick": (data: any) => void;
+    "onLongclick": (data: any) => void;
+    "onLongtap": (data: any) => void;
+    "onTouchend": (data: any) => void;
 };
-declare const uniPageBindMethods: readonly ["tap", "touchend", "longtap", "click", "dbclick", "longclick"];
+declare const uniPageBindMethods: readonly ["tap", "touchend", "longtap", "click", "dbclick", "longclick", "onClick", "onTap", "onDbclick", "onLongclick", "onLongtap", "onTouchend"];
 declare const UniPageBindEventBus: {
     getNames: () => any[];
     clearAll: () => void;

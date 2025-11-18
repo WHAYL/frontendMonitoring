@@ -3,6 +3,7 @@ import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
 import { RequestPlugin } from './plugins/request';
+import { BehaviorPlugin } from './plugins/behavior';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo, getUniCurrentPages } from './utils';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
@@ -32,6 +33,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             errorPluginEnabled = true,
             routerPluginEnabled = true,
             requestPluginEnabled = true,
+            behaviorPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -43,6 +45,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
             requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
+            behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: () => new BehaviorPlugin() },
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -63,7 +66,7 @@ class UniAppMonitor implements UniAppMonitorBase {
         uni.onAppHide(() => {
             UniAppEventBus.emit('onAppHide', {});
         });
-        this.h5Hide();
+        // this.h5Hide();
     }
     private h5Hide() {
         try {

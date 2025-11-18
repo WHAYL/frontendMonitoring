@@ -28,7 +28,15 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             }
         });
         this.onAppHideHandel = () => {
-            console.log('app hide', this.routerList);
+            this.monitor?.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.pageLifecycle,
+                pluginName: this.name,
+                message: 'pageLifecycle',
+                url: getUniCurrentPages().page,
+                extraData: this.routerList,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
         };
         UniAppEventBus.on('onAppHide', this.onAppHideHandel);
     }

@@ -2009,7 +2009,7 @@
     var UniNavEventBus = u(UniNavMethods);
     var UniAppMethods = ['onAppHide'];
     var UniAppEventBus = u(UniAppMethods);
-    var uniPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick'];
+    var uniPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick', 'onClick', 'onTap', 'onDbclick', 'onLongclick', 'onLongtap', 'onTouchend'];
     var UniPageBindEventBus = u(uniPageBindMethods);
 
     var RouterPlugin = (function () {
@@ -2035,7 +2035,16 @@
                 }
             });
             this.onAppHideHandel = function () {
-                console.log('app hide', _this.routerList);
+                var _a;
+                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.pageLifecycle,
+                    pluginName: _this.name,
+                    message: 'pageLifecycle',
+                    url: getUniCurrentPages().page,
+                    extraData: _this.routerList,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
             };
             UniAppEventBus.on('onAppHide', this.onAppHideHandel);
         };
@@ -2131,6 +2140,74 @@
         return RequestPlugin;
     }());
 
+    var BehaviorPlugin = (function () {
+        function BehaviorPlugin() {
+            this.name = 'behavior';
+            this.monitor = null;
+            this.behaviorList = [];
+            this.onAppHideHandel = function () { };
+            this.userEventHandlers = {};
+            this.name = 'behavior';
+        }
+        BehaviorPlugin.prototype.init = function (monitor) {
+            var _this = this;
+            this.monitor = monitor;
+            this.rewriteBehavior();
+            this.onAppHideHandel = function () {
+                var _a;
+                console.log('onAppHide', _this.behaviorList.length);
+                if (!_this.behaviorList.length) {
+                    return;
+                }
+                (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                    logCategory: LogCategoryKeyValue.userBehavior,
+                    pluginName: _this.name,
+                    message: 'userBehavior',
+                    url: getUniCurrentPages().page,
+                    extraData: _this.behaviorList,
+                    timestamp: getTimestamp(),
+                    date: formatTimestamp()
+                });
+                _this.behaviorList = [];
+            };
+            UniAppEventBus.on('onAppHide', this.onAppHideHandel);
+        };
+        BehaviorPlugin.prototype.rewriteBehavior = function () {
+            var _this = this;
+            try {
+                if (!uni) {
+                    return;
+                }
+                var that_1 = this;
+                uniPageBindMethods.forEach(function (item) {
+                    _this.userEventHandlers[item] = function (options) {
+                        that_1.behaviorList.push({
+                            methods: item,
+                            timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                            options: options
+                        });
+                    };
+                    UniPageBindEventBus.on(item, _this.userEventHandlers[item]);
+                });
+            }
+            catch (error) {
+                console.error(error);
+            }
+        };
+        BehaviorPlugin.prototype.destroy = function () {
+            var _this = this;
+            UniAppEventBus.off('onAppHide', this.onAppHideHandel);
+            uniPageBindMethods.forEach(function (item) {
+                if (_this.userEventHandlers[item]) {
+                    UniPageBindEventBus.off(item, _this.userEventHandlers[item]);
+                    delete _this.userEventHandlers[item];
+                }
+            });
+            this.monitor = null;
+        };
+        return BehaviorPlugin;
+    }());
+
     var UniAppMonitor = (function () {
         function UniAppMonitor(config) {
             var _this = this;
@@ -2141,13 +2218,14 @@
             this.cacheLog = [];
             this.config = config;
             getDeviceInfo();
-            var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d, _e = _a.requestPluginEnabled, requestPluginEnabled = _e === void 0 ? true : _e;
+            var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d, _e = _a.requestPluginEnabled, requestPluginEnabled = _e === void 0 ? true : _e, _f = _a.behaviorPluginEnabled, behaviorPluginEnabled = _f === void 0 ? true : _f;
             this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
             var pluginsToRegister = [
                 consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consolePluginConfig) || {}); } },
                 errorPluginEnabled && { name: 'ErrorPlugin', creator: function () { return new ErrorPlugin(); } },
                 routerPluginEnabled && { name: 'RouterPlugin', creator: function () { return new RouterPlugin(); } },
                 requestPluginEnabled && { name: 'RequestPlugin', creator: function () { return new RequestPlugin(); } },
+                behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: function () { return new BehaviorPlugin(); } },
             ].filter(Boolean);
             pluginsToRegister.forEach(function (plugin) {
                 _this.use(plugin.creator());
@@ -2164,7 +2242,6 @@
             uni.onAppHide(function () {
                 UniAppEventBus.emit('onAppHide', {});
             });
-            this.h5Hide();
         };
         UniAppMonitor.prototype.h5Hide = function () {
             try {
