@@ -9,6 +9,7 @@ declare class WxAppMonitor implements WxAppMonitorBase {
     constructor(config: WxAppMonitorConfig);
     private init;
     private uniWxCreatePage;
+    private wxComponent;
     private wxPage;
     private rewriteWxApp;
     reportAllLog(): void;

@@ -18,6 +18,7 @@ export interface WxAppMonitorConfig {
         errorPluginEnabled?: boolean;
         routerPluginEnabled?: boolean;
         requestPluginEnabled?: boolean;
+        behaviorPluginEnabled?: boolean
     };
     consolePluginConfig?: ConsolePluginConfig;
 

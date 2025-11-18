@@ -35,4 +35,27 @@ type UniCreatePageEventMap = {
 };
 const UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'] as const;
 const UniCreatePageEventBus = EventEmitter<UniCreatePageEventMap>(UniCreatePageMethods);
-export { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, UniCreatePageMethods, wxPageMethods, wxAppMethods };
+
+// 定义事件类型映射
+type WxPageBindEventMap = {
+    "tap": (data: any) => void;
+    "touchend": (data: any) => void;
+    "longtap": (data: any) => void;
+    "click": (data: any) => void;
+    "dbclick": (data: any) => void;
+    "longclick": (data: any) => void;
+
+    // 可以添加更多的事件类型
+};
+const wxPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick'] as const;
+const WxPageBindEventBus = EventEmitter<WxPageBindEventMap>(wxPageBindMethods);
+export {
+    WxAppEventBus,
+    WxPageEventBus,
+    UniCreatePageEventBus,
+    UniCreatePageMethods,
+    wxPageMethods,
+    wxAppMethods,
+    WxPageBindEventBus,
+    wxPageBindMethods
+};

@@ -1929,6 +1929,8 @@ var wxPageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var WxPageEventBus = u(wxPageMethods);
 var UniCreatePageMethods = ['onLoad', 'onShow', 'onReady', 'onHide', 'onUnload'];
 var UniCreatePageEventBus = u(UniCreatePageMethods);
+var wxPageBindMethods = ['tap', 'touchend', 'longtap', 'click', 'dbclick', 'longclick'];
+var WxPageBindEventBus = u(wxPageBindMethods);
 
 var ErrorPlugin = (function () {
     function ErrorPlugin() {
@@ -2101,6 +2103,9 @@ var RouterPlugin = (function () {
             }
             var that_3 = this;
             this.eventHandlers['wxAppOnHide'] = function (options) {
+                if (!that_3.getRouterList().length) {
+                    return;
+                }
                 that_3.monitor && that_3.monitor.reportInfo('INFO', {
                     logCategory: LogCategoryKeyValue.pageLifecycle,
                     pluginName: that_3.name,
@@ -2135,6 +2140,70 @@ var RouterPlugin = (function () {
     return RouterPlugin;
 }());
 
+var BehaviorPlugin = (function () {
+    function BehaviorPlugin() {
+        this.name = 'behavior';
+        this.monitor = null;
+        this.behaviorList = [];
+        this.onAppHideHandel = function () { };
+        this.userEventHandlers = {};
+        this.name = 'behavior';
+    }
+    BehaviorPlugin.prototype.init = function (monitor) {
+        var _this = this;
+        this.monitor = monitor;
+        this.rewriteBehavior();
+        this.onAppHideHandel = function () {
+            var _a;
+            console.log('onAppHide', _this.behaviorList.length);
+            if (!_this.behaviorList.length) {
+                return;
+            }
+            (_a = _this.monitor) === null || _a === void 0 ? void 0 : _a.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.userBehavior,
+                pluginName: _this.name,
+                message: 'userBehavior',
+                url: getWxCurrentPages().page,
+                extraData: _this.behaviorList,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
+            _this.behaviorList = [];
+        };
+        WxAppEventBus.on('onHide', this.onAppHideHandel);
+    };
+    BehaviorPlugin.prototype.rewriteBehavior = function () {
+        var _this = this;
+        try {
+            var that_1 = this;
+            wxPageBindMethods.forEach(function (item) {
+                _this.userEventHandlers[item] = function (options) {
+                    that_1.behaviorList.push({
+                        methods: item,
+                        timestamp: formatTimestamp('YYYY/MM/DD hh:mm:ss.SSS', getTimestamp()),
+                        options: options
+                    });
+                };
+                WxPageBindEventBus.on(item, _this.userEventHandlers[item]);
+            });
+        }
+        catch (error) {
+            console.error(error);
+        }
+    };
+    BehaviorPlugin.prototype.destroy = function () {
+        var _this = this;
+        wxPageBindMethods.forEach(function (item) {
+            if (_this.userEventHandlers[item]) {
+                WxPageBindEventBus.off(item, _this.userEventHandlers[item]);
+                delete _this.userEventHandlers[item];
+            }
+        });
+        this.monitor = null;
+    };
+    return BehaviorPlugin;
+}());
+
 var RequestPlugin = (function () {
     function RequestPlugin() {
         this.name = 'request';
@@ -2155,7 +2224,7 @@ var RequestPlugin = (function () {
                             extraData: { param: param, err: err },
                             logCategory: LogCategoryKeyValue.xhrFetch,
                             pluginName: self_1.name,
-                            message: 'uni.request error',
+                            message: 'wx.request error',
                             url: getWxCurrentPages().page,
                             timestamp: getTimestamp(),
                             date: formatTimestamp()
@@ -2182,13 +2251,14 @@ var WxAppMonitor = (function () {
         this.cacheLog = [];
         this.config = config;
         getDeviceInfo();
-        var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d, _e = _a.requestPluginEnabled, requestPluginEnabled = _e === void 0 ? true : _e;
+        var _a = config.pluginsUse || {}, _b = _a.consolePluginEnabled, consolePluginEnabled = _b === void 0 ? true : _b, _c = _a.errorPluginEnabled, errorPluginEnabled = _c === void 0 ? true : _c, _d = _a.routerPluginEnabled, routerPluginEnabled = _d === void 0 ? true : _d, _e = _a.requestPluginEnabled, requestPluginEnabled = _e === void 0 ? true : _e, _f = _a.behaviorPluginEnabled, behaviorPluginEnabled = _f === void 0 ? true : _f;
         this.monitor.init(config === null || config === void 0 ? void 0 : config.monitorConfig);
         var pluginsToRegister = [
             consolePluginEnabled && { name: 'ConsolePlugin', creator: function () { return new ConsolePlugin((config === null || config === void 0 ? void 0 : config.consolePluginConfig) || {}); } },
             errorPluginEnabled && { name: 'ErrorPlugin', creator: function () { return new ErrorPlugin(); } },
             routerPluginEnabled && { name: 'RouterPlugin', creator: function () { return new RouterPlugin(); } },
             requestPluginEnabled && { name: 'RequestPlugin', creator: function () { return new RequestPlugin(); } },
+            behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: function () { return new BehaviorPlugin(); } }
         ].filter(Boolean);
         pluginsToRegister.forEach(function (plugin) {
             _this.use(plugin.creator());
@@ -2199,6 +2269,7 @@ var WxAppMonitor = (function () {
     WxAppMonitor.prototype.init = function () {
         this.rewriteWxApp();
         this.wxPage();
+        this.wxComponent();
         this.uniWxCreatePage();
     };
     WxAppMonitor.prototype.uniWxCreatePage = function () {
@@ -2216,7 +2287,62 @@ var WxAppMonitor = (function () {
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(function (key) {
+                        if (typeof options.methods[key] === 'function' && !UniCreatePageMethods.includes(key)) {
+                            var userDefinedMethod_1 = options.methods[key];
+                            options.methods[key] = function () {
+                                var args = [];
+                                for (var _i = 0; _i < arguments.length; _i++) {
+                                    args[_i] = arguments[_i];
+                                }
+                                var detail = args[args.length - 1] || (args === null || args === void 0 ? void 0 : args[0]);
+                                if (wxPageBindMethods.includes(detail === null || detail === void 0 ? void 0 : detail.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail: detail
+                                    });
+                                }
+                                return userDefinedMethod_1 && userDefinedMethod_1.call.apply(userDefinedMethod_1, __spreadArray([this], args, false));
+                            };
+                        }
+                    });
+                }
                 return wxC_1(options);
+            };
+        }
+        catch (error) {
+        }
+    };
+    WxAppMonitor.prototype.wxComponent = function () {
+        try {
+            if (!Component) {
+                return;
+            }
+            var originComponent_1 = Component;
+            Component = function (options) {
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(function (key) {
+                        if (typeof options.methods[key] === 'function') {
+                            var userDefinedMethod_2 = options.methods[key];
+                            options.methods[key] = function () {
+                                var args = [];
+                                for (var _i = 0; _i < arguments.length; _i++) {
+                                    args[_i] = arguments[_i];
+                                }
+                                var detail = args[args.length - 1] || (args === null || args === void 0 ? void 0 : args[0]);
+                                if (wxPageBindMethods.includes(detail === null || detail === void 0 ? void 0 : detail.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail: detail
+                                    });
+                                }
+                                return userDefinedMethod_2 && userDefinedMethod_2.call.apply(userDefinedMethod_2, __spreadArray([this], args, false));
+                            };
+                        }
+                    });
+                }
+                return originComponent_1(options);
             };
         }
         catch (error) {
@@ -2236,6 +2362,18 @@ var WxAppMonitor = (function () {
                         WxPageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
+                });
+                Object.keys(prams).forEach(function (key) {
+                    if (typeof prams[key] === 'function' && !wxPageMethods.includes(key)) {
+                        var userDefinedMethod_3 = prams[key];
+                        prams[key] = function (options) {
+                            var type = options === null || options === void 0 ? void 0 : options.type;
+                            if (wxPageBindMethods.includes(type)) {
+                                WxPageBindEventBus.emit(type, { methods: key, detail: options });
+                            }
+                            return userDefinedMethod_3 && userDefinedMethod_3.call(this, options);
+                        };
+                    }
                 });
                 return originPage_1(prams);
             };

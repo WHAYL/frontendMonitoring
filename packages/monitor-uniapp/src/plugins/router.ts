@@ -28,7 +28,19 @@ export class RouterPlugin implements UniAppMonitorPlugin {
             }
         });
         this.onAppHideHandel = () => {
-            console.log('app hide', this.routerList);
+            if (!this.routerList.length) {
+                return;
+            }
+            this.monitor?.reportInfo('INFO', {
+                logCategory: LogCategoryKeyValue.pageLifecycle,
+                pluginName: this.name,
+                message: 'pageLifecycle',
+                url: getUniCurrentPages().page,
+                extraData: this.routerList,
+                timestamp: getTimestamp(),
+                date: formatTimestamp()
+            });
+            this.routerList = [];
         };
         UniAppEventBus.on('onAppHide', this.onAppHideHandel);
     }
@@ -64,7 +76,6 @@ export class RouterPlugin implements UniAppMonitorPlugin {
                             });
                         }, 40);
                     }
-                    console.log('router', item, that.routerList);
                 };
 
                 UniNavEventBus.on(item, this.navEventHandlers[item]);

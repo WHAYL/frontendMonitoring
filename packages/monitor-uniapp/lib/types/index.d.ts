@@ -11,6 +11,7 @@ declare class UniAppMonitor implements UniAppMonitorBase {
     private init;
     private appHide;
     private h5Hide;
+    private rewritePageFunction;
     private rewriteRouter;
     reportAllLog(): void;
     private reportCacheLog;

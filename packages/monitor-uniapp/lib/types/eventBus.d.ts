@@ -24,4 +24,26 @@ declare const UniAppEventBus: {
     off: <K_1 extends "onAppHide">(eventName: K_1, listener: UniAppEventMap[K_1]) => void;
     emit: <K_2 extends "onAppHide">(eventName: K_2, ...args: Parameters<UniAppEventMap[K_2]>) => void;
 };
-export { UniNavEventBus, UniNavMethods, UniAppMethods, UniAppEventBus };
+type UniPageBindEventMap = {
+    "tap": (data: any) => void;
+    "touchend": (data: any) => void;
+    "longtap": (data: any) => void;
+    "click": (data: any) => void;
+    "dbclick": (data: any) => void;
+    "longclick": (data: any) => void;
+    "onClick": (data: any) => void;
+    "onTap": (data: any) => void;
+    "onDbclick": (data: any) => void;
+    "onLongclick": (data: any) => void;
+    "onLongtap": (data: any) => void;
+    "onTouchend": (data: any) => void;
+};
+declare const uniPageBindMethods: readonly ["tap", "touchend", "longtap", "click", "dbclick", "longclick", "onClick", "onTap", "onDbclick", "onLongclick", "onLongtap", "onTouchend"];
+declare const UniPageBindEventBus: {
+    getNames: () => any[];
+    clearAll: () => void;
+    on: <K extends keyof UniPageBindEventMap>(eventName: K, listener: UniPageBindEventMap[K]) => void;
+    off: <K_1 extends keyof UniPageBindEventMap>(eventName: K_1, listener: UniPageBindEventMap[K_1]) => void;
+    emit: <K_2 extends keyof UniPageBindEventMap>(eventName: K_2, ...args: Parameters<UniPageBindEventMap[K_2]>) => void;
+};
+export { UniNavEventBus, UniNavMethods, UniAppMethods, UniAppEventBus, UniPageBindEventBus, uniPageBindMethods };

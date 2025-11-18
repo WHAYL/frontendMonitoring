@@ -3,11 +3,12 @@ import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
 import { RequestPlugin } from './plugins/request';
+import { BehaviorPlugin } from './plugins/behavior';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo, getUniCurrentPages } from './utils';
 import { UniAppLogData, UniAppMonitorBase, UniAppMonitorConfig, UniAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-import { UniNavMethods, UniNavEventBus, UniAppEventBus } from './eventBus';
+import { UniNavMethods, UniNavEventBus, UniAppEventBus, UniPageBindEventBus, UniAppMethods, uniPageBindMethods } from './eventBus';
 /**
  * 浏览器监控类
  */
@@ -32,6 +33,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             errorPluginEnabled = true,
             routerPluginEnabled = true,
             requestPluginEnabled = true,
+            behaviorPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -43,6 +45,7 @@ class UniAppMonitor implements UniAppMonitorBase {
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
             requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
+            behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: () => new BehaviorPlugin() },
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -57,12 +60,13 @@ class UniAppMonitor implements UniAppMonitorBase {
     private init(): void {
         this.rewriteRouter();
         this.appHide();
+        this.rewritePageFunction();
     }
     private appHide() {
         uni.onAppHide(() => {
             UniAppEventBus.emit('onAppHide', {});
         });
-        this.h5Hide();
+        // this.h5Hide();
     }
     private h5Hide() {
         try {
@@ -97,6 +101,40 @@ class UniAppMonitor implements UniAppMonitorBase {
 
         }
     }
+    private rewritePageFunction() {
+        try {
+            setTimeout(() => {
+                const pageInfo = getUniCurrentPages();
+                if (pageInfo.pages) {
+                    pageInfo.pages.forEach(page => {
+                        if (page.isWritePageFunction) {
+                            return;
+                        }
+                        Object.keys(page).forEach(key => {
+                            page.isWritePageFunction = true;
+                            if (typeof page[key] === 'function' && !page[key].isWritePageFunction) {
+                                const originFun = page[key];
+                                page[key] = function (...args) {
+                                    const detail = args[args.length - 1] || args?.[0];//uniapp 事件方法传参 最后或者第一个参数是事件对象$event
+                                    if (uniPageBindMethods.includes(detail?.type)) {
+                                        UniPageBindEventBus.emit(detail.type, {
+                                            methods: key,
+                                            detail
+                                        });
+                                    }
+                                    return originFun.apply(this, args);
+                                };
+                                page[key].isWritePageFunction = true;
+                            }
+                        });
+                    });
+
+                }
+            }, 40);
+        } catch (error) {
+            console.log('rewritePageFunction error', error);
+        }
+    }
     private rewriteRouter() {
         try {
             const that = this;
@@ -107,6 +145,10 @@ class UniAppMonitor implements UniAppMonitorBase {
                         ...obj, success: function (res) {
                             UniNavEventBus.emit(item, obj);
                             obj.success && obj.success.call(this, res);
+                        },
+                        complete: function (res) {
+                            that.rewritePageFunction();
+                            obj.complete && obj.complete.call(this, res);
                         }
                     });
                 };
