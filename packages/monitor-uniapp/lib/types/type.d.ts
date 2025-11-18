@@ -14,6 +14,7 @@ export interface UniAppMonitorConfig {
         errorPluginEnabled?: boolean;
         routerPluginEnabled?: boolean;
         requestPluginEnabled?: boolean;
+        behaviorPluginEnabled?: boolean;
     };
     consolePluginConfig?: ConsolePluginConfig;
 }

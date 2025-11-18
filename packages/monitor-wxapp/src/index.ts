@@ -2,11 +2,12 @@ import { DeviceInfo, FrontendMonitor, LogCategoryKeyValue, LogData, MonitorConfi
 import { ConsolePlugin } from './plugins/console';
 import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
+import { BehaviorPlugin } from './plugins/behavior';
 
 import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
-import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods } from './eventBus';
+import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods, wxPageBindMethods, WxPageBindEventBus } from './eventBus';
 import { RequestPlugin } from './plugins/request';
 /**
  * wxapp监控类
@@ -31,6 +32,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             errorPluginEnabled = true,
             routerPluginEnabled = true,
             requestPluginEnabled = true,
+            behaviorPluginEnabled = true
         } = config.pluginsUse || {};
 
         // 初始化核心监控
@@ -42,6 +44,7 @@ class WxAppMonitor implements WxAppMonitorBase {
             errorPluginEnabled && { name: 'ErrorPlugin', creator: () => new ErrorPlugin() },
             routerPluginEnabled && { name: 'RouterPlugin', creator: () => new RouterPlugin() },
             requestPluginEnabled && { name: 'RequestPlugin', creator: () => new RequestPlugin() },
+            behaviorPluginEnabled && { name: 'BehaviorPlugin', creator: () => new BehaviorPlugin() }
         ].filter(Boolean) as { name: string; creator: () => any }[];
 
         // 注册插件
@@ -56,6 +59,7 @@ class WxAppMonitor implements WxAppMonitorBase {
     private init(): void {
         this.rewriteWxApp();
         this.wxPage();
+        this.wxComponent();
         this.uniWxCreatePage();
     }
     /** 拦截 uniapp wx.createPage */
@@ -74,7 +78,55 @@ class WxAppMonitor implements WxAppMonitorBase {
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
                 });
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(key => {
+                        if (typeof options.methods[key] === 'function' && !UniCreatePageMethods.includes(key as any)) {
+                            const userDefinedMethod = options.methods[key]; // 暂存用户定义的方法
+                            options.methods[key] = function (...args) {
+                                const detail = args[args.length - 1] || args?.[0];//uniapp 事件方法传参 最后或者第一个参数是事件对象$event
+                                if (wxPageBindMethods.includes(detail?.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail
+                                    });
+                                }
+                                return userDefinedMethod && userDefinedMethod.call(this, ...args);
+                            };
+                        }
+                    });
+                }
                 return wxC(options);
+            };
+        } catch (error) {
+        }
+    }
+    /** 拦截 微信 Component */
+    private wxComponent() {
+        try {
+            if (!Component) {
+                return;
+            }
+            const originComponent = Component;
+            Component = function (options) {
+                // 拦截组件方法
+                if (options.methods) {
+                    Object.keys(options.methods).forEach(key => {
+                        if (typeof options.methods[key] === 'function') {
+                            const userDefinedMethod = options.methods[key]; // 暂存用户定义的方法
+                            options.methods[key] = function (...args) {
+                                const detail = args[args.length - 1] || args?.[0];
+                                if (wxPageBindMethods.includes(detail?.type)) {
+                                    WxPageBindEventBus.emit(detail.type, {
+                                        methods: key,
+                                        detail
+                                    });
+                                }
+                                return userDefinedMethod && userDefinedMethod.call(this, ...args);
+                            };
+                        }
+                    });
+                }
+                return originComponent(options);
             };
         } catch (error) {
 
@@ -96,6 +148,18 @@ class WxAppMonitor implements WxAppMonitorBase {
                         WxPageEventBus.emit(methodName, options);
                         return userDefinedMethod && userDefinedMethod.call(this, options);
                     };
+                });
+                Object.keys(prams).forEach(key => {
+                    if (typeof prams[key] === 'function' && !wxPageMethods.includes(key as any)) {
+                        const userDefinedMethod = prams[key]; // 暂存用户定义的方法
+                        prams[key] = function (options) {
+                            const type = options?.type;
+                            if (wxPageBindMethods.includes(type)) {
+                                WxPageBindEventBus.emit(type, { methods: key, detail: options });
+                            }
+                            return userDefinedMethod && userDefinedMethod.call(this, options);
+                        };
+                    }
                 });
                 return originPage(prams);
             };
