@@ -669,14 +669,14 @@ var AiyMonitorCore = (function (exports) {
     });
 
     var LogCategory = [
-        { label: '其他', key: 'oth', value: 0 },
-        { label: '页面生命周期', key: 'pageLifecycle', value: 1 },
-        { label: 'js错误，未处理的Promise，console.error', key: 'error', value: 2 },
-        { label: 'xhr,fetch请求信息', key: 'xhrFetch', value: 3 },
-        { label: '页面性能相关数据', key: 'pagePerformance', value: 4 },
-        { label: '系统相关访问数据', key: 'osView', value: 5 },
-        { label: '资源加载信息', key: 'resource', value: 6 },
-        { label: '用户行为', key: 'userBehavior', value: 7 },
+        { label: '其他', key: 'oth', value: 'oth' },
+        { label: '页面生命周期', key: 'pageLifecycle', value: 'pageLifecycle' },
+        { label: 'js错误，未处理的Promise，console.error', key: 'error', value: 'error' },
+        { label: 'xhr,fetch请求信息', key: 'xhrFetch', value: 'xhrFetch' },
+        { label: '页面性能相关数据', key: 'pagePerformance', value: 'pagePerformance' },
+        { label: '系统相关访问数据', key: 'osView', value: 'osView' },
+        { label: '资源加载信息', key: 'resource', value: 'resource' },
+        { label: '用户行为', key: 'userBehavior', value: 'userBehavior' },
     ];
     var LogCategoryKeyValue = e(LogCategory, 'key', 'value');
     exports.ReportLevelEnum = void 0;

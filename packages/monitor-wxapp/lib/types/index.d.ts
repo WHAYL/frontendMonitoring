@@ -19,6 +19,7 @@ declare class WxAppMonitor implements WxAppMonitorBase {
     getFingerprint(): string;
     private getNavigatorData;
     private getDeviceInfoData;
+    diyReportInfo(type: ReportingLevel, data: Omit<WxAppLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>): void;
     reportInfo(type: ReportingLevel, data: WxAppLogData): Promise<void>;
     use(plugin: WxAppMonitorPlugin): void;
     destroy(): void;

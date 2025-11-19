@@ -20,6 +20,7 @@ declare class UniAppMonitor implements UniAppMonitorBase {
     getFingerprint(): string;
     private getNavigatorData;
     private getDeviceInfoData;
+    diyReportInfo(type: ReportingLevel, data: Omit<UniAppLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>): void;
     reportInfo(type: ReportingLevel, data: UniAppLogData): Promise<void>;
     use(plugin: UniAppMonitorPlugin): void;
     destroy(): void;

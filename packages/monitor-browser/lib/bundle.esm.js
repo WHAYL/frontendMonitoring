@@ -808,35 +808,35 @@ Wr$1.forEach(function (e) {
 var LogCategory = [{
   label: '其他',
   key: 'oth',
-  value: 0
+  value: 'oth'
 }, {
   label: '页面生命周期',
   key: 'pageLifecycle',
-  value: 1
+  value: 'pageLifecycle'
 }, {
   label: 'js错误，未处理的Promise，console.error',
   key: 'error',
-  value: 2
+  value: 'error'
 }, {
   label: 'xhr,fetch请求信息',
   key: 'xhrFetch',
-  value: 3
+  value: 'xhrFetch'
 }, {
   label: '页面性能相关数据',
   key: 'pagePerformance',
-  value: 4
+  value: 'pagePerformance'
 }, {
   label: '系统相关访问数据',
   key: 'osView',
-  value: 5
+  value: 'osView'
 }, {
   label: '资源加载信息',
   key: 'resource',
-  value: 6
+  value: 'resource'
 }, {
   label: '用户行为',
   key: 'userBehavior',
-  value: 7
+  value: 'userBehavior'
 }];
 var LogCategoryKeyValue = e$1(LogCategory, 'key', 'value');
 var ReportLevelEnum;
@@ -3942,6 +3942,9 @@ var BrowserMonitor = (function () {
             height: window.innerHeight,
             pixelRatio: window.devicePixelRatio,
         };
+    };
+    BrowserMonitor.prototype.diyReportInfo = function (type, data) {
+        this.reportInfo(type, __assign$1(__assign$1({}, data), { pluginName: 'BrowserDiyReportInfo', url: window.location.href, timestamp: getTimestamp(), date: formatTimestamp() }));
     };
     BrowserMonitor.prototype.reportInfo = function (type, data) {
         data.navigator = this.getNavigatorData();

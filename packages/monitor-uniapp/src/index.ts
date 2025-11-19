@@ -196,6 +196,15 @@ class UniAppMonitor implements UniAppMonitorBase {
             pixelRatio: getCatchDeviceInfo.devicePixelRatio,
         };
     }
+    diyReportInfo(type: ReportingLevel, data: Omit<UniAppLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>) {
+        this.reportInfo(type, {
+            ...data,
+            pluginName: 'UniAppDiyReportInfo',
+            url: getUniCurrentPages().page,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
+    }
     async reportInfo(type: ReportingLevel, data: UniAppLogData) {
         data.navigator = await this.getNavigatorData();
         const deviceInfo = await this.getDeviceInfoData();
