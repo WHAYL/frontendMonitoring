@@ -16,6 +16,7 @@ declare class BrowserMonitor implements BrowserMonitorBase {
     getFingerprint(): string;
     private getNavigatorData;
     private getDeviceInfoData;
+    diyReportInfo(type: ReportingLevel, data: Omit<BrowserLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>): void;
     reportInfo(type: ReportingLevel, data: BrowserLogData): void;
     use(plugin: BrowserMonitorPlugin): void;
     destroy(): void;

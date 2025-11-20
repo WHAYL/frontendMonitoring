@@ -162,6 +162,15 @@ class BrowserMonitor implements BrowserMonitorBase {
             pixelRatio: window.devicePixelRatio,
         };
     }
+    diyReportInfo(type: ReportingLevel, data: Omit<BrowserLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>) {
+        this.reportInfo(type, {
+            ...data,
+            pluginName: 'BrowserDiyReportInfo',
+            url: window.location.href,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
+    }
     reportInfo(type: ReportingLevel, data: BrowserLogData) {
         data.navigator = this.getNavigatorData();
         if (!this.isOnline) {

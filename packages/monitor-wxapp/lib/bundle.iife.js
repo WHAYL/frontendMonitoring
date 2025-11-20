@@ -820,35 +820,35 @@ var AiyMonitorWxapp = (function () {
     var LogCategory = [{
       label: '其他',
       key: 'oth',
-      value: 0
+      value: 'oth'
     }, {
       label: '页面生命周期',
       key: 'pageLifecycle',
-      value: 1
+      value: 'pageLifecycle'
     }, {
       label: 'js错误，未处理的Promise，console.error',
       key: 'error',
-      value: 2
+      value: 'error'
     }, {
       label: 'xhr,fetch请求信息',
       key: 'xhrFetch',
-      value: 3
+      value: 'xhrFetch'
     }, {
       label: '页面性能相关数据',
       key: 'pagePerformance',
-      value: 4
+      value: 'pagePerformance'
     }, {
       label: '系统相关访问数据',
       key: 'osView',
-      value: 5
+      value: 'osView'
     }, {
       label: '资源加载信息',
       key: 'resource',
-      value: 6
+      value: 'resource'
     }, {
       label: '用户行为',
       key: 'userBehavior',
-      value: 7
+      value: 'userBehavior'
     }];
     var LogCategoryKeyValue = e(LogCategory, 'key', 'value');
     var ReportLevelEnum;
@@ -2417,6 +2417,61 @@ var AiyMonitorWxapp = (function () {
             }
         };
         WxAppMonitor.prototype.setupNetworkListener = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var navigator, deviceInfo;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4, this.getNavigatorData()];
+                        case 1:
+                            navigator = _a.sent();
+                            return [4, this.getDeviceInfoData()];
+                        case 2:
+                            deviceInfo = _a.sent();
+                            wx.onNetworkStatusChange(function (res) {
+                                if (!_this.isOnline && res.isConnected) {
+                                    _this.cacheLog.push({
+                                        type: 'INFO',
+                                        data: {
+                                            logCategory: LogCategoryKeyValue.oth,
+                                            pluginName: 'NetworkStatus',
+                                            message: 'Network reconnected',
+                                            url: getWxCurrentPages().page,
+                                            extraData: {
+                                                networkType: res.networkType
+                                            },
+                                            timestamp: getTimestamp(),
+                                            date: formatTimestamp(),
+                                            deviceInfo: deviceInfo,
+                                            navigator: navigator
+                                        }
+                                    });
+                                    _this.reportCacheLog();
+                                }
+                                if (_this.isOnline && !res.isConnected) {
+                                    _this.cacheLog.push({
+                                        type: 'INFO',
+                                        data: {
+                                            logCategory: LogCategoryKeyValue.oth,
+                                            pluginName: 'NetworkStatus',
+                                            message: 'Network disconnected',
+                                            url: getWxCurrentPages().page,
+                                            extraData: {
+                                                networkType: res.networkType
+                                            },
+                                            timestamp: getTimestamp(),
+                                            date: formatTimestamp(),
+                                            deviceInfo: deviceInfo,
+                                            navigator: navigator
+                                        }
+                                    });
+                                }
+                                _this.isOnline = res.isConnected;
+                            });
+                            return [2];
+                    }
+                });
+            });
         };
         WxAppMonitor.prototype.setFingerprint = function (value) {
             this.monitor.setFingerprint(value);
@@ -2459,6 +2514,9 @@ var AiyMonitorWxapp = (function () {
                     }
                 });
             });
+        };
+        WxAppMonitor.prototype.diyReportInfo = function (type, data) {
+            this.reportInfo(type, __assign$1(__assign$1({}, data), { pluginName: 'WxAppDiyReportInfo', url: getWxCurrentPages().page, timestamp: getTimestamp(), date: formatTimestamp() }));
         };
         WxAppMonitor.prototype.reportInfo = function (type, data) {
             return __awaiter(this, void 0, void 0, function () {

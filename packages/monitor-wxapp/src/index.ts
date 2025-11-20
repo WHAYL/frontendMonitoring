@@ -4,7 +4,7 @@ import { ErrorPlugin } from './plugins/error';
 import { RouterPlugin } from './plugins/router';
 import { BehaviorPlugin } from './plugins/behavior';
 
-import { getTimestamp, formatTimestamp, getDeviceInfo } from './utils';
+import { getTimestamp, formatTimestamp, getDeviceInfo, getWxCurrentPages } from './utils';
 import { WxAppLogData, WxAppMonitorBase, WxAppMonitorConfig, WxAppMonitorPlugin, PartialNavigator } from './type';
 import { SetRequired } from 'aiy-utils';
 import { WxAppEventBus, WxPageEventBus, UniCreatePageEventBus, wxAppMethods, wxPageMethods, UniCreatePageMethods, wxPageBindMethods, WxPageBindEventBus } from './eventBus';
@@ -203,7 +203,52 @@ class WxAppMonitor implements WxAppMonitorBase {
             this.cacheLog = [];
         }
     }
-    private setupNetworkListener(): void {
+    private async setupNetworkListener() {
+        const navigator = await this.getNavigatorData();
+        const deviceInfo = await this.getDeviceInfoData();
+        wx.onNetworkStatusChange((res: {
+            isConnected: boolean,
+            networkType: string
+        }) => {
+            if (!this.isOnline && res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network reconnected',
+                        url: getWxCurrentPages().page,
+                        extraData: {
+                            networkType: res.networkType
+                        },
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+                this.reportCacheLog();
+            }
+            if (this.isOnline && !res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network disconnected',
+                        url: getWxCurrentPages().page,
+                        extraData: {
+                            networkType: res.networkType
+                        },
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+            }
+            this.isOnline = res.isConnected;
+        });
 
     }
     setFingerprint(value: string) {
@@ -229,6 +274,15 @@ class WxAppMonitor implements WxAppMonitorBase {
             height: getCatchDeviceInfo.screenHeight,
             pixelRatio: getCatchDeviceInfo.pixelRatio,
         };
+    }
+    diyReportInfo(type: ReportingLevel, data: Omit<WxAppLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>) {
+        this.reportInfo(type, {
+            ...data,
+            pluginName: 'WxAppDiyReportInfo',
+            url: getWxCurrentPages().page,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
     }
     async reportInfo(type: ReportingLevel, data: WxAppLogData) {
         data.navigator = await this.getNavigatorData();

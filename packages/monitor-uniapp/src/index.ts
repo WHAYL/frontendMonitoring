@@ -169,8 +169,52 @@ class UniAppMonitor implements UniAppMonitorBase {
             this.cacheLog = [];
         }
     }
-    private setupNetworkListener(): void {
-
+    private async setupNetworkListener() {
+        const navigator = await this.getNavigatorData();
+        const deviceInfo = await this.getDeviceInfoData();
+        uni.onNetworkStatusChange((res: {
+            isConnected: boolean,
+            networkType: string
+        }) => {
+            if (!this.isOnline && res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network reconnected',
+                        url: getUniCurrentPages().page,
+                        extraData: {
+                            networkType: res.networkType
+                        },
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+                this.reportCacheLog();
+            }
+            if (this.isOnline && !res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network disconnected',
+                        url: getUniCurrentPages().page,
+                        extraData: {
+                            networkType: res.networkType
+                        },
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+            }
+            this.isOnline = res.isConnected;
+        });
     }
     setFingerprint(value: string) {
         this.monitor.setFingerprint(value);
@@ -195,6 +239,15 @@ class UniAppMonitor implements UniAppMonitorBase {
             height: getCatchDeviceInfo.screenHeight,
             pixelRatio: getCatchDeviceInfo.devicePixelRatio,
         };
+    }
+    diyReportInfo(type: ReportingLevel, data: Omit<UniAppLogData, 'url' | 'date' | 'timestamp' | 'pluginName'>) {
+        this.reportInfo(type, {
+            ...data,
+            pluginName: 'UniAppDiyReportInfo',
+            url: getUniCurrentPages().page,
+            timestamp: getTimestamp(),
+            date: formatTimestamp()
+        });
     }
     async reportInfo(type: ReportingLevel, data: UniAppLogData) {
         data.navigator = await this.getNavigatorData();
