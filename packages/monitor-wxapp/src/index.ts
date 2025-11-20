@@ -203,7 +203,48 @@ class WxAppMonitor implements WxAppMonitorBase {
             this.cacheLog = [];
         }
     }
-    private setupNetworkListener(): void {
+    private async setupNetworkListener() {
+        const navigator = await this.getNavigatorData();
+        const deviceInfo = await this.getDeviceInfoData();
+        wx.onNetworkStatusChange((res: {
+            isConnected: boolean,
+            networkType: string
+        }) => {
+            if (!this.isOnline && res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network reconnected',
+                        url: getWxCurrentPages().page,
+                        extraData: {},
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+                this.reportCacheLog();
+            }
+            if (this.isOnline && !res.isConnected) {
+                this.cacheLog.push({
+                    type: 'INFO',
+                    data: {
+                        logCategory: LogCategoryKeyValue.oth,
+                        pluginName: 'NetworkStatus',
+                        message: 'Network disconnected',
+                        url: getWxCurrentPages().page,
+                        extraData: {},
+                        timestamp: getTimestamp(),
+                        date: formatTimestamp(),
+                        deviceInfo,
+                        navigator
+                    }
+                });
+            }
+            this.isOnline = res.isConnected;
+        });
 
     }
     setFingerprint(value: string) {

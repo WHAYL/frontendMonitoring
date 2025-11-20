@@ -2342,6 +2342,57 @@ var UniAppMonitor = (function () {
         }
     };
     UniAppMonitor.prototype.setupNetworkListener = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var navigator, deviceInfo;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this.getNavigatorData()];
+                    case 1:
+                        navigator = _a.sent();
+                        return [4, this.getDeviceInfoData()];
+                    case 2:
+                        deviceInfo = _a.sent();
+                        uni.onNetworkStatusChange(function (res) {
+                            if (!_this.isOnline && res.isConnected) {
+                                _this.cacheLog.push({
+                                    type: 'INFO',
+                                    data: {
+                                        logCategory: LogCategoryKeyValue.oth,
+                                        pluginName: 'NetworkStatus',
+                                        message: 'Network reconnected',
+                                        url: getUniCurrentPages().page,
+                                        extraData: {},
+                                        timestamp: getTimestamp(),
+                                        date: formatTimestamp(),
+                                        deviceInfo: deviceInfo,
+                                        navigator: navigator
+                                    }
+                                });
+                                _this.reportCacheLog();
+                            }
+                            if (_this.isOnline && !res.isConnected) {
+                                _this.cacheLog.push({
+                                    type: 'INFO',
+                                    data: {
+                                        logCategory: LogCategoryKeyValue.oth,
+                                        pluginName: 'NetworkStatus',
+                                        message: 'Network disconnected',
+                                        url: getUniCurrentPages().page,
+                                        extraData: {},
+                                        timestamp: getTimestamp(),
+                                        date: formatTimestamp(),
+                                        deviceInfo: deviceInfo,
+                                        navigator: navigator
+                                    }
+                                });
+                            }
+                            _this.isOnline = res.isConnected;
+                        });
+                        return [2];
+                }
+            });
+        });
     };
     UniAppMonitor.prototype.setFingerprint = function (value) {
         this.monitor.setFingerprint(value);
