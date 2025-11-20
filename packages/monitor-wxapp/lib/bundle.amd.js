@@ -2436,7 +2436,9 @@ define((function () { 'use strict';
                                             pluginName: 'NetworkStatus',
                                             message: 'Network reconnected',
                                             url: getWxCurrentPages().page,
-                                            extraData: {},
+                                            extraData: {
+                                                networkType: res.networkType
+                                            },
                                             timestamp: getTimestamp(),
                                             date: formatTimestamp(),
                                             deviceInfo: deviceInfo,
@@ -2453,7 +2455,9 @@ define((function () { 'use strict';
                                             pluginName: 'NetworkStatus',
                                             message: 'Network disconnected',
                                             url: getWxCurrentPages().page,
-                                            extraData: {},
+                                            extraData: {
+                                                networkType: res.networkType
+                                            },
                                             timestamp: getTimestamp(),
                                             date: formatTimestamp(),
                                             deviceInfo: deviceInfo,

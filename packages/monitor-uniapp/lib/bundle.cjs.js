@@ -2362,7 +2362,9 @@ var UniAppMonitor = (function () {
                                         pluginName: 'NetworkStatus',
                                         message: 'Network reconnected',
                                         url: getUniCurrentPages().page,
-                                        extraData: {},
+                                        extraData: {
+                                            networkType: res.networkType
+                                        },
                                         timestamp: getTimestamp(),
                                         date: formatTimestamp(),
                                         deviceInfo: deviceInfo,
@@ -2379,7 +2381,9 @@ var UniAppMonitor = (function () {
                                         pluginName: 'NetworkStatus',
                                         message: 'Network disconnected',
                                         url: getUniCurrentPages().page,
-                                        extraData: {},
+                                        extraData: {
+                                            networkType: res.networkType
+                                        },
                                         timestamp: getTimestamp(),
                                         date: formatTimestamp(),
                                         deviceInfo: deviceInfo,
