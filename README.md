@@ -45,7 +45,7 @@ packages/
 - **错误异常监控** - 监控 JavaScript 错误和未捕获的 Promise 异常
 - **路由变化监控** - 监控页面路由的变化历史
 - **请求信息监控** - 监控网络请求的成功与失败情况
-- **事件拦截监控** - 监控@tap、@click 等事件，在事件方法第一个参数或者最后一个参数传入$event 如下： @tap="handleClick(oth1,oth2,$event)" @tap="handleClick($event,oth1,oth2)"
+- **事件拦截监控** - 监控@tap、@click 等事件
 
 ### monitor-server (服务端)
 - 提供监控数据接收和存储服务
